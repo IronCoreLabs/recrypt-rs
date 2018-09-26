@@ -1,0 +1,37 @@
+[package]
+name = "recrypt"
+version = "0.1.0"
+authors = ["IroncCore Labs <info at ironcorelabs.com>"]
+readme = "README.md"
+license = "AGPL"
+repository = "https://github.com/IronCoreLabs/recrypt-rust"
+documentation = "https://docs.rs/recrypt-rust" #Check this
+categories = ["cryptography", "algorithms"]
+keywords = ["cryptography", "proxy re-encryption", "PRE", "ECC", "transform cryptography", "data control"]
+description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
+
+[dependencies]
+rand = "~0.5"
+sha2 = "0.7.1"
+num-traits = "0.2"
+lazy_static = "1.0.1"
+arrayvec = "0.4.7"
+ed25519-dalek = "~0.8"
+curve25519-dalek = "0.19" #Can get rid of it as soon as https://github.com/dalek-cryptography/ed25519-dalek/issues/39 is resolved
+gridiron = "0.1" 
+
+[profile.dev]
+opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
+debug = true
+
+[profile.test]
+opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
+debug = true
+
+[dev-dependencies]
+proptest = "0.8.3"
+hex = "0.3.2"
+
+[features]
+unstable = []
+
