@@ -1,13 +1,13 @@
 [package]
 name = "recrypt"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["IroncCore Labs <info at ironcorelabs.com>"]
 readme = "README.md"
-license = "AGPL"
-repository = "https://github.com/IronCoreLabs/recrypt-rust"
-documentation = "https://docs.rs/recrypt-rust" #Check this
+license = "AGPL-3.0-only"
+repository = "https://github.com/IronCoreLabs/recrypt-rs"
+documentation = "https://docs.rs/recrypt"
 categories = ["cryptography", "algorithms"]
-keywords = ["cryptography", "proxy re-encryption", "PRE", "ECC", "transform cryptography", "data control"]
+keywords = ["cryptography", "proxy-re-encryption", "PRE", "ECC", "transform-encryption"]
 description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
 
 [dependencies]
@@ -17,7 +17,7 @@ num-traits = "0.2"
 lazy_static = "1.0.1"
 arrayvec = "0.4.7"
 ed25519-dalek = "~0.8"
-curve25519-dalek = "0.19" #Can get rid of it as soon as https://github.com/dalek-cryptography/ed25519-dalek/issues/39 is resolved
+curve25519-dalek = "0.20" #Can get rid of it as soon as https://github.com/dalek-cryptography/ed25519-dalek/issues/39 is resolved
 gridiron = "0.1" 
 
 [profile.dev]

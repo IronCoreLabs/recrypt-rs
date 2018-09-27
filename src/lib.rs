@@ -1,8 +1,7 @@
 #![cfg_attr(feature = "unstable", feature(test))]
-#![doc(html_playground_url = "https://play.rust-lang.org/")]
 #![doc(html_no_source)] // use github for source browsing
 
-//! Recrypt implements a set of cryptographic primitives that are needed for a
+//! Recrypt implements a set of cryptographic primitives for building a
 //! multi-hop proxy re-encryption scheme, known as Transform Encryption.
 //!
 //! ## Basic Encrypt/Decrypt Example

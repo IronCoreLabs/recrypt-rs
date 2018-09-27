@@ -1,6 +1,6 @@
 recrypt
 =======
-[![Build Status](https://travis-ci.org/IronCoreLabs/recrypt-rs.svg?branch=master)](https://travis-ci.org/IronCoreLabs/recrypt-rs) 
+[![](https://img.shields.io/crates/v/recrypt.svg)](https://crates.io/crates/recrypt) [![](https://docs.rs/recrypt/badge.svg)](https://docs.rs/recrypt) [![Build Status](https://travis-ci.org/IronCoreLabs/recrypt-rs.svg?branch=master)](https://travis-ci.org/IronCoreLabs/recrypt-rs) 
 
 A pure-Rust library that implements a set of cryptographic primitives for building a _multi-hop Proxy Re-encryption_ scheme, known as Transform Encryption. 
 
@@ -10,13 +10,15 @@ Suppose you have two (public, private) key pairs: **(A, AA)** and **(B, BB)**.
 
 Transform Encryption allows data encrypted to one public key (A) to be _transformed_ so that it can be decrypted using another user's private key (BB).  This transformation process requires a special _transform key_ (A -> B) that is computed using the first user's private key (AA) and the second user's public key (B). **Having a transform key and performing the transformation does not allow the person doing this process to decrypt the data or to recover either user's private key.**
 
-See [this example](https://docs.rs/recrypt/index.html#single-hop-transform-encryption-example) for more details on computing a transform key and applying a transform using recrypt.
+See the [Single-hop Transform Encryption Example](https://docs.rs/recrypt/) for more details on computing a transform key and applying a transform using recrypt.
 
 ## Usage 
 
 If you are building an application and would like to use Transform Encryption, you might try looking at the [IronCore SDKs](https://docs.ironcorelabs.com/sdks/overview/index.html).
 
 ### Rust Dependency
+
+https://crates.io/crates/recrypt
 
 ```toml
 [dependencies]
