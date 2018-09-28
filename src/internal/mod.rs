@@ -1,5 +1,6 @@
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
+use gridiron::fr_256::Fr256;
 use internal::curve::CurvePoints;
 use internal::ed25519::{Ed25519Signing, PrivateSigningKey, PublicSigningKey, Signature};
 use internal::field::ExtensionField;
@@ -29,6 +30,7 @@ pub mod homogeneouspoint;
 pub mod non_adjacent_form;
 pub mod pairing;
 pub mod rand_bytes;
+pub mod schnorr;
 pub mod sha256;
 
 use api;
@@ -89,7 +91,7 @@ impl<T: Field + Hashable> Hashable for PublicKey<T> {
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
-pub struct PrivateKey<T: Copy> {
+pub struct PrivateKey<T> {
     pub value: T,
 }
 impl From<api::PrivateKey> for PrivateKey<Fp256> {
@@ -277,6 +279,12 @@ pub trait Square {
 }
 
 impl Square for Fp256 {
+    fn square(&self) -> Self {
+        self.square()
+    }
+}
+
+impl Square for Fr256 {
     fn square(&self) -> Self {
         self.square()
     }
@@ -1834,13 +1842,13 @@ mod test {
     }
 
     prop_compose! {
-        fn arb_pub_key()(ref hpoint in arb_homogeneous().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
+        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
             PublicKey { value: *hpoint }
         }
     }
 
     prop_compose! {
-        fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<Fp256> {
+        [pub] fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<Fp256> {
             PrivateKey { value: fp256 }
         }
     }

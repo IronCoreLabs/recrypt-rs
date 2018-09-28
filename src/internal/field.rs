@@ -1,4 +1,5 @@
 use gridiron::fp_256::Fp256;
+use gridiron::fr_256::Fr256;
 use internal::fp2elem::Fp2Elem;
 use internal::fp6elem::Fp6Elem;
 use internal::Square;
@@ -101,6 +102,7 @@ pub trait Field:
 }
 
 impl Field for Fp256 {}
+impl Field for Fr256 {}
 
 /// Contains the values needed to configure a new Fp type to be used as an extension field
 /// (FP2Elem, FP6Elem, FP12Elem)
