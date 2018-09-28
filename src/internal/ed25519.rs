@@ -8,6 +8,7 @@ use internal::ByteVector;
 use sha2::Sha512;
 use std;
 use std::fmt;
+use clear_on_drop::clear::Clear;
 
 ///CompressedY version of the PublicSigningKey
 new_bytes_type!(PublicSigningKey, 32);
@@ -18,7 +19,13 @@ impl Hashable for PublicSigningKey {
     }
 }
 
-new_bytes_type!(PrivateSigningKey, 64);
+new_bytes_type_no_derive!(PrivateSigningKey, 64);
+
+impl Drop for PrivateSigningKey {
+    fn drop(&mut self) {
+        self.bytes.clear()
+    }
+}
 new_bytes_type!(Signature, 64);
 
 pub struct Ed25519;

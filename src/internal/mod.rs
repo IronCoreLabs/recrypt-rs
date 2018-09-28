@@ -358,13 +358,13 @@ where
 fn sign_value<T, F: Ed25519Signing>(
     payload: T,
     public_signing_key: PublicSigningKey,
-    private_signing_key: PrivateSigningKey,
+    private_signing_key: &PrivateSigningKey,
     ed25519: &F,
 ) -> SignedValue<T>
 where
     T: Hashable + Clone,
 {
-    let signature = ed25519.sign(&(public_signing_key, payload.clone()), &private_signing_key);
+    let signature = ed25519.sign(&(public_signing_key, payload.clone()), private_signing_key);
     SignedValue {
         public_signing_key,
         signature,
@@ -402,7 +402,7 @@ pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     plaintext: Fp12Elem<T>, // @clintfred can this be any fp12? or an rth root?
     encrypting_key: PrivateKey<T>,
     public_signing_key: PublicSigningKey,
-    private_signing_key: PrivateSigningKey,
+    private_signing_key: &PrivateSigningKey,
     pairing: &Pairing<T>,
     curve_points: &CurvePoints<T>,
     hash: &F,
@@ -646,7 +646,7 @@ pub fn generate_reencryption_key<FP, H, S>(
     reencryption_private_key: PrivateKey<FP>,
     new_k: Fp12Elem<FP>,
     public_signing_key: PublicSigningKey,
-    private_signing_key: PrivateSigningKey,
+    private_signing_key: &PrivateSigningKey,
     curve_points: &CurvePoints<FP>,
     pairing: &Pairing<FP>,
     sha256: &H,
@@ -765,7 +765,7 @@ pub fn reencrypt<FP, S, H>(
     rand_re_priv_key: PrivateKey<FP>,
     rand_re_k: Fp12Elem<FP>,
     public_signing_key: PublicSigningKey,
-    private_signing_key: PrivateSigningKey,
+    private_signing_key: &PrivateSigningKey,
     ed25519: &S,
     sha256: &H,
     curve_points: &CurvePoints<FP>,
@@ -1104,7 +1104,7 @@ mod test {
             Fp256::new([716814800932300689, 17116457880960511458, 14343763253984106508, 2777291258235104886])
         );
 
-        let re_key = generate_reencryption_key(private_key, public_key, re_private_key, salt, pbsk, pvsk, curve_points, &pairing, sha256, ed25519).payload;
+        let re_key = generate_reencryption_key(private_key, public_key, re_private_key, salt, pbsk, &pvsk, curve_points, &pairing, sha256, ed25519).payload;
 
 
         let good_encrypted_k = Fp12Elem::create_from_t(
@@ -1246,7 +1246,7 @@ mod test {
             plaintext,
             ephem_priv_key,
             pbsk,
-            pvsk,
+            &pvsk,
             &pairing,
             curve_points,
             sha256,
@@ -1268,7 +1268,7 @@ mod test {
             re_private,
             salt,
             pbsk,
-            pvsk,
+            &pvsk,
             curve_points,
             &pairing,
             sha256,
@@ -1281,7 +1281,7 @@ mod test {
             rand_re_priv_key,
             rand_re_k,
             pbsk,
-            pvsk,
+            &pvsk,
             ed25519,
             sha256,
             curve_points,
@@ -1331,7 +1331,7 @@ mod test {
             salt1,
             ephem_priv_key,
             pbsk,
-            pvsk,
+            &pvsk,
             &pairing,
             curve_points,
             sha256,
@@ -1384,7 +1384,7 @@ mod test {
             salt1,
             ephem_priv_key,
             pbsk,
-            pvsk,
+            &pvsk,
             &pairing,
             curve_points,
             sha256,
@@ -1545,7 +1545,7 @@ mod test {
             plaintext,
             ephem_priv_key,
             pbsk,
-            pvsk,
+            &pvsk,
             &pairing,
             curve_points,
             sha256,
@@ -1567,7 +1567,7 @@ mod test {
             re_private,
             salt1,
             pbsk,
-            pvsk,
+            &pvsk,
             curve_points,
             &pairing,
             sha256,
@@ -1581,7 +1581,7 @@ mod test {
             rand_re_priv_key,
             rand_re_k,
             pbsk,
-            pvsk,
+            &pvsk,
             ed25519,
             sha256,
             curve_points,
@@ -1615,7 +1615,7 @@ mod test {
             re_priv_2,
             salt2,
             pbsk,
-            pvsk,
+            &pvsk,
             curve_points,
             &pairing,
             sha256,
@@ -1628,7 +1628,7 @@ mod test {
             rand_re_priv_key_2,
             rand_re_k_2,
             pbsk,
-            pvsk,
+            &pvsk,
             ed25519,
             sha256,
             curve_points,
@@ -1687,7 +1687,7 @@ mod test {
         #[test]
         fn sign_verify_roundtrip(fp256 in arb_fp256()) {
             let (priv_signing_key, pub_signing_key) = good_signing_keys();
-            let signed_value = sign_value(fp256, pub_signing_key, priv_signing_key, &Ed25519);
+            let signed_value = sign_value(fp256, pub_signing_key, &priv_signing_key, &Ed25519);
             let verified = verify_signed_value(signed_value, &Ed25519);
             assert!(verified.is_some())
         }
@@ -1703,7 +1703,7 @@ mod test {
                 plaintext,
                 ephem_secret_key,
                 pub_signing_key,
-                priv_signing_key,
+                &priv_signing_key,
                 &pairing,
                 curve_points,
                 &Sha256,
@@ -1782,7 +1782,7 @@ mod test {
                 *reencryption_private_key,
                 *new_k,
                 PublicSigningKey::new([0; 32]),
-                PrivateSigningKey::new([0;64]),
+                &PrivateSigningKey::new([0;64]),
                 &curve_points,
                 &pairing,
                 &Mocks,
