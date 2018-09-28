@@ -87,7 +87,7 @@ impl<T: Field + Hashable> Hashable for PublicKey<T> {
     }
 }
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
 pub struct PrivateKey<T: Copy> {
     pub value: T,
 }
@@ -95,6 +95,14 @@ impl From<api::PrivateKey> for PrivateKey<Fp256> {
     fn from(api_pk: api::PrivateKey) -> Self {
         PrivateKey {
             value: Fp256::from(api_pk.to_bytes_32()),
+        }
+    }
+}
+
+impl <'a> From<&'a api::PrivateKey> for PrivateKey<Fp256> {
+    fn from(api_pk: &'a api::PrivateKey) -> Self {
+        PrivateKey {
+            value: Fp256::from(api_pk.to_bytes_32())
         }
     }
 }

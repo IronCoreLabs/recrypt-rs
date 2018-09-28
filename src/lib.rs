@@ -78,6 +78,7 @@ extern crate gridiron;
 extern crate num_traits;
 extern crate rand;
 extern crate sha2;
+extern crate clear_on_drop;
 
 #[cfg(test)]
 #[macro_use]
