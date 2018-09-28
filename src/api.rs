@@ -930,6 +930,8 @@ pub(crate) mod test {
     use rand;
     use std::ops::Mul;
 
+
+
     ///Duplicated here for the generate plaintext test
     fn pow_for_square<T: One + Mul<T, Output = T> + Copy + Square>(t: T, exp: Fp256) -> T {
         use gridiron::digits::util::DigitsArray;
@@ -1388,5 +1390,14 @@ pub(crate) mod test {
             ApiErr::InputWrongSize(64),
             PublicKey::new_from_slice((&input.0[..30], &input.1[..32])).unwrap_err()
         )
+    }
+
+    // note that this doesn't show that Drop is working properly, just that clear does
+    #[test]
+    fn private_key_clear() {
+        let (mut priv_key, _) = Api::new().generate_key_pair().unwrap();
+        priv_key.clear();
+        assert_eq!(priv_key.bytes(), &[0u8; 32]);
+        assert_eq!(priv_key._internal_key, Default::default())
     }
 }

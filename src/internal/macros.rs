@@ -33,6 +33,7 @@ macro_rules! new_from_slice {
 macro_rules! new_bytes_type_with_derive {
     ($t: ident, $n: expr, $derive: meta) => {
 
+        #[allow(unused_attributes)] //should squelch error for empty derive, but does not appear to work: https://github.com/rust-lang/rust/issues/54651
         #[$derive]
         pub struct $t {
             bytes: [u8; $t::ENCODED_SIZE_BYTES],
