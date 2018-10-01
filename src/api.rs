@@ -94,7 +94,8 @@ new_bytes_type!(EncryptedMessage, Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES);
 
 /// Not hashed, not encrypted Fp12Elem
 /// See DecryptedSymmetricKey and EncryptedMessage
-#[derive(Clone, Copy)]
+// we don't derive Copy or Clone here on purpose. Plaintext is a sensitive value and should be passed by reference
+// to avoid needless duplication
 pub struct Plaintext {
     bytes: [u8; Plaintext::ENCODED_SIZE_BYTES],
     _internal_fp12: Fp12Elem<Fp256>,
@@ -140,6 +141,20 @@ impl From<Fp12Elem<Fp256>> for Plaintext {
     }
 }
 
+impl Default for Plaintext {
+    fn default() -> Self {
+        Plaintext {
+            bytes: [0u8; Plaintext::ENCODED_SIZE_BYTES],
+            _internal_fp12: Fp12Elem::default(),
+        }
+    }
+}
+impl Drop for Plaintext {
+    fn drop(&mut self) {
+        self.bytes.clear();
+        self._internal_fp12.clear();
+    }
+}
 impl BytesDecoder for Plaintext {
     const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES;
 
@@ -686,7 +701,7 @@ pub trait CryptoOps {
     /// EncryptedValue which can be decrypted by the matching private key of `to_public_key` or ApiErr.
     fn encrypt(
         &mut self,
-        plaintext: Plaintext,
+        plaintext: &Plaintext,
         to_public_key: PublicKey,
         public_signing_key: PublicSigningKey,
         private_signing_key: &PrivateSigningKey,
@@ -732,7 +747,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
 
     fn encrypt(
         &mut self,
-        plaintext: Plaintext,
+        plaintext: &Plaintext,
         to_public_key: PublicKey,
         public_signing_key: PublicSigningKey,
         private_signing_key: &PrivateSigningKey,
@@ -1166,7 +1181,7 @@ pub(crate) mod test {
         let priv_signing_key = internal::ed25519::PrivateSigningKey::new([0; 64]);
 
         let encrypted_val = api
-            .encrypt(pt, pub_key, pub_signing_key, &priv_signing_key)
+            .encrypt(&pt, pub_key, pub_signing_key, &priv_signing_key)
             .unwrap();
 
         let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
@@ -1198,7 +1213,7 @@ pub(crate) mod test {
 
         let plaintext = api.gen_plaintext();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
-        let enc_value = api.encrypt(plaintext, master_pub, pbsk, &pvsk).unwrap();
+        let enc_value = api.encrypt(&plaintext, master_pub, pbsk, &pvsk).unwrap();
         let master_to_master_transform_key = api
             .generate_transform_key(&master_priv, master_pub, pbsk, &pvsk)
             .unwrap();
@@ -1223,7 +1238,7 @@ pub(crate) mod test {
         let (master_private_key, master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let encrypted_msg = api
-            .encrypt(pt.clone(), master_public_key, pbsk.clone(), &pvsk)
+            .encrypt(&pt, master_public_key, pbsk.clone(), &pvsk)
             .unwrap();
         let master_to_device_transform_key = api
             .generate_transform_key(&master_private_key, device_public_key, pbsk.clone(), &pvsk)
@@ -1250,7 +1265,7 @@ pub(crate) mod test {
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let (server_private, server_public) = api.generate_key_pair().unwrap();
         let master_public_key = client_generated_pub.augment(&server_public).unwrap();
-        let encrypted_msg = api.encrypt(pt, master_public_key, pbsk, &pvsk).unwrap();
+        let encrypted_msg = api.encrypt(&pt, master_public_key, pbsk, &pvsk).unwrap();
         let master_to_device_transform_key = api
             .generate_transform_key(&master_private_key, device_public_key, pbsk, &pvsk)
             .unwrap();
@@ -1275,7 +1290,7 @@ pub(crate) mod test {
         let (user_master_private_key, user_master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let encrypted_msg = api
-            .encrypt(pt.clone(), group_master_public_key, pbsk.clone(), &pvsk)
+            .encrypt(&pt, group_master_public_key, pbsk.clone(), &pvsk)
             .unwrap();
 
         // now create two transform keys. Group -> User -> Device (arrows are the transform keys)

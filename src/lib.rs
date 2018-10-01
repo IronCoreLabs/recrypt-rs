@@ -4,6 +4,8 @@
 //! Recrypt implements a set of cryptographic primitives for building a
 //! multi-hop proxy re-encryption scheme, known as Transform Encryption.
 //!
+//! Start exploring the [Api documentation](api/index.html)
+//!
 //! ## Basic Encrypt/Decrypt Example
 //! ```
 //! use recrypt::api::*;

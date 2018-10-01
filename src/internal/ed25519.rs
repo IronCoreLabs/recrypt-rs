@@ -19,6 +19,8 @@ impl Hashable for PublicSigningKey {
     }
 }
 
+// we don't derive Copy or Clone here on purpose. PrivateSigningKey is a sensitive value and
+// should be passed by reference to avoid needless duplication
 new_bytes_type_no_derive!(PrivateSigningKey, 64);
 
 impl Drop for PrivateSigningKey {

@@ -704,6 +704,7 @@ where
 }
 
 /// Fp12Elem that is private and is used in the transform/decrypt algorithms
+// we don't derive Copy or Clone here on purpose. KValue is a sensitive value.
 pub struct KValue<FP: Clear + Default>(pub(crate) Fp12Elem<FP>);
 
 /// Before KValue is dropped, we want to clear the Fp12, to reduce the value's exposure to snooping.
