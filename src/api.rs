@@ -570,10 +570,10 @@ impl TransformKey {
     ///Augment the TransformKey using private_key. If the private_key the TransformKey was delegating from was unaugmented
     ///this can be used to make the TransformKey useful for delegation.
     pub fn augment(&self, private_key: &PrivateKey) -> Result<TransformKey> {
-        let new_internal = self._internal_key.payload.augment(
-            &private_key.into(),
-            &curve::FP_256_CURVE_POINTS.g1,
-        );
+        let new_internal = self
+            ._internal_key
+            .payload
+            .augment(&private_key.into(), &curve::FP_256_CURVE_POINTS.g1);
         TransformKey::try_from_internal(internal::SignedValue {
             payload: new_internal,
             ..self._internal_key
