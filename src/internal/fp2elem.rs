@@ -13,7 +13,7 @@ use std::result::Result;
 /// Fp, subject to the constraint u^2 + 1 = 0. That is, FP2 = Fp[u]/(u^2 + 1)
 ///
 /// A value in FP2 is represented as a polynomial a + b * u, where a and b are both elements of Fp.
-#[derive(Clone, PartialEq, Eq, Copy)]
+#[derive(Clone, PartialEq, Eq, Copy, Default)]
 #[repr(C)]
 pub struct Fp2Elem<T> {
     pub elem1: T,

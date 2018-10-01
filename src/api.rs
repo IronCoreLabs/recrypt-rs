@@ -1,5 +1,5 @@
-use gridiron::fp_256::Fp256;
 use clear_on_drop::clear::Clear;
+use gridiron::fp_256::Fp256;
 use internal;
 use internal::bytedecoder::{BytesDecoder, DecodeErr};
 use internal::curve;
@@ -116,6 +116,10 @@ impl Plaintext {
 
     pub fn bytes(&self) -> &[u8; Plaintext::ENCODED_SIZE_BYTES] {
         &self.bytes
+    }
+
+    pub(crate) fn internal_fp12(&self) -> &Fp12Elem<Fp256> {
+        &self._internal_fp12
     }
 }
 
@@ -551,10 +555,10 @@ impl TransformKey {
     ///Augment the TransformKey using private_key. If the private_key the TransformKey was delegating from was unaugmented
     ///this can be used to make the TransformKey useful for delegation.
     pub fn augment(&self, private_key: &PrivateKey) -> Result<TransformKey> {
-        let new_internal = self
-            ._internal_key
-            .payload
-            .augment(&internal::PrivateKey::from(private_key), &curve::FP_256_CURVE_POINTS.g1);
+        let new_internal = self._internal_key.payload.augment(
+            &internal::PrivateKey::from(private_key),
+            &curve::FP_256_CURVE_POINTS.g1,
+        );
         TransformKey::try_from_internal(internal::SignedValue {
             payload: new_internal,
             ..self._internal_key
@@ -644,7 +648,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
         private_signing_key: &PrivateSigningKey,
     ) -> Result<TransformKey> {
         let ephem_reencryption_private_key = self.random_private_key();
-        let temp_key = gen_random_fp12(&mut self.random_bytes);
+        let temp_key = internal::KValue(gen_random_fp12(&mut self.random_bytes));
         let reencryption_key = internal::generate_reencryption_key(
             from_private_key._internal_key,
             to_public_key._internal_key,
@@ -780,7 +784,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
             transform_key._internal_key,
             EncryptedValue::try_into(encrypted_value)?,
             internal::PrivateKey::from(random_private_key),
-            plaintext._internal_fp12,
+            plaintext.into(),
             public_signing_key,
             private_signing_key,
             &self.ed25519,
@@ -929,8 +933,6 @@ pub(crate) mod test {
     use num_traits::{One, Zero};
     use rand;
     use std::ops::Mul;
-
-
 
     ///Duplicated here for the generate plaintext test
     fn pow_for_square<T: One + Mul<T, Output = T> + Copy + Square>(t: T, exp: Fp256) -> T {
@@ -1224,12 +1226,8 @@ pub(crate) mod test {
             .encrypt(pt.clone(), master_public_key, pbsk.clone(), &pvsk)
             .unwrap();
         let master_to_device_transform_key = api
-            .generate_transform_key(
-                &master_private_key,
-                device_public_key,
-                pbsk.clone(),
-                &pvsk,
-            ).unwrap();
+            .generate_transform_key(&master_private_key, device_public_key, pbsk.clone(), &pvsk)
+            .unwrap();
 
         let transformed_msg = api
             .transform(
@@ -1277,12 +1275,8 @@ pub(crate) mod test {
         let (user_master_private_key, user_master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let encrypted_msg = api
-            .encrypt(
-                pt.clone(),
-                group_master_public_key,
-                pbsk.clone(),
-                &pvsk,
-            ).unwrap();
+            .encrypt(pt.clone(), group_master_public_key, pbsk.clone(), &pvsk)
+            .unwrap();
 
         // now create two transform keys. Group -> User -> Device (arrows are the transform keys)
         let group_to_user_transform_key = api

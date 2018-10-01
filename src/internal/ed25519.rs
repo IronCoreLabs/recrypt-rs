@@ -1,4 +1,5 @@
 use api::ApiErr;
+use clear_on_drop::clear::Clear;
 use curve25519_dalek::constants;
 use curve25519_dalek::scalar::Scalar;
 use ed25519_dalek;
@@ -8,7 +9,6 @@ use internal::ByteVector;
 use sha2::Sha512;
 use std;
 use std::fmt;
-use clear_on_drop::clear::Clear;
 
 ///CompressedY version of the PublicSigningKey
 new_bytes_type!(PublicSigningKey, 32);

@@ -1,3 +1,4 @@
+use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal::curve::CurvePoints;
 use internal::ed25519::{Ed25519Signing, PrivateSigningKey, PublicSigningKey, Signature};
@@ -99,10 +100,10 @@ impl From<api::PrivateKey> for PrivateKey<Fp256> {
     }
 }
 
-impl <'a> From<&'a api::PrivateKey> for PrivateKey<Fp256> {
+impl<'a> From<&'a api::PrivateKey> for PrivateKey<Fp256> {
     fn from(api_pk: &'a api::PrivateKey) -> Self {
         PrivateKey {
-            value: Fp256::from(api_pk.to_bytes_32())
+            value: Fp256::from(api_pk.to_bytes_32()),
         }
     }
 }
@@ -453,7 +454,13 @@ pub fn decrypt<T, H: Sha256Hashing, G: Ed25519Signing>(
     signing: &G,
 ) -> ErrorOr<Fp12Elem<T>>
 where
-    T: Field + ExtensionField + PairingConfig + NonAdjacentForm + Hashable + From<[u8; 64]>,
+    T: Field
+        + ExtensionField
+        + PairingConfig
+        + NonAdjacentForm
+        + Hashable
+        + From<[u8; 64]>
+        + Default,
 {
     verify_signed_value(signed_encrypted_value, signing).map_or(
         Result::Err(InternalError::SignatureFailed),
@@ -550,7 +557,13 @@ fn decrypt_reencrypted_value<FP, H>(
     sha256: &H,
 ) -> Fp12Elem<FP>
 where
-    FP: Field + Hashable + ExtensionField + PairingConfig + NonAdjacentForm + From<[u8; 64]>,
+    FP: Field
+        + Hashable
+        + ExtensionField
+        + PairingConfig
+        + NonAdjacentForm
+        + From<[u8; 64]>
+        + Default,
     H: Sha256Hashing,
 {
     let re_blocks = &reencrypted_value.encryption_blocks;
@@ -563,11 +576,15 @@ where
         encrypted_rand_re_temp_key: enc_rand_re_k_last,
     } = re_blocks_last;
 
-    let sec_to_last_k = *encrypted_k_last
-        * pairing.pair(-re_pub_key_last.value * private_key.value, curve_points.g1);
-    let sec_to_last_rand_re_k = *enc_rand_re_k_last * pairing.pair(
-        -rand_re_pub_key_last.value * private_key.value,
-        curve_points.g1,
+    let sec_to_last_k = KValue(
+        *encrypted_k_last
+            * pairing.pair(-re_pub_key_last.value * private_key.value, curve_points.g1),
+    );
+    let sec_to_last_rand_re_k = KValue(
+        *enc_rand_re_k_last * pairing.pair(
+            -rand_re_pub_key_last.value * private_key.value,
+            curve_points.g1,
+        ),
     );
     //We're going through the list backwards because we unravel the reencryption blocks from last to first, the last one is special so it's done first.
     let (first_k, first_rand_re_k) = re_blocks.to_vec().iter().rev().skip(1).fold(
@@ -580,12 +597,14 @@ where
                 encrypted_rand_re_temp_key: next_enc_rand_re_k,
             } = curr_re_block;
             let curr_k_hash = hash2(curr_k, curve_points, sha256);
-            let new_enc_k = *next_enc_k * pairing.pair(-next_re_pub_key.value, curr_k_hash);
-            let new_enc_rand_re_k = *next_enc_rand_re_k * pairing.pair(
-                -next_rand_re_pub_key.value,
-                hash2(curr_rand_re_k, curve_points, sha256) + curr_k_hash,
+            let new_k = KValue(*next_enc_k * pairing.pair(-next_re_pub_key.value, curr_k_hash));
+            let new_rand_re_k = KValue(
+                *next_enc_rand_re_k * pairing.pair(
+                    -next_rand_re_pub_key.value,
+                    hash2(curr_rand_re_k, curve_points, sha256) + curr_k_hash,
+                ),
             );
-            (new_enc_k, new_enc_rand_re_k)
+            (new_k, new_rand_re_k)
         },
     );
     reencrypted_value.encrypted_message * pairing.pair(
@@ -644,7 +663,7 @@ pub fn generate_reencryption_key<FP, H, S>(
     from_private_key: PrivateKey<FP>,
     to_public_key: PublicKey<FP>,
     reencryption_private_key: PrivateKey<FP>,
-    new_k: Fp12Elem<FP>,
+    new_k: KValue<FP>,
     public_signing_key: PublicSigningKey,
     private_signing_key: &PrivateSigningKey,
     curve_points: &CurvePoints<FP>,
@@ -653,7 +672,13 @@ pub fn generate_reencryption_key<FP, H, S>(
     ed25519: &S,
 ) -> SignedValue<ReencryptionKey<FP>>
 where
-    FP: Field + ExtensionField + PairingConfig + NonAdjacentForm + Hashable + From<[u8; 64]>,
+    FP: Field
+        + ExtensionField
+        + PairingConfig
+        + NonAdjacentForm
+        + Hashable
+        + From<[u8; 64]>
+        + Default,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -661,7 +686,7 @@ where
 
     let re_public_key = public_keygen(reencryption_private_key, curve_points.generator);
     let p = to_public_key.value * reencryption_private_key.value;
-    let encrypted_k = pairing.pair(p, g1) * new_k;
+    let encrypted_k = pairing.pair(p, g1) * new_k.0;
     let hashed_k = hash2(new_k, &curve_points, sha256) + (g1.neg() * from_private_key);
     let reencryption_key = ReencryptionKey {
         re_public_key,
@@ -678,26 +703,51 @@ where
     )
 }
 
+/// Fp12Elem that is private and is used in the transform/decrypt algorithms
+pub struct KValue<FP: Clear + Default>(pub(crate) Fp12Elem<FP>);
+
+/// Before KValue is dropped, we want to clear the Fp12, to reduce the value's exposure to snooping.
+impl<FP: Default> Drop for KValue<FP> {
+    fn drop(&mut self) {
+        self.0.clear()
+    }
+}
+
+impl<'a, FP> Hashable for &'a KValue<FP>
+where
+    FP: Hashable + Default + Clear + Copy,
+{
+    fn to_bytes(&self) -> Vec<u8> {
+        self.0.to_bytes()
+    }
+}
+
+impl From<api::Plaintext> for KValue<Fp256> {
+    fn from(pt: api::Plaintext) -> Self {
+        KValue(*pt.internal_fp12())
+    }
+}
+
 /// Arbitrary hash function to hash an integer into points base field subgroup of the elliptic curve
 ///
 /// # Arguments
-/// `fp12`          - Fp12 element to use in the hash
+/// `k_value`       - Fp12 element to use in the hash
 /// `curve_points`  - IronCore's curve
 /// `sha256`        - Sha256 implementation
 ///
 fn hash2<FP, H>(
-    fp12: Fp12Elem<FP>,
+    k_value: KValue<FP>,
     curve_points: &CurvePoints<FP>,
     sha256: &H,
 ) -> HomogeneousPoint<Fp2Elem<FP>>
 where
-    FP: Field + Hashable + From<[u8; 64]> + NonAdjacentForm,
+    FP: Field + Hashable + From<[u8; 64]> + NonAdjacentForm + Default,
     H: Sha256Hashing,
 {
     let hash_element = curve_points.hash_element;
     //Produce a 512 bit byte vector, which ensures we have a big enough value for 480 and Fp
     //We use a constant value combined with the entire fp12 element so we don't leak information about the fp12 structure.
-    let bytes = array_concat_32(sha256.hash(&(0u8, fp12)), sha256.hash(&(1u8, fp12)));
+    let bytes = array_concat_32(sha256.hash(&(0u8, &k_value)), sha256.hash(&(1u8, &k_value)));
     let fp = FP::from(bytes);
     hash_element * fp
 }
@@ -763,7 +813,7 @@ pub fn reencrypt<FP, S, H>(
     signed_reencryption_key: SignedValue<ReencryptionKey<FP>>,
     signed_encrypted_value: SignedValue<EncryptedValue<FP>>,
     rand_re_priv_key: PrivateKey<FP>,
-    rand_re_k: Fp12Elem<FP>,
+    rand_re_k: KValue<FP>,
     public_signing_key: PublicSigningKey,
     private_signing_key: &PrivateSigningKey,
     ed25519: &S,
@@ -772,7 +822,13 @@ pub fn reencrypt<FP, S, H>(
     pairing: &Pairing<FP>,
 ) -> Result<SignedValue<EncryptedValue<FP>>, InternalError>
 where
-    FP: Field + Hashable + ExtensionField + PairingConfig + NonAdjacentForm + From<[u8; 64]>,
+    FP: Field
+        + Hashable
+        + ExtensionField
+        + PairingConfig
+        + NonAdjacentForm
+        + From<[u8; 64]>
+        + Default,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -835,20 +891,26 @@ fn reencrypt_encrypted_once<FP, H>(
         auth_hash,
     }: EncryptedOnceValue<FP>,
     rand_re_priv_key: PrivateKey<FP>,
-    rand_re_temp_key: Fp12Elem<FP>,
+    rand_re_temp_key: KValue<FP>,
     curve_points: &CurvePoints<FP>,
     pairing: &Pairing<FP>,
     sha256: &H,
 ) -> ReencryptedValue<FP>
 where
-    FP: Field + Hashable + ExtensionField + PairingConfig + NonAdjacentForm + From<[u8; 64]>,
+    FP: Field
+        + Hashable
+        + ExtensionField
+        + PairingConfig
+        + NonAdjacentForm
+        + From<[u8; 64]>
+        + Default,
     H: Sha256Hashing,
 {
     // encrypt and product auth hashes for the rand_re_temp_key
     let rand_re_public_key = public_keygen(rand_re_priv_key, curve_points.generator);
 
     let encrypted_rand_re_temp_key =
-        pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1) * rand_re_temp_key;
+        pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1) * rand_re_temp_key.0;
     // Because this is the first reencryption, modify the encrypted_message using rand_re_temp_key
     // Note that this can be decrypted using the reencryption key
     let encrypted_msg_prime = pairing.pair(
@@ -888,13 +950,19 @@ fn reencrypt_reencrypted_value<FP, H>(
     }: ReencryptionKey<FP>,
     reencrypted_value: &ReencryptedValue<FP>,
     rand_re_priv_key: PrivateKey<FP>,
-    rand_re_temp_key: Fp12Elem<FP>,
+    rand_re_temp_key: KValue<FP>,
     curve_points: &CurvePoints<FP>,
     pairing: &Pairing<FP>,
     sha256: &H,
 ) -> ReencryptedValue<FP>
 where
-    FP: Field + Hashable + ExtensionField + PairingConfig + NonAdjacentForm + From<[u8; 64]>,
+    FP: Field
+        + Hashable
+        + ExtensionField
+        + PairingConfig
+        + NonAdjacentForm
+        + From<[u8; 64]>
+        + Default,
     H: Sha256Hashing,
 {
     let re_blocks = reencrypted_value.encryption_blocks.clone();
@@ -909,7 +977,7 @@ where
     let encrypted_k_prime_last = *encrypted_k_last * pairing.pair(re_pub_key_last.value, hashed_k); // re-encrypted K
     let rand_re_pub_key = public_keygen(rand_re_priv_key, curve_points.generator);
     let enc_rand_re_temp_key =
-        pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1) * rand_re_temp_key;
+        pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1) * rand_re_temp_key.0;
     // Modify the enc_rand_re_temp_key of the last block with the new random reencryption K
     let rand_re_k_last_prime = *enc_rand_re_k_last * pairing.pair(
         rand_re_pub_key_last.value,
@@ -1073,7 +1141,7 @@ mod test {
         );
         let public_key = PublicKey::from_x_y_fp256(parsed_pub_key_x, parsed_pub_key_y).unwrap();
 
-        let salt = Fp12Elem::create_from_t(
+        let salt = KValue(Fp12Elem::create_from_t(
             //20621517740542501009268492188240231175004875885443969425948886451683622135253
             Fp256::new([18092919563963868629,
                 7535312703102788932,
@@ -1102,9 +1170,19 @@ mod test {
             Fp256::new([5004153509371452589, 16294162787904550875, 220950411748700060, 9655544337531903215]),
             //17433339776741835027827317970122814431745024562995872600925458287403992082321
             Fp256::new([716814800932300689, 17116457880960511458, 14343763253984106508, 2777291258235104886])
-        );
+        ));
 
-        let re_key = generate_reencryption_key(private_key, public_key, re_private_key, salt, pbsk, &pvsk, curve_points, &pairing, sha256, ed25519).payload;
+        let re_key = generate_reencryption_key(
+            private_key,
+            public_key,
+            re_private_key,
+            salt,
+            pbsk,
+            &pvsk,
+            curve_points,
+            &pairing,
+            sha256,
+            ed25519).payload;
 
 
         let good_encrypted_k = Fp12Elem::create_from_t(
@@ -1208,7 +1286,7 @@ mod test {
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
-        let salt = gen_rth_root(&pairing, salt_fp12);
+        let salt = KValue(gen_rth_root(&pairing, salt_fp12));
         let pbsk = PublicSigningKey::new([0; 32]);
         let pvsk = PrivateSigningKey::new([0; 64]);
 
@@ -1261,7 +1339,7 @@ mod test {
                 2797782574727398164,
             ]),
         );
-        let rand_re_k = gen_rth_root(&pairing, rand_re_k_fp12);
+        let rand_re_k = KValue(gen_rth_root(&pairing, rand_re_k_fp12));
         let re_key = generate_reencryption_key(
             priv_key,
             pub_key,
@@ -1484,7 +1562,7 @@ mod test {
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
-        let salt1 = gen_rth_root(&pairing, salt_1_fp12);
+        let salt1 = KValue(gen_rth_root(&pairing, salt_1_fp12));
         let pbsk = PublicSigningKey::new([0; 32]);
         let pvsk = PrivateSigningKey::new([0; 64]);
 
@@ -1560,7 +1638,7 @@ mod test {
                 2797782574727398164,
             ]),
         );
-        let rand_re_k = gen_rth_root(&pairing, rand_re_k_1_fp12);
+        let rand_re_k = KValue(gen_rth_root(&pairing, rand_re_k_1_fp12));
         let re_key = generate_reencryption_key(
             priv_key,
             pub_key2,
@@ -1607,8 +1685,8 @@ mod test {
                 3505141733675108717,
             ]),
         );
-        let rand_re_k_2 = gen_rth_root(&pairing, rand_re_k_2_fp12);
-        let salt2 = gen_rth_root(&pairing, salt_2_fp12);
+        let rand_re_k_2 = KValue(gen_rth_root(&pairing, rand_re_k_2_fp12));
+        let salt2 = KValue(gen_rth_root(&pairing, salt_2_fp12));
         let reencryption_key_2 = generate_reencryption_key(
             priv_key2,
             pub_key3,
@@ -1780,7 +1858,7 @@ mod test {
                 from_private_key,
                 to_public_key,
                 *reencryption_private_key,
-                *new_k,
+                KValue(*new_k),
                 PublicSigningKey::new([0; 32]),
                 &PrivateSigningKey::new([0;64]),
                 &curve_points,
