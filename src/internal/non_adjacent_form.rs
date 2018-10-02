@@ -1,5 +1,5 @@
 use gridiron::fp_256::Fp256;
-use gridiron::fr_256::Fr256;
+use internal::fp::fr_256::Fr256;
 
 ///A trait that signifies the ability to create a Nonadjacent form from a value
 ///
