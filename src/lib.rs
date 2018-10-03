@@ -4,6 +4,8 @@
 //! Recrypt implements a set of cryptographic primitives for building a
 //! multi-hop proxy re-encryption scheme, known as Transform Encryption.
 //!
+//! Start exploring the [Api documentation](api/index.html)
+//!
 //! ## Basic Encrypt/Decrypt Example
 //! ```
 //! use recrypt::api::*;
@@ -18,10 +20,10 @@
 //! let (priv_signing_key, pub_signing_key) = api.generate_ed25519_key_pair();
 //!
 //! // encrypt!
-//! let encrypted_val = api.encrypt(pt, pub_key, pub_signing_key, priv_signing_key).unwrap();
+//! let encrypted_val = api.encrypt(&pt, pub_key, pub_signing_key, &priv_signing_key).unwrap();
 //!
 //! // decrypt!
-//! let decrypted_val = api.decrypt(encrypted_val, priv_key).unwrap();
+//! let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
 //!
 //! assert_eq!(pt, decrypted_val)
 //! ```
@@ -44,7 +46,7 @@
 //! let (initial_priv_key, initial_pub_key) = api.generate_key_pair().unwrap();
 //!
 //! // encrypt the data to `initial_pub_key`!
-//! let encrypted_val = api.encrypt(pt, initial_pub_key, pub_signing_key, priv_signing_key).unwrap();
+//! let encrypted_val = api.encrypt(&pt, initial_pub_key, pub_signing_key, &priv_signing_key).unwrap();
 //!
 //! // generate a second public/private keypair as the target of the transform.
 //! // after applying the transform, `target_priv_key` will be able to decrypt the data!
@@ -52,10 +54,10 @@
 //!
 //! // generate a transform key that will change which private key can decrypt the data
 //! let initial_to_target_transform_key = api.generate_transform_key(
-//!     initial_priv_key,
+//!     &initial_priv_key,
 //!     target_pub_key,
 //!     pub_signing_key,
-//!     priv_signing_key).unwrap();
+//!     &priv_signing_key).unwrap();
 //!
 //! // Transform the plaintext to be encrypted to the target!
 //! // The data is _not_ be decrypted here. Simply transformed!
@@ -63,14 +65,15 @@
 //!     encrypted_val,
 //!     initial_to_target_transform_key,
 //!     pub_signing_key,
-//!     priv_signing_key).unwrap();
+//!     &priv_signing_key).unwrap();
 //!
 //! // decrypt the transformed value with the target private key and recover the plaintext
-//! let decrypted_val = api.decrypt(transformed_val, target_priv_key).unwrap();
+//! let decrypted_val = api.decrypt(transformed_val, &target_priv_key).unwrap();
 //!
 //! assert_eq!(pt, decrypted_val);
 //! ```
 extern crate arrayvec;
+extern crate clear_on_drop;
 extern crate core;
 extern crate curve25519_dalek;
 extern crate ed25519_dalek;

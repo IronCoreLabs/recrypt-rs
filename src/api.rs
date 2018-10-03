@@ -1,3 +1,4 @@
+use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal;
 use internal::bytedecoder::{BytesDecoder, DecodeErr};
@@ -93,7 +94,8 @@ new_bytes_type!(EncryptedMessage, Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES);
 
 /// Not hashed, not encrypted Fp12Elem
 /// See DecryptedSymmetricKey and EncryptedMessage
-#[derive(Clone, Copy)]
+// we don't derive Copy or Clone here on purpose. Plaintext is a sensitive value and should be passed by reference
+// to avoid needless duplication
 pub struct Plaintext {
     bytes: [u8; Plaintext::ENCODED_SIZE_BYTES],
     _internal_fp12: Fp12Elem<Fp256>,
@@ -116,6 +118,10 @@ impl Plaintext {
     pub fn bytes(&self) -> &[u8; Plaintext::ENCODED_SIZE_BYTES] {
         &self.bytes
     }
+
+    pub(crate) fn internal_fp12(&self) -> &Fp12Elem<Fp256> {
+        &self._internal_fp12
+    }
 }
 
 bytes_only_debug!(Plaintext);
@@ -135,6 +141,20 @@ impl From<Fp12Elem<Fp256>> for Plaintext {
     }
 }
 
+impl Default for Plaintext {
+    fn default() -> Self {
+        Plaintext {
+            bytes: [0u8; Plaintext::ENCODED_SIZE_BYTES],
+            _internal_fp12: Fp12Elem::default(),
+        }
+    }
+}
+impl Drop for Plaintext {
+    fn drop(&mut self) {
+        self.bytes.clear();
+        self._internal_fp12.clear();
+    }
+}
 impl BytesDecoder for Plaintext {
     const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES;
 
@@ -553,7 +573,7 @@ impl TransformKey {
         let new_internal = self
             ._internal_key
             .payload
-            .augment(&(*private_key).into(), &curve::FP_256_CURVE_POINTS.g1);
+            .augment(&private_key.into(), &curve::FP_256_CURVE_POINTS.g1);
         TransformKey::try_from_internal(internal::SignedValue {
             payload: new_internal,
             ..self._internal_key
@@ -608,17 +628,17 @@ pub trait KeyGenOps {
     ///
     fn generate_transform_key(
         &mut self,
-        from_private_key: PrivateKey,
+        from_private_key: &PrivateKey,
         to_public_key: PublicKey,
         public_signing_key: PublicSigningKey,
-        private_signing_key: PrivateSigningKey,
+        private_signing_key: &PrivateSigningKey,
     ) -> Result<TransformKey>;
 }
 
 impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H, S, R> {
     fn compute_public_key(&self, private_key: &PrivateKey) -> Result<PublicKey> {
         let pub_key_internal = internal::public_keygen(
-            internal::PrivateKey::from(*private_key),
+            internal::PrivateKey::from(private_key),
             self.curve_points.generator,
         );
         PublicKey::try_from(&pub_key_internal)
@@ -637,13 +657,13 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
 
     fn generate_transform_key(
         &mut self,
-        from_private_key: PrivateKey,
+        from_private_key: &PrivateKey,
         to_public_key: PublicKey,
         public_signing_key: PublicSigningKey,
-        private_signing_key: PrivateSigningKey,
+        private_signing_key: &PrivateSigningKey,
     ) -> Result<TransformKey> {
         let ephem_reencryption_private_key = self.random_private_key();
-        let temp_key = gen_random_fp12(&mut self.random_bytes);
+        let temp_key = internal::KValue(gen_random_fp12(&mut self.random_bytes));
         let reencryption_key = internal::generate_reencryption_key(
             from_private_key._internal_key,
             to_public_key._internal_key,
@@ -681,10 +701,10 @@ pub trait CryptoOps {
     /// EncryptedValue which can be decrypted by the matching private key of `to_public_key` or ApiErr.
     fn encrypt(
         &mut self,
-        plaintext: Plaintext,
+        plaintext: &Plaintext,
         to_public_key: PublicKey,
         public_signing_key: PublicSigningKey,
-        private_signing_key: PrivateSigningKey,
+        private_signing_key: &PrivateSigningKey,
     ) -> Result<EncryptedValue>;
 
     /// Decrypt the value using `private_key`.
@@ -698,7 +718,7 @@ pub trait CryptoOps {
     fn decrypt(
         &self,
         encrypted_value: EncryptedValue,
-        private_key: PrivateKey,
+        private_key: &PrivateKey,
     ) -> Result<Plaintext>;
 
     /// Transform the value `encrypted_value` using the `transform_key`.
@@ -711,7 +731,7 @@ pub trait CryptoOps {
         encrypted_value: EncryptedValue,
         transform_key: TransformKey,
         public_signing_key: PublicSigningKey,
-        private_signing_key: PrivateSigningKey,
+        private_signing_key: &PrivateSigningKey,
     ) -> Result<EncryptedValue>;
 }
 
@@ -727,10 +747,10 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
 
     fn encrypt(
         &mut self,
-        plaintext: Plaintext,
+        plaintext: &Plaintext,
         to_public_key: PublicKey,
         public_signing_key: PublicSigningKey,
-        private_signing_key: PrivateSigningKey,
+        private_signing_key: &PrivateSigningKey,
     ) -> Result<EncryptedValue> {
         //generate a ephemeral private key
         let ephem_private_key = self.random_private_key();
@@ -754,7 +774,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
     fn decrypt(
         &self,
         encrypted_value: EncryptedValue,
-        private_key: PrivateKey,
+        private_key: &PrivateKey,
     ) -> Result<Plaintext> {
         Ok(internal::decrypt(
             internal::PrivateKey::from(private_key),
@@ -771,7 +791,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
         encrypted_value: EncryptedValue,
         transform_key: TransformKey,
         public_signing_key: PublicSigningKey,
-        private_signing_key: PrivateSigningKey,
+        private_signing_key: &PrivateSigningKey,
     ) -> Result<EncryptedValue> {
         let plaintext = self.gen_plaintext();
         let random_private_key = self.random_private_key();
@@ -779,7 +799,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
             transform_key._internal_key,
             EncryptedValue::try_into(encrypted_value)?,
             internal::PrivateKey::from(random_private_key),
-            plaintext._internal_fp12,
+            plaintext.into(),
             public_signing_key,
             private_signing_key,
             &self.ed25519,
@@ -873,9 +893,9 @@ impl PublicKey {
     }
 }
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+#[derive(Eq, PartialEq, Default, Debug)]
 pub struct PrivateKey {
-    bytes: [u8; Fp256::ENCODED_SIZE_BYTES],
+    bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES],
     _internal_key: internal::PrivateKey<Fp256>,
 }
 
@@ -909,6 +929,14 @@ impl From<internal::PrivateKey<Fp256>> for PrivateKey {
             bytes: internal_pk.value.to_bytes_32(),
             _internal_key: internal_pk,
         }
+    }
+}
+
+// use Drop to call clear on members of PrivateKey to zero memory before moving the stack pointer
+impl Drop for PrivateKey {
+    fn drop(&mut self) {
+        self.bytes.clear();
+        self._internal_key.clear()
     }
 }
 
@@ -995,7 +1023,7 @@ pub(crate) mod test {
     fn private_key_roundtrip_with_internal() {
         let (priv_key_api, _) = Api::new().generate_key_pair().unwrap();
 
-        let internal_pk = internal::PrivateKey::<Fp256>::from(priv_key_api);
+        let internal_pk = internal::PrivateKey::<Fp256>::from(&priv_key_api);
         let roundtrip = PrivateKey::from(internal_pk);
 
         assert_eq!(priv_key_api, roundtrip);
@@ -1090,7 +1118,7 @@ pub(crate) mod test {
         let pbsk = PublicSigningKey::new([0; 32]);
         let pvsk = PrivateSigningKey::new([0; 64]);
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
-        api.generate_transform_key(master_priv, master_pub, pbsk, pvsk)
+        api.generate_transform_key(&master_priv, master_pub, pbsk, &pvsk)
             .unwrap()
     }
 
@@ -1153,10 +1181,10 @@ pub(crate) mod test {
         let priv_signing_key = internal::ed25519::PrivateSigningKey::new([0; 64]);
 
         let encrypted_val = api
-            .encrypt(pt, pub_key, pub_signing_key, priv_signing_key)
+            .encrypt(&pt, pub_key, pub_signing_key, &priv_signing_key)
             .unwrap();
 
-        let decrypted_val = api.decrypt(encrypted_val, priv_key).unwrap();
+        let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
 
         // compare the bytes as a vec as Plaintext and [u8; 384] don't define Eq
         assert_eq!(pt.bytes.to_vec(), decrypted_val.bytes.to_vec())
@@ -1185,18 +1213,18 @@ pub(crate) mod test {
 
         let plaintext = api.gen_plaintext();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
-        let enc_value = api.encrypt(plaintext, master_pub, pbsk, pvsk).unwrap();
+        let enc_value = api.encrypt(&plaintext, master_pub, pbsk, &pvsk).unwrap();
         let master_to_master_transform_key = api
-            .generate_transform_key(master_priv, master_pub, pbsk, pvsk.clone())
+            .generate_transform_key(&master_priv, master_pub, pbsk, &pvsk)
             .unwrap();
         let transformed_value = api
             .transform(
                 enc_value,
                 master_to_master_transform_key,
                 pbsk.clone(),
-                pvsk.clone(),
+                &pvsk,
             ).unwrap();
-        let decrypted_plaintext = api.decrypt(transformed_value, master_priv).unwrap();
+        let decrypted_plaintext = api.decrypt(transformed_value, &master_priv).unwrap();
         assert_eq!(plaintext, decrypted_plaintext)
     }
 
@@ -1210,24 +1238,20 @@ pub(crate) mod test {
         let (master_private_key, master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let encrypted_msg = api
-            .encrypt(pt.clone(), master_public_key, pbsk.clone(), pvsk.clone())
+            .encrypt(&pt, master_public_key, pbsk.clone(), &pvsk)
             .unwrap();
         let master_to_device_transform_key = api
-            .generate_transform_key(
-                master_private_key,
-                device_public_key,
-                pbsk.clone(),
-                pvsk.clone(),
-            ).unwrap();
+            .generate_transform_key(&master_private_key, device_public_key, pbsk.clone(), &pvsk)
+            .unwrap();
 
         let transformed_msg = api
             .transform(
                 encrypted_msg,
                 master_to_device_transform_key,
                 pbsk.clone(),
-                pvsk.clone(),
+                &pvsk,
             ).unwrap();
-        let decrypted_pt = api.decrypt(transformed_msg, device_private_key).unwrap();
+        let decrypted_pt = api.decrypt(transformed_msg, &device_private_key).unwrap();
 
         assert_eq!(pt, decrypted_pt)
     }
@@ -1241,17 +1265,17 @@ pub(crate) mod test {
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let (server_private, server_public) = api.generate_key_pair().unwrap();
         let master_public_key = client_generated_pub.augment(&server_public).unwrap();
-        let encrypted_msg = api.encrypt(pt, master_public_key, pbsk, pvsk).unwrap();
+        let encrypted_msg = api.encrypt(&pt, master_public_key, pbsk, &pvsk).unwrap();
         let master_to_device_transform_key = api
-            .generate_transform_key(master_private_key, device_public_key, pbsk, pvsk)
+            .generate_transform_key(&master_private_key, device_public_key, pbsk, &pvsk)
             .unwrap();
         let augmented_transform_key = master_to_device_transform_key
             .augment(&server_private)
             .unwrap();
         let transformed_msg = api
-            .transform(encrypted_msg, augmented_transform_key, pbsk, pvsk)
+            .transform(encrypted_msg, augmented_transform_key, pbsk, &pvsk)
             .unwrap();
-        let decrypted_pt = api.decrypt(transformed_msg, device_private_key).unwrap();
+        let decrypted_pt = api.decrypt(transformed_msg, &device_private_key).unwrap();
 
         assert_eq!(pt, decrypted_pt)
     }
@@ -1266,28 +1290,24 @@ pub(crate) mod test {
         let (user_master_private_key, user_master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let encrypted_msg = api
-            .encrypt(
-                pt.clone(),
-                group_master_public_key,
-                pbsk.clone(),
-                pvsk.clone(),
-            ).unwrap();
+            .encrypt(&pt, group_master_public_key, pbsk.clone(), &pvsk)
+            .unwrap();
 
         // now create two transform keys. Group -> User -> Device (arrows are the transform keys)
         let group_to_user_transform_key = api
             .generate_transform_key(
-                group_master_private_key,
+                &group_master_private_key,
                 user_master_public_key,
                 pbsk.clone(),
-                pvsk.clone(),
+                &pvsk,
             ).unwrap();
 
         let user_to_device_transform_key = api
             .generate_transform_key(
-                user_master_private_key,
+                &user_master_private_key,
                 device_public_key,
                 pbsk.clone(),
-                pvsk.clone(),
+                &pvsk,
             ).unwrap();
 
         let transformed_to_user = api
@@ -1295,17 +1315,17 @@ pub(crate) mod test {
                 encrypted_msg,
                 group_to_user_transform_key,
                 pbsk.clone(),
-                pvsk.clone(),
+                &pvsk,
             ).unwrap();
         let transformed_to_device = api
             .transform(
                 transformed_to_user,
                 user_to_device_transform_key,
                 pbsk.clone(),
-                pvsk.clone(),
+                &pvsk,
             ).unwrap();
         let decrypted_result = api
-            .decrypt(transformed_to_device, device_private_key)
+            .decrypt(transformed_to_device, &device_private_key)
             .unwrap();
 
         assert_eq!(pt, decrypted_result)
@@ -1379,5 +1399,14 @@ pub(crate) mod test {
             ApiErr::InputWrongSize(64),
             PublicKey::new_from_slice((&input.0[..30], &input.1[..32])).unwrap_err()
         )
+    }
+
+    // note that this doesn't show that Drop is working properly, just that clear does
+    #[test]
+    fn private_key_clear() {
+        let (mut priv_key, _) = Api::new().generate_key_pair().unwrap();
+        priv_key.clear();
+        assert_eq!(priv_key.bytes(), &[0u8; 32]);
+        assert_eq!(priv_key._internal_key, Default::default())
     }
 }

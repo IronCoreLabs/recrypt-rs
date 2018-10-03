@@ -1,4 +1,5 @@
 use api::ApiErr;
+use clear_on_drop::clear::Clear;
 use curve25519_dalek::constants;
 use curve25519_dalek::scalar::Scalar;
 use ed25519_dalek;
@@ -18,7 +19,15 @@ impl Hashable for PublicSigningKey {
     }
 }
 
-new_bytes_type!(PrivateSigningKey, 64);
+// we don't derive Copy or Clone here on purpose. PrivateSigningKey is a sensitive value and
+// should be passed by reference to avoid needless duplication
+new_bytes_type_no_derive!(PrivateSigningKey, 64);
+
+impl Drop for PrivateSigningKey {
+    fn drop(&mut self) {
+        self.bytes.clear()
+    }
+}
 new_bytes_type!(Signature, 64);
 
 pub struct Ed25519;

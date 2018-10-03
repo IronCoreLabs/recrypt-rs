@@ -29,10 +29,12 @@ macro_rules! new_from_slice {
     };
 }
 
-/// macro for generation of "new-types" around a byte array with a standard pattern for construction and access
-macro_rules! new_bytes_type {
-    ($t: ident, $n: expr) => {
-        #[derive(Clone, Copy)]
+/// macro for generation of "new-types" around byte arrays, but with the option of specifying custom derive
+macro_rules! new_bytes_type_with_derive {
+    ($t: ident, $n: expr, $derive: meta) => {
+
+        #[allow(unused_attributes)] //should squelch error for empty derive, but does not appear to work: https://github.com/rust-lang/rust/issues/54651
+        #[$derive]
         pub struct $t {
             bytes: [u8; $t::ENCODED_SIZE_BYTES],
         }
@@ -59,5 +61,19 @@ macro_rules! new_bytes_type {
         }
 
         impl Eq for $t {}
+    };
+}
+
+/// macro for generation of "new-types" around a byte array with a standard pattern for construction and access
+macro_rules! new_bytes_type {
+    ($t: ident, $n: expr) => {
+        new_bytes_type_with_derive!($t, $n, derive(Clone, Copy));
+    };
+}
+
+/// macro for generation of "new-types" around a byte array with a standard pattern for construction and access
+macro_rules! new_bytes_type_no_derive {
+    ($t: ident, $n: expr) => {
+        new_bytes_type_with_derive!($t, $n, derive());
     };
 }
