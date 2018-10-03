@@ -87,16 +87,17 @@ where
     fn verify<A: Hashable>(
         &self,
         pub_key: PublicKey<FP>,
-        augmenting_key: PrivateKey<FP>,
+        augmenting_key: Option<PrivateKey<FP>>,
         message: &A,
         signature: SchnorrSignature<FR>,
     ) -> bool {
+        use num_traits::Zero;
         let h = FR::from(FP::from(compute_double_hash(
             &self.sha256,
             &(&signature.r, &pub_key, message),
             &(&pub_key, message, &signature.r),
         )));
-        let augmenting_pub_key = self.g * augmenting_key.value;
+        let augmenting_pub_key = augmenting_key.map(|key| self.g * key.value).unwrap_or_else(|| HomogeneousPoint::zero()) ;
         let unaugmented_key = pub_key.value - augmenting_pub_key;
         let v = self.g * signature.s + unaugmented_key * h;
         let normalized = v.normalize();
@@ -128,7 +129,7 @@ pub trait SchnorrSigning<T: field::Field, U> {
     fn verify<A: Hashable>(
         &self,
         pub_key: PublicKey<T>,
-        augmenting_key: PrivateKey<T>,
+        augmenting_key: Option<PrivateKey<T>>,
         message: &A,
         signature: SchnorrSignature<U>,
     ) -> bool;
@@ -168,7 +169,7 @@ mod test {
             let aug_pub_key = PublicKey::new(g * aug_priv_key);
             let pub_key = PublicKey::new(g * priv_key.value + aug_pub_key.value);
             let sig = signing.sign(priv_key,pub_key, &message, fr).unwrap();
-            prop_assert!(signing.verify(pub_key, aug_priv_key, &message, sig))
+            prop_assert!(signing.verify(pub_key, Some(aug_priv_key), &message, sig))
         }
     }
 
