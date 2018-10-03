@@ -19,7 +19,7 @@ arrayvec = "0.4.7"
 ed25519-dalek = "~0.8"
 curve25519-dalek = "0.20" #Can get rid of it as soon as https://github.com/dalek-cryptography/ed25519-dalek/issues/39 is resolved
 clear_on_drop = "0.2"
-gridiron = "0.1.1"
+gridiron = "0.2"
 
 [profile.dev]
 opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
