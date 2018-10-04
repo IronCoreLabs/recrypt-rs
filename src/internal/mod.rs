@@ -765,7 +765,10 @@ where
     let hash_element = curve_points.hash_element;
     //Produce a 512 bit byte vector, which ensures we have a big enough value for 480 and Fp
     //We use a constant value combined with the entire fp12 element so we don't leak information about the fp12 structure.
-    let bytes = array_concat_32(&sha256.hash(&(0u8, &k_value)), &sha256.hash(&(1u8, &k_value)));
+    let bytes = array_concat_32(
+        &sha256.hash(&(0u8, &k_value)),
+        &sha256.hash(&(1u8, &k_value)),
+    );
     let fp = FP::from(bytes);
     hash_element * fp
 }
