@@ -14,8 +14,8 @@ new_bytes_type!(PublicSigningKey, 32);
 impl PublicSigningKey {
     ///
     /// Verify that the signature was signed by its private key over the hashable bytes of
-    /// the message. 
-    /// 
+    /// the message.
+    ///
     /// Returns true if all the values are valid and the signature can be verified.
     ///
     pub fn verify<A: Hashable>(&self, message: &A, signature: &Signature) -> bool {
