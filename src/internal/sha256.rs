@@ -14,9 +14,11 @@ impl Sha256Hashing for Sha256 {
         hasher.input(t.to_bytes().as_slice());
         let hash_result = hasher.result();
         //This is currently the best way I know of to do this... Sorry.
-        let mut result: [u8; 32] = [0; 32];
-        result.clone_from_slice(hash_result.as_slice());
-        result
+        {
+            let mut result: [u8; 32] = [0; 32];
+            result.copy_from_slice(&hash_result);
+            result
+        }
     }
 }
 
@@ -24,7 +26,7 @@ impl Sha256Hashing for Sha256 {
 mod test {
     use hex;
     use internal::sha256::*;
-    //Test that ensures a manually computed value is correct.
+
     #[test]
     fn sha256_match_known_value() {
         assert_eq!(

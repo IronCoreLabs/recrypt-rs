@@ -6,12 +6,14 @@ use internal::curve;
 pub use internal::ed25519::{
     Ed25519, Ed25519Signing, PrivateSigningKey, PublicSigningKey, Signature,
 };
+use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
 use internal::hashable::{Hashable, Hashable32};
 use internal::homogeneouspoint::HomogeneousPoint;
 use internal::pairing;
 pub use internal::rand_bytes::*;
+use internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use internal::sha256::{Sha256, Sha256Hashing};
 pub use internal::ByteVector;
 use nonemptyvec::NonEmptyVec;
@@ -27,6 +29,7 @@ pub struct Api<H, S, R> {
     ed25519: S,
     pairing: internal::pairing::Pairing<Fp256>,
     curve_points: &'static internal::curve::CurvePoints<Fp256>,
+    schnorr_signing: SchnorrSign<Fp256, Fr256, H>,
 }
 
 impl Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
@@ -38,12 +41,14 @@ impl<CR: rand::CryptoRng + rand::RngCore> Api<Sha256, Ed25519, RandomBytes<CR>> 
     pub fn new_with_rand(r: CR) -> Api<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = pairing::Pairing::new();
         let curve_points = &*curve::FP_256_CURVE_POINTS;
+        let schnorr_signing = internal::schnorr::SchnorrSign::<Fp256, Fr256, Sha256>::new_256();
         Api {
             random_bytes: RandomBytes::new(r),
             sha_256: Sha256,
             ed25519: Ed25519,
             pairing,
             curve_points,
+            schnorr_signing,
         }
     }
 }
@@ -581,6 +586,66 @@ impl TransformKey {
     }
 }
 
+pub trait SchnorrOps {
+    ///Create a signature for the message using `priv_key`.
+    ///- `priv_key` - The private key which is used to generate the signature.
+    ///- `pub_key` the public key which will be used to validate the signature.
+    ///- `message` the message to sign.
+    fn schnorr_sign<A: Hashable>(
+        &mut self,
+        priv_key: &PrivateKey,
+        pub_key: PublicKey,
+        message: &A,
+    ) -> SchnorrSignature;
+
+    ///Verify that the message was signed by the matching private key to `pub_key`. Note that if `pub_key` was augmented
+    ///the private key used in the augmentation should be passed in as `augmenting_priv_key`.
+    /// - `pub_key` - The pub_key that was used in the signing process.
+    /// - `augmenting_priv_key` - If the `pub_key` was augmented, pass the private key that was used to augment.
+    ///                           None if no augmentation was done.
+    /// - `message` - Message that was signed.
+    /// - `signature` - The signature that was generated from `schnorr_sign`.
+    fn schnorr_verify<A: Hashable>(
+        &self,
+        pub_key: PublicKey,
+        augmenting_priv_key: Option<&PrivateKey>,
+        message: &A,
+        signature: SchnorrSignature,
+    ) -> bool;
+}
+
+impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
+    for Api<H, S, RandomBytes<CR>>
+{
+    fn schnorr_sign<A: Hashable>(
+        &mut self,
+        priv_key: &PrivateKey,
+        pub_key: PublicKey,
+        message: &A,
+    ) -> SchnorrSignature {
+        let k = Fr256::from_rand_no_bias(&mut self.random_bytes);
+        self.schnorr_signing
+            .sign(priv_key.into(), pub_key._internal_key, message, k)
+            .unwrap() //The  curve we're using _cannot_ produce an x value which would be zero, so this can't happen
+            .into()
+    }
+
+    fn schnorr_verify<A: Hashable>(
+        &self,
+        pub_key: PublicKey,
+        augmenting_priv_key: Option<&PrivateKey>,
+        message: &A,
+        signature: SchnorrSignature,
+    ) -> bool {
+        self.schnorr_signing.verify(
+            pub_key._internal_key,
+            augmenting_priv_key.map(|key| key.into()),
+            message,
+            signature.into(),
+        )
+    }
+}
+
 pub trait Ed25519Ops {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait.
     fn generate_ed25519_key_pair(&mut self) -> (PrivateSigningKey, PublicSigningKey);
@@ -939,6 +1004,23 @@ impl Drop for PrivateKey {
         self._internal_key.clear()
     }
 }
+new_bytes_type!(SchnorrSignature, 64);
+
+impl From<internal::schnorr::SchnorrSignature<Fr256>> for SchnorrSignature {
+    fn from(internal: internal::schnorr::SchnorrSignature<Fr256>) -> Self {
+        SchnorrSignature::new(internal::array_concat_32(
+            &internal.r().to_bytes_32(),
+            &internal.s().to_bytes_32(),
+        ))
+    }
+}
+
+impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr256> {
+    fn from(sig: SchnorrSignature) -> Self {
+        let (r_bytes, s_bytes) = internal::array_split_64(&sig.bytes);
+        internal::schnorr::SchnorrSignature::new(Fr256::from(r_bytes), Fr256::from(s_bytes))
+    }
+}
 
 #[cfg(test)]
 pub(crate) mod test {
@@ -1006,7 +1088,29 @@ pub(crate) mod test {
             ed25519,
             pairing: api.pairing,
             curve_points: api.curve_points,
+            schnorr_signing: internal::schnorr::SchnorrSign::<Fp256, Fr256, Sha256>::new_256(),
         }
+    }
+
+    #[test]
+    fn schnorr_signing_roundtrip_augmented() {
+        let mut api = Api::new();
+        let (private_key, pub_key) = api.generate_key_pair().unwrap();
+        let (aug_private_key, aug_pub_key) = api.generate_key_pair().unwrap();
+        let message = vec![1u8, 2u8];
+        let augmented_pub = pub_key.augment(&aug_pub_key).unwrap();
+        let sig = api.schnorr_sign(&private_key, augmented_pub, &message);
+        let result = api.schnorr_verify(augmented_pub, Some(&aug_private_key), &message, sig);
+        assert!(result);
+    }
+    #[test]
+    fn schnorr_signing_roundtrip_unaugmented() {
+        let mut api = Api::new();
+        let (private_key, pub_key) = api.generate_key_pair().unwrap();
+        let message = vec![1u8, 2u8, 3u8, 4u8];
+        let sig = api.schnorr_sign(&private_key, pub_key, &message);
+        let result = api.schnorr_verify(pub_key, None, &message, sig);
+        assert!(result);
     }
 
     #[test]

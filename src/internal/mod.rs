@@ -4,6 +4,7 @@ use internal::curve::CurvePoints;
 use internal::ed25519::{Ed25519Signing, PrivateSigningKey, PublicSigningKey, Signature};
 use internal::field::ExtensionField;
 use internal::field::Field;
+use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
 use internal::hashable::{Hashable, Hashable32};
@@ -21,6 +22,7 @@ pub mod bytedecoder;
 pub mod curve;
 pub mod ed25519;
 pub mod field;
+pub mod fp;
 pub mod fp12elem;
 pub mod fp2elem;
 pub mod fp6elem;
@@ -29,6 +31,7 @@ pub mod homogeneouspoint;
 pub mod non_adjacent_form;
 pub mod pairing;
 pub mod rand_bytes;
+pub mod schnorr;
 pub mod sha256;
 
 use api;
@@ -89,7 +92,7 @@ impl<T: Field + Hashable> Hashable for PublicKey<T> {
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
-pub struct PrivateKey<T: Copy> {
+pub struct PrivateKey<T> {
     pub value: T,
 }
 impl From<api::PrivateKey> for PrivateKey<Fp256> {
@@ -282,6 +285,12 @@ impl Square for Fp256 {
     }
 }
 
+impl Square for Fr256 {
+    fn square(&self) -> Self {
+        self.square()
+    }
+}
+
 ///Sum t n times.
 fn sum_n<T: Add<Output = T> + Copy + Zero + PartialEq>(t: T, n: u64) -> T {
     if n == 0 {
@@ -320,11 +329,19 @@ fn pow_for_square<T: One + Mul<T, Output = T> + Copy + Square>(t: T, exp: u64) -
     }
 }
 
-fn array_concat_32<T: Copy + Zero>(one: [T; 32], two: [T; 32]) -> [T; 64] {
+pub fn array_concat_32<T: Copy + Zero>(one: &[T; 32], two: &[T; 32]) -> [T; 64] {
     let mut result: [T; 64] = [T::zero(); 64];
-    let x = [one, two].concat();
-    result.copy_from_slice(x.as_slice());
+    result[0..32].copy_from_slice(&one[..]);
+    result[32..64].copy_from_slice(&two[..]);
     result
+}
+
+pub fn array_split_64<T: Copy + Zero>(array: &[T; 64]) -> ([T; 32], [T; 32]) {
+    let mut one = [T::zero(); 32];
+    let mut two = [T::zero(); 32];
+    one.copy_from_slice(&array[0..32]);
+    two.copy_from_slice(&array[32..64]);
+    (one, two)
 }
 
 /// Generate one of the rth roots of unity (an element of G_T) given an FP12Elem.
@@ -748,7 +765,10 @@ where
     let hash_element = curve_points.hash_element;
     //Produce a 512 bit byte vector, which ensures we have a big enough value for 480 and Fp
     //We use a constant value combined with the entire fp12 element so we don't leak information about the fp12 structure.
-    let bytes = array_concat_32(sha256.hash(&(0u8, &k_value)), sha256.hash(&(1u8, &k_value)));
+    let bytes = array_concat_32(
+        &sha256.hash(&(0u8, &k_value)),
+        &sha256.hash(&(1u8, &k_value)),
+    );
     let fp = FP::from(bytes);
     hash_element * fp
 }
@@ -774,7 +794,12 @@ pub struct ReencryptionKey<FP: Field> {
 impl<FP: Field + Hashable> Hashable for ReencryptionKey<FP> {
     fn to_bytes(&self) -> ByteVector {
         let clone = self;
-        (clone.re_public_key, clone.to_public_key, clone.encrypted_k).to_bytes()
+        (
+            &clone.re_public_key,
+            &clone.to_public_key,
+            &clone.encrypted_k,
+        )
+            .to_bytes()
     }
 }
 
@@ -1085,6 +1110,16 @@ mod test {
                 Fp256::from(random_bytes.random_bytes_32()),
             ),
         )
+    }
+
+    #[test]
+    fn array_concat_32_array_split_roundtrip() {
+        let one = [1u8; 32];
+        let two = [2u8; 32];
+        let concat = array_concat_32(&one, &two);
+        let (res1, res2) = array_split_64(&concat);
+        assert_eq!(one, res1);
+        assert_eq!(two, res2);
     }
 
     #[test]
@@ -1834,13 +1869,13 @@ mod test {
     }
 
     prop_compose! {
-        fn arb_pub_key()(ref hpoint in arb_homogeneous().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
+        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
             PublicKey { value: *hpoint }
         }
     }
 
     prop_compose! {
-        fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<Fp256> {
+        [pub] fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<Fp256> {
             PrivateKey { value: fp256 }
         }
     }

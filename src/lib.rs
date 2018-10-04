@@ -77,6 +77,7 @@ extern crate clear_on_drop;
 extern crate core;
 extern crate curve25519_dalek;
 extern crate ed25519_dalek;
+#[macro_use]
 extern crate gridiron;
 extern crate num_traits;
 extern crate rand;

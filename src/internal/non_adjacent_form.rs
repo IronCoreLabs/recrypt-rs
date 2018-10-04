@@ -1,4 +1,5 @@
 use gridiron::fp_256::Fp256;
+use internal::fp::fr_256::Fr256;
 
 ///A trait that signifies the ability to create a Nonadjacent form from a value
 ///
@@ -8,6 +9,12 @@ pub trait NonAdjacentForm {
 }
 
 impl NonAdjacentForm for Fp256 {
+    fn to_naf(&self) -> Vec<i8> {
+        (*self).create_naf()
+    }
+}
+
+impl NonAdjacentForm for Fr256 {
     fn to_naf(&self) -> Vec<i8> {
         (*self).create_naf()
     }
