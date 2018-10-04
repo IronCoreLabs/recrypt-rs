@@ -10,6 +10,9 @@ use internal::sha256::Sha256Hashing;
 use internal::{field, PrivateKey, PublicKey};
 use std::marker::PhantomData;
 
+///- r is the x coordinate for a point on the elliptic curve.
+///- s is the signature.
+///These names are choosen because it's common terminology when working in `EC-Schnorr` algorithms.
 #[derive(Debug, PartialEq, Eq)]
 pub struct SchnorrSignature<T> {
     r: T,
@@ -112,7 +115,7 @@ where
 pub trait SchnorrSigning<T: field::Field, U> {
     ///Sign a `message` using `priv_key`.
     ///- `priv_key` - Key to use for signing
-    ///- `pub_key` - Matching public key.
+    ///- `pub_key` - public key which will be used for verifying.
     ///- `message` - Message to sign.
     ///- `k` - Secret value which is used as part of the signature. Should be cryptographically random.
     fn sign<A: Hashable>(

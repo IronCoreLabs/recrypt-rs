@@ -904,12 +904,6 @@ pub struct PublicKey {
     _internal_key: internal::PublicKey<Fp256>,
 }
 
-impl From<PrivateKey> for PublicKey {
-    fn from(priv_key: PrivateKey) -> Self {
-        unimplemented!()
-    }
-}
-
 impl PublicKey {
     pub const ENCODED_SIZE_BYTES: usize = Fp256::ENCODED_SIZE_BYTES * 2;
 
@@ -1011,9 +1005,6 @@ impl Drop for PrivateKey {
     }
 }
 new_bytes_type!(SchnorrSignature, 64);
-impl SchnorrSignature {
-    new_from_slice!(SchnorrSignature);
-}
 
 impl From<internal::schnorr::SchnorrSignature<Fr256>> for SchnorrSignature {
     fn from(internal: internal::schnorr::SchnorrSignature<Fr256>) -> Self {
@@ -1024,9 +1015,9 @@ impl From<internal::schnorr::SchnorrSignature<Fr256>> for SchnorrSignature {
     }
 }
 
-impl Into<internal::schnorr::SchnorrSignature<Fr256>> for SchnorrSignature {
-    fn into(self) -> internal::schnorr::SchnorrSignature<Fr256> {
-        let (r_bytes, s_bytes) = internal::array_split_64(&self.bytes);
+impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr256> {
+    fn from(sig: SchnorrSignature) -> Self {
+        let (r_bytes, s_bytes) = internal::array_split_64(&sig.bytes);
         internal::schnorr::SchnorrSignature::new(Fr256::from(r_bytes), Fr256::from(s_bytes))
     }
 }
