@@ -19,6 +19,20 @@ impl Hashable for u8 {
     }
 }
 
+impl<'a, T> Hashable for [&'a T]
+where
+    T: Hashable,
+{
+    fn to_bytes(&self) -> ByteVector {
+        let mut result: Vec<u8> = Vec::new();
+        for t in self.iter() {
+            let mut bytes = t.to_bytes();
+            result.append(&mut bytes);
+        }
+        result
+    }
+}
+
 impl<T> Hashable for Vec<T>
 where
     T: Hashable,
