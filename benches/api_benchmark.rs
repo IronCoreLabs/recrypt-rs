@@ -51,21 +51,15 @@ fn criterion_benchmark(c: &mut Criterion) {
                 let (pvk, _) = api.borrow_mut().generate_key_pair().unwrap();
                 pvk
             },
-            |pvk| {
-                api.borrow_mut().compute_public_key(&pvk)
-            },
+            |pvk| api.borrow_mut().compute_public_key(&pvk),
         );
     });
 
     c.bench_function("derive symmetric key", |b| {
         let api = RefCell::new(Api::new());
         b.iter_with_setup(
-            || {
-                api.borrow_mut().gen_plaintext()
-            },
-            |pt| {
-                api.borrow_mut().derive_symmetric_key(&pt)
-            },
+            || api.borrow_mut().gen_plaintext(),
+            |pt| api.borrow_mut().derive_symmetric_key(&pt),
         );
     });
 
@@ -87,9 +81,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let (pvsk, pbsk) = api.generate_ed25519_key_pair();
         let pt = api.gen_plaintext();
         let encrypted_value = api.encrypt(&pt, pbk, pbsk, &pvsk).unwrap();
-        b.iter(|| {
-            api.decrypt(encrypted_value.clone(), &pvk).unwrap()
-        });
+        b.iter(|| api.decrypt(encrypted_value.clone(), &pvk).unwrap());
     });
 
     c.bench_function("transform (level 1)", |b| {
@@ -303,5 +295,3 @@ criterion_group! {
     targets = criterion_benchmark
 }
 criterion_main!(benches);
-
-
