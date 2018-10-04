@@ -593,7 +593,7 @@ pub trait SchnorrOps {
     ///- `message` the message to sign.
     fn schnorr_sign<A: Hashable>(
         &mut self,
-        priv_key: PrivateKey,
+        priv_key: &PrivateKey,
         pub_key: PublicKey,
         message: &A,
     ) -> SchnorrSignature;
@@ -608,7 +608,7 @@ pub trait SchnorrOps {
     fn schnorr_verify<A: Hashable>(
         &self,
         pub_key: PublicKey,
-        augmenting_priv_key: Option<PrivateKey>,
+        augmenting_priv_key: Option<&PrivateKey>,
         message: &A,
         signature: SchnorrSignature,
     ) -> bool;
@@ -619,7 +619,7 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
 {
     fn schnorr_sign<A: Hashable>(
         &mut self,
-        priv_key: PrivateKey,
+        priv_key: &PrivateKey,
         pub_key: PublicKey,
         message: &A,
     ) -> SchnorrSignature {
@@ -633,7 +633,7 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
     fn schnorr_verify<A: Hashable>(
         &self,
         pub_key: PublicKey,
-        augmenting_priv_key: Option<PrivateKey>,
+        augmenting_priv_key: Option<&PrivateKey>,
         message: &A,
         signature: SchnorrSignature,
     ) -> bool {
@@ -904,6 +904,12 @@ pub struct PublicKey {
     _internal_key: internal::PublicKey<Fp256>,
 }
 
+impl From<PrivateKey> for PublicKey {
+    fn from(priv_key: PrivateKey) -> Self {
+        unimplemented!()
+    }
+}
+
 impl PublicKey {
     pub const ENCODED_SIZE_BYTES: usize = Fp256::ENCODED_SIZE_BYTES * 2;
 
@@ -1093,6 +1099,27 @@ pub(crate) mod test {
             curve_points: api.curve_points,
             schnorr_signing: internal::schnorr::SchnorrSign::<Fp256, Fr256, Sha256>::new_256(),
         }
+    }
+
+    #[test]
+    fn schnorr_signing_roundtrip_augmented() {
+        let mut api = Api::new();
+        let (private_key, pub_key) = api.generate_key_pair().unwrap();
+        let (aug_private_key, aug_pub_key) = api.generate_key_pair().unwrap();
+        let message = vec![1u8, 2u8];
+        let augmented_pub = pub_key.augment(&aug_pub_key).unwrap();
+        let sig = api.schnorr_sign(&private_key, augmented_pub, &message);
+        let result = api.schnorr_verify(augmented_pub, Some(&aug_private_key), &message, sig);
+        assert!(result);
+    }
+    #[test]
+    fn schnorr_signing_roundtrip_unaugmented() {
+        let mut api = Api::new();
+        let (private_key, pub_key) = api.generate_key_pair().unwrap();
+        let message = vec![1u8, 2u8, 3u8, 4u8];
+        let sig = api.schnorr_sign(&private_key, pub_key, &message);
+        let result = api.schnorr_verify(pub_key, None, &message, sig);
+        assert!(result);
     }
 
     #[test]

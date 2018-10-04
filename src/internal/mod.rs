@@ -1113,6 +1113,16 @@ mod test {
     }
 
     #[test]
+    fn array_concat_32_array_split_roundtrip() {
+        let one = [1u8; 32];
+        let two = [2u8; 32];
+        let concat = array_concat_32(&one, &two);
+        let (res1, res2) = array_split_64(&concat);
+        assert_eq!(one, res1);
+        assert_eq!(two, res2);
+    }
+
+    #[test]
     fn pow_for_square_works() {
         let v = Fp256::from(10);
         let result = pow_for_square(v, 2);

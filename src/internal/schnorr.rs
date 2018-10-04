@@ -25,7 +25,7 @@ impl<T> SchnorrSignature<T> {
     }
 
     pub fn s(&self) -> &T {
-        &self.r
+        &self.s
     }
 }
 
@@ -111,10 +111,10 @@ where
 
 pub trait SchnorrSigning<T: field::Field, U> {
     ///Sign a `message` using `priv_key`.
-    ///- `priv_key` should be the matching public key for the `priv_key` and must
-    ///- `pub_key`
-    ///- `message`
-    ///- `k`
+    ///- `priv_key` - Key to use for signing
+    ///- `pub_key` - Matching public key.
+    ///- `message` - Message to sign.
+    ///- `k` - Secret value which is used as part of the signature. Should be cryptographically random.
     fn sign<A: Hashable>(
         &self,
         priv_key: PrivateKey<T>,
@@ -124,10 +124,11 @@ pub trait SchnorrSigning<T: field::Field, U> {
     ) -> Option<SchnorrSignature<U>>;
 
     ///verify a signature which was generated for `message` using `priv_key`.
-    ///- `pub_key` -
-    ///- `augmenting_key` -
-    ///- `message` -
-    ///- `signature` -
+    ///- `pub_key` - The public key that was passed in on sign.
+    ///- `augmenting_key` - The augmenting private key (if there was one). If the public key was not augmented
+    ///                     then None should be passed here.
+    ///- `message` - The message to verify the signature over.
+    ///- `signature` - The signature produced by sign.
     fn verify<A: Hashable>(
         &self,
         pub_key: PublicKey<T>,
