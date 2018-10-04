@@ -587,13 +587,24 @@ impl TransformKey {
 }
 
 pub trait SchnorrOps {
-    ///
+    ///Create a signature for the message using `priv_key`.
+    ///- `priv_key` - The private key which is used to generate the signature.
+    ///- `pub_key` the public key which will be used to validate the signature.
+    ///- `message` the message to sign.
     fn schnorr_sign<A: Hashable>(
         &mut self,
         priv_key: PrivateKey,
         pub_key: PublicKey,
         message: &A,
     ) -> SchnorrSignature;
+
+    ///Verify that the message was signed by the matching private key to `pub_key`. Note that if `pub_key` was augmented
+    ///the private key used in the augmentation should be passed in as `augmenting_priv_key`.
+    /// - `pub_key` - The pub_key that was used in the signing process.
+    /// - `augmenting_priv_key` - If the `pub_key` was augmented, pass the private key that was used to augment.
+    ///                           None if no augmentation was done.
+    /// - `message` - Message that was signed.
+    /// - `signature` - The signature that was generated from `schnorr_sign`.
     fn schnorr_verify<A: Hashable>(
         &self,
         pub_key: PublicKey,
@@ -606,10 +617,6 @@ pub trait SchnorrOps {
 impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
     for Api<H, S, RandomBytes<CR>>
 {
-    ///Create a signature for the message using `priv_key`.
-    ///- `priv_key` - The private key which is used to generate the signature.
-    ///- `pub_key` the public key which will be used to validate the signature.
-    ///- `message` the message to sign.
     fn schnorr_sign<A: Hashable>(
         &mut self,
         priv_key: PrivateKey,
@@ -623,13 +630,6 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
             .into()
     }
 
-    ///Verify that the message was signed by the matching private key to `pub_key`. Note that if `pub_key` was augmented
-    ///the private key used in the augmentation should be passed in as `augmenting_priv_key`.
-    /// - `pub_key` - The pub_key that was used in the signing process.
-    /// - `augmenting_priv_key` - If the `pub_key` was augmented, pass the private key that was used to augment.
-    ///                           None if no augmentation was done.
-    /// - `message` - Message that was signed.
-    /// - `signature` - The signature that was generated from `schnorr_sign`.                          
     fn schnorr_verify<A: Hashable>(
         &self,
         pub_key: PublicKey,
