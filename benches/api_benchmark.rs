@@ -14,16 +14,19 @@ fn criterion_benchmark(c: &mut Criterion) {
         let mut api = Api::new();
         b.iter(|| api.generate_key_pair());
     });
+
     c.bench_function("generate plaintext", |b| {
         let mut api = Api::new();
         b.iter(|| api.gen_plaintext());
     });
+
     c.bench_function("generate ed25519 keypair", |b| {
         let mut api = Api::new();
         b.iter(|| {
             api.generate_ed25519_key_pair();
         });
     });
+
     c.bench_function("generate transform key", |b| {
         let api = RefCell::new(Api::new());
         let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
@@ -40,6 +43,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
         );
     });
+
     c.bench_function("compute public key", |b| {
         let api = RefCell::new(Api::new());
         b.iter_with_setup(
@@ -52,6 +56,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
         );
     });
+
     c.bench_function("derive symmetric key", |b| {
         let api = RefCell::new(Api::new());
         b.iter_with_setup(
@@ -63,6 +68,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
         );
     });
+
     c.bench_function("encrypt (level 0)", |b| {
         let api = RefCell::new(Api::new());
         let (_, pbk) = api.borrow_mut().generate_key_pair().unwrap();
@@ -74,6 +80,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
         );
     });
+
     c.bench_function("decrypt (level 0)", |b| {
         let mut api = Api::new();
         let (pvk, pbk) = api.generate_key_pair().unwrap();
@@ -108,6 +115,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
         );
     });
+
     c.bench_function("decrypt (level 1)", |b| {
         let api = RefCell::new(Api::new());
         let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
@@ -133,6 +141,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
         );
     });
+
     c.bench_function("transform (level 2)", |b| {
         let api = RefCell::new(Api::new());
         let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
@@ -165,36 +174,6 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
         );
     });
-
-    //    c.bench_function("transform (level 2 - simple)", |b| {
-    //        let api = RefCell::new(Api::new());
-    //        let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-    //        let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-    //        let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-    //        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
-    //        let tk_0_to_1 = api
-    //            .borrow_mut()
-    //            .generate_transform_key(&level_0_pvk, level_1_pbk, pbsk, &pvsk)
-    //            .unwrap();
-    //        let tk_1_to_2 = api
-    //            .borrow_mut()
-    //            .generate_transform_key(&level_1_pvk, level_2_pbk, pbsk, &pvsk)
-    //            .unwrap();
-    //        let pt = api.borrow_mut().gen_plaintext();
-    //                let ev = api.borrow_mut()
-    //                    .encrypt(&pt, level_0_pbk, pbsk, &pvsk)
-    //                    .unwrap();
-    //        b.iter(
-    //            || {
-    //                let ev_to_1 = api.borrow_mut()
-    //                    .transform(ev.clone(), tk_0_to_1.clone(), pbsk, &pvsk)
-    //                    .unwrap();
-    //                api.borrow_mut()
-    //                    .transform(ev_to_1, tk_1_to_2.clone(), pbsk, &pvsk)
-    //                    .unwrap();
-    //            },
-    //        );
-    //    });
 
     c.bench_function("decrypt (level 2)", |b| {
         let api = RefCell::new(Api::new());
@@ -272,6 +251,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
         );
     });
+
     c.bench_function("decrypt (level 3)", |b| {
         let api = RefCell::new(Api::new());
         let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
