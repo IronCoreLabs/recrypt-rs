@@ -1,7 +1,5 @@
 use api::ApiErr;
 use clear_on_drop::clear::Clear;
-use curve25519_dalek::constants;
-use curve25519_dalek::scalar::Scalar;
 use ed25519_dalek;
 use ed25519_dalek::{ExpandedSecretKey, PublicKey};
 use internal::hashable::Hashable;
@@ -13,6 +11,18 @@ use std::fmt;
 ///CompressedY version of the PublicSigningKey
 new_bytes_type!(PublicSigningKey, 32);
 
+impl PublicSigningKey {
+    ///
+    /// Verify that the signature was signed by its private key over the hashable bytes of
+    /// the message.
+    ///
+    /// Returns true if all the values are valid and the signature can be verified.
+    ///
+    pub fn verify<A: Hashable>(&self, message: &A, signature: &Ed25519Signature) -> bool {
+        Ed25519.verify(message, signature, self)
+    }
+}
+
 impl Hashable for PublicSigningKey {
     fn to_bytes(&self) -> ByteVector {
         self.bytes.to_vec()
@@ -22,6 +32,20 @@ impl Hashable for PublicSigningKey {
 // we don't derive Copy or Clone here on purpose. PrivateSigningKey is a sensitive value and
 // should be passed by reference to avoid needless duplication
 new_bytes_type_no_derive!(PrivateSigningKey, 64);
+
+impl PrivateSigningKey {
+    pub fn compute_public_key(&self) -> PublicSigningKey {
+        let pub_key: PublicKey = ExpandedSecretKey::from_bytes(&self.bytes).unwrap().into();
+        PublicSigningKey::new(pub_key.to_bytes())
+    }
+
+    ///
+    ///Create a signature by signing over the bytes produced by the hashable instance of `message`.
+    ///
+    pub fn sign<A: Hashable>(&self, message: &A) -> Ed25519Signature {
+        Ed25519.sign(message, self)
+    }
+}
 
 impl Drop for PrivateSigningKey {
     fn drop(&mut self) {
@@ -39,21 +63,10 @@ impl Ed25519Signing for Ed25519 {
         //value is 64 bytes long, which we guarentee statically.
         let secret_key: ExpandedSecretKey =
             ExpandedSecretKey::from_bytes(&private_key_bytes).unwrap();
-        //The value used to compute the key is the bottom 32 bytes of the expanded key.
-        //This can be removed when we resolve https://github.com/dalek-cryptography/ed25519-dalek/issues/39
-        let secret_bytes: [u8; 32] = {
-            let mut secret_bytes = [0; 32];
-            secret_bytes.copy_from_slice(&private_key_bytes[0..32]);
-            secret_bytes
-        };
-        //We compute the public key point and then push it into the sign call as the public key.
-        let public_key_point =
-            (&Scalar::from_bits(secret_bytes) * &constants::ED25519_BASEPOINT_TABLE).compress();
-        let sig = secret_key.sign::<Sha512>(
-            &t.to_bytes()[..],
-            //unwrap cannot fail here. Will go away once the above ticket is resolved.
-            &PublicKey::from_bytes(&public_key_point.to_bytes()).unwrap(),
-        );
+        let public_key: PublicKey = ExpandedSecretKey::from_bytes(&private_key_bytes)
+            .unwrap()
+            .into();
+        let sig = secret_key.sign::<Sha512>(&t.to_bytes()[..], &public_key);
 
         Ed25519Signature::new(sig.to_bytes())
     }
