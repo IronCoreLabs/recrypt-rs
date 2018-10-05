@@ -1,7 +1,7 @@
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal::curve::CurvePoints;
-use internal::ed25519::{Ed25519Signing, PrivateSigningKey, PublicSigningKey, Signature};
+use internal::ed25519::{Ed25519Signature, Ed25519Signing, PrivateSigningKey, PublicSigningKey};
 use internal::field::ExtensionField;
 use internal::field::Field;
 use internal::fp::fr_256::Fr256;
@@ -129,7 +129,7 @@ where
 #[derive(Eq, PartialEq, Clone, Debug)]
 pub struct SignedValue<T> {
     pub public_signing_key: PublicSigningKey,
-    pub signature: Signature,
+    pub signature: Ed25519Signature,
     pub payload: T,
 }
 
@@ -1053,14 +1053,14 @@ mod test {
     struct Mocks;
 
     impl Ed25519Signing for Mocks {
-        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Signature {
-            Signature::new([0; 64])
+        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Ed25519Signature {
+            Ed25519Signature::new([0; 64])
         }
 
         fn verify<T: Hashable>(
             &self,
             _t: &T,
-            _signature: &Signature,
+            _signature: &Ed25519Signature,
             _public_key: &PublicSigningKey,
         ) -> bool {
             true
@@ -1076,14 +1076,14 @@ mod test {
     struct AlwaysFailVerifyEd25519Signing;
 
     impl Ed25519Signing for AlwaysFailVerifyEd25519Signing {
-        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Signature {
-            Signature::new([0; 64])
+        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Ed25519Signature {
+            Ed25519Signature::new([0; 64])
         }
 
         fn verify<T: Hashable>(
             &self,
             _t: &T,
-            _signature: &Signature,
+            _signature: &Ed25519Signature,
             _public_key: &PublicSigningKey,
         ) -> bool {
             false
