@@ -28,12 +28,12 @@ impl Drop for PrivateSigningKey {
         self.bytes.clear()
     }
 }
-new_bytes_type!(Signature, 64);
+new_bytes_type!(Ed25519Signature, 64);
 
 pub struct Ed25519;
 
 impl Ed25519Signing for Ed25519 {
-    fn sign<T: Hashable>(&self, t: &T, private_key: &PrivateSigningKey) -> Signature {
+    fn sign<T: Hashable>(&self, t: &T, private_key: &PrivateSigningKey) -> Ed25519Signature {
         let private_key_bytes: [u8; 64] = private_key.bytes;
         //This unwrap cannot fail. The only thing that the `from_bytes` does for validation is that the
         //value is 64 bytes long, which we guarentee statically.
@@ -55,14 +55,12 @@ impl Ed25519Signing for Ed25519 {
             &PublicKey::from_bytes(&public_key_point.to_bytes()).unwrap(),
         );
 
-        Signature {
-            bytes: sig.to_bytes(),
-        }
+        Ed25519Signature::new(sig.to_bytes())
     }
     fn verify<T: Hashable>(
         &self,
         t: &T,
-        signature: &Signature,
+        signature: &Ed25519Signature,
         public_key: &PublicSigningKey,
     ) -> bool {
         PublicKey::from_bytes(&public_key.bytes[..])
@@ -78,7 +76,7 @@ pub trait Ed25519Signing {
     ///
     ///Create a signature by signing over the bytes produced by the hashable instance of `t`.
     ///
-    fn sign<T: Hashable>(&self, t: &T, private_key: &PrivateSigningKey) -> Signature;
+    fn sign<T: Hashable>(&self, t: &T, private_key: &PrivateSigningKey) -> Ed25519Signature;
 
     ///
     /// Use the public_key to verify that the signature was signed by its private key over the hashable bytes of
@@ -87,7 +85,7 @@ pub trait Ed25519Signing {
     fn verify<T: Hashable>(
         &self,
         t: &T,
-        signature: &Signature,
+        signature: &Ed25519Signature,
         public_key: &PublicSigningKey,
     ) -> bool;
 }

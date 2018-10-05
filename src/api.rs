@@ -4,7 +4,7 @@ use internal;
 use internal::bytedecoder::{BytesDecoder, DecodeErr};
 use internal::curve;
 pub use internal::ed25519::{
-    Ed25519, Ed25519Signing, PrivateSigningKey, PublicSigningKey, Signature,
+    Ed25519, Ed25519Signing, PrivateSigningKey, PublicSigningKey, Ed25519Signature,
 };
 use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
@@ -248,7 +248,7 @@ pub enum EncryptedValue {
         encrypted_message: EncryptedMessage,
         auth_hash: AuthHash,
         public_signing_key: PublicSigningKey,
-        signature: Signature,
+        signature: Ed25519Signature,
     },
     /// Value which has been encrypted and then transformed n times for n > 0.
     /// `ephemeral_public_key`  - public key of the ephemeral private key that was used to encrypt
@@ -263,7 +263,7 @@ pub enum EncryptedValue {
         auth_hash: AuthHash,
         transform_blocks: NonEmptyVec<TransformBlock>,
         public_signing_key: PublicSigningKey,
-        signature: Signature,
+        signature: Ed25519Signature,
     },
 }
 
@@ -500,7 +500,7 @@ pub struct TransformKey {
     encrypted_temp_key: EncryptedTempKey,
     hashed_temp_key: HashedValue,
     public_signing_key: PublicSigningKey,
-    signature: Signature,
+    signature: Ed25519Signature,
     _internal_key: internal::SignedValue<internal::ReencryptionKey<Fp256>>,
 }
 
@@ -520,7 +520,7 @@ impl TransformKey {
     pub fn public_signing_key(&self) -> &PublicSigningKey {
         &self.public_signing_key
     }
-    pub fn signature(&self) -> &Signature {
+    pub fn signature(&self) -> &Ed25519Signature {
         &self.signature
     }
     fn try_from_internal(
@@ -545,7 +545,7 @@ impl TransformKey {
         encrypted_temp_key: EncryptedTempKey, //The encrypted K value, which is used to go from the reencrypted value to the encrypted value
         hashed_temp_key: HashedValue,
         public_signing_key: PublicSigningKey,
-        signature: Signature,
+        signature: Ed25519Signature,
     ) -> TransformKey {
         let reencryption_key = internal::ReencryptionKey {
             re_public_key: ephemeral_public_key._internal_key,
@@ -1055,14 +1055,14 @@ pub(crate) mod test {
 
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
-        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Signature {
-            Signature::new([0; 64])
+        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Ed25519Signature {
+            Ed25519Signature::new([0; 64])
         }
 
         fn verify<T: Hashable>(
             &self,
             _t: &T,
-            _signature: &Signature,
+            _signature: &Ed25519Signature,
             _public_key: &PublicSigningKey,
         ) -> bool {
             true
