@@ -4,7 +4,7 @@ use internal;
 use internal::bytedecoder::{BytesDecoder, DecodeErr};
 use internal::curve;
 pub use internal::ed25519::{
-    Ed25519, Ed25519Signing, PrivateSigningKey, PublicSigningKey, Ed25519Signature,
+    Ed25519, Ed25519Signature, Ed25519Signing, PrivateSigningKey, PublicSigningKey,
 };
 use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;

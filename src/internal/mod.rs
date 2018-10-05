@@ -1,7 +1,7 @@
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal::curve::CurvePoints;
-use internal::ed25519::{Ed25519Signing, PrivateSigningKey, PublicSigningKey, Ed25519Signature};
+use internal::ed25519::{Ed25519Signature, Ed25519Signing, PrivateSigningKey, PublicSigningKey};
 use internal::field::ExtensionField;
 use internal::field::Field;
 use internal::fp::fr_256::Fr256;
