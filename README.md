@@ -18,12 +18,7 @@ If you are building an application and would like to use Transform Encryption, y
 
 ### Rust Dependency
 
-https://crates.io/crates/recrypt
-
-```toml
-[dependencies]
-recrypt = "0.1"
-```
+See https://crates.io/crates/recrypt for the most recent version.
 
 ### Other bindings
 In addition to the native Rust implementation, we provide additional bindings to Recrypt: 
@@ -34,7 +29,7 @@ A [Scala implementation](https://github.com/IronCoreLabs/recrypt) of recrypt is 
 
 ## API Documentation and Example Usage
 
-See https://docs.rs/recrypt
+See https://recrypt.rs
 
 ## Security and Audits
 
