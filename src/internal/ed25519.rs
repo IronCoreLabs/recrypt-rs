@@ -18,7 +18,7 @@ impl PublicSigningKey {
     ///
     /// Returns true if all the values are valid and the signature can be verified.
     ///
-    pub fn verify<A: Hashable>(&self, message: &A, signature: &Signature) -> bool {
+    pub fn verify<A: Hashable>(&self, message: &A, signature: &Ed25519Signature) -> bool {
         Ed25519.verify(message, signature, self)
     }
 }
@@ -42,7 +42,7 @@ impl PrivateSigningKey {
     ///
     ///Create a signature by signing over the bytes produced by the hashable instance of `message`.
     ///
-    pub fn sign<A: Hashable>(&self, message: &A) -> Signature {
+    pub fn sign<A: Hashable>(&self, message: &A) -> Ed25519Signature {
         Ed25519.sign(message, self)
     }
 }
