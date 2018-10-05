@@ -32,7 +32,11 @@ debug = true
 [dev-dependencies]
 proptest = "0.8.3"
 hex = "0.3.2"
+criterion = "0.2"
 
 [features]
 unstable = []
 
+[[bench]]
+name = "api_benchmark"
+harness = false
