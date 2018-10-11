@@ -58,15 +58,10 @@ pub struct Ed25519;
 
 impl Ed25519Signing for Ed25519 {
     fn sign<T: Hashable>(&self, t: &T, private_key: &PrivateSigningKey) -> Ed25519Signature {
-        let private_key_bytes: [u8; 64] = private_key.bytes;
         //This unwrap cannot fail. The only thing that the `from_bytes` does for validation is that the
         //value is 64 bytes long, which we guarentee statically.
-        let secret_key: ExpandedSecretKey =
-            ExpandedSecretKey::from_bytes(&private_key_bytes).unwrap();
-        let public_key: PublicKey = ExpandedSecretKey::from_bytes(&private_key_bytes)
-            .unwrap()
-            .into();
-        let sig = secret_key.sign::<Sha512>(&t.to_bytes()[..], &public_key);
+        let key_pair = ed25519_dalek::Keypair::from_bytes(&private_key.bytes[..]).unwrap();
+        let sig = key_pair.sign::<Sha512>(&t.to_bytes()[..]);
 
         Ed25519Signature::new(sig.to_bytes())
     }
@@ -107,11 +102,15 @@ pub trait Ed25519Signing {
 mod test {
     use super::*;
     use ed25519_dalek::SecretKey;
+    use internal::array_concat_32;
     #[test]
     fn real_ed25519_matches_verify_good_message() {
         let sec_key = SecretKey::from_bytes(&[1; 32]).unwrap();
         let priv_key = PrivateSigningKey {
-            bytes: sec_key.expand::<Sha512>().to_bytes(),
+            bytes: array_concat_32(
+                &sec_key.to_bytes(),
+                &ed25519_dalek::PublicKey::from_secret::<Sha512>(&sec_key).to_bytes(),
+            ),
         };
         let message = [100u8; 32].to_vec();
         let result = Ed25519.sign(&message, &priv_key);

@@ -1789,10 +1789,9 @@ mod test {
             191, 29, 148, 18, 27, 243, 116, 136, 1, 180, 15, 111, 92,
         ]);
         let priv_signing_key = ed25519::PrivateSigningKey::new([
-            88, 232, 110, 251, 117, 250, 78, 44, 65, 15, 70, 225, 109, 233, 246, 172, 174, 26, 23,
-            3, 82, 134, 81, 182, 155, 193, 118, 192, 136, 190, 243, 110, 177, 122, 42, 44, 243,
-            212, 164, 26, 142, 78, 24, 204, 69, 200, 101, 109, 85, 142, 206, 221, 176, 173, 180,
-            107, 250, 8, 138, 95, 83, 190, 210, 82,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 138, 136, 227, 221, 116, 9, 241, 149, 253, 82, 219, 45, 60, 186, 93, 114, 202,
+            103, 9, 191, 29, 148, 18, 27, 243, 116, 136, 1, 180, 15, 111, 92,
         ]);
         (priv_signing_key, pub_signing_key)
     }
@@ -1803,7 +1802,7 @@ mod test {
             let (priv_signing_key, pub_signing_key) = good_signing_keys();
             let signed_value = sign_value(fp256, pub_signing_key, &priv_signing_key, &Ed25519);
             let verified = verify_signed_value(signed_value, &Ed25519);
-            assert!(verified.is_some())
+            prop_assert!(verified.is_some())
         }
         #[test]
         fn encrypt_decrypt_roundtrip(priv_key in arb_priv_key(), plaintext in arb_fp12().prop_filter("", |a| !(*a == Fp12Elem::<Fp256>::zero()))) {
