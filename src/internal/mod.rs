@@ -1062,7 +1062,7 @@ mod test {
     struct AlwaysFailVerifyEd25519Signing;
 
     impl Ed25519Signing for AlwaysFailVerifyEd25519Signing {
-        fn sign<T: Hashable>(&self, _t: &T,  _signing_keypair: &SigningKeypair) -> Ed25519Signature {
+        fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {
             Ed25519Signature::new([0; 64])
         }
 
@@ -1758,9 +1758,9 @@ mod test {
             138, 136, 227, 221, 116, 9, 241, 149, 253, 82, 219, 45, 60, 186, 93, 114, 202, 103, 9,
             191, 29, 148, 18, 27, 243, 116, 136, 1, 180, 15, 111, 92,
         ];
-        let priv_signing_key =[
+        let priv_signing_key = [
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1
+            1, 1, 1,
         ];
         SigningKeypair::new(array_concat_32(&priv_signing_key, &pub_signing_key))
     }

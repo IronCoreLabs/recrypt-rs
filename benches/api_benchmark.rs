@@ -70,7 +70,9 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter_with_setup(
             || api.borrow_mut().gen_plaintext(),
             |pt| {
-                api.borrow_mut().encrypt(&pt, pbk, &signing_keypair).unwrap();
+                api.borrow_mut()
+                    .encrypt(&pt, pbk, &signing_keypair)
+                    .unwrap();
             },
         );
     });

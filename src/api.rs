@@ -682,7 +682,7 @@ pub trait KeyGenOps {
     /// # Arguments
     /// - `from_private_key`   - key that can currently decrypt the value. (delegator)
     /// - `to_public_key`      - key that we want to let decrypt the value. (delegatee)
-    /// - `from_private_signing_key`  - The signing keypair of the person (or device) who is generating this transform key
+    /// - `from_signing_keypair`  - The signing keypair of the person (or device) who is generating this transform key
     ///
     /// # Return
     /// Key which allows a proxy to compute the transform. See `EncryptOps.transform`.
@@ -752,8 +752,7 @@ pub trait CryptoOps {
     /// # Arguments
     /// - `plaintext`             - value to encrypt.
     /// - `to_public_key`         - identity to encrypt to.
-    /// - `public_signing_key`    - public signing key of the person (or device) who is encrypting this value
-    /// - `private_signing_key`   - private signing key of the person (or device) who is encrypting this value
+    /// - `signing_keypair`       - signing keypair of the person (or device) who is encrypting this value
     ///
     /// # Return
     /// EncryptedValue which can be decrypted by the matching private key of `to_public_key` or ApiErr.
@@ -787,7 +786,6 @@ pub trait CryptoOps {
         &mut self,
         encrypted_value: EncryptedValue,
         transform_key: TransformKey,
-
         signing_keypair: &SigningKeypair,
     ) -> Result<EncryptedValue>;
 }
@@ -1050,7 +1048,7 @@ pub(crate) mod test {
 
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
-        fn sign<T: Hashable>(&self, _t: &T,  _signing_keypair: &SigningKeypair) -> Ed25519Signature {
+        fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {
             Ed25519Signature::new([0; 64])
         }
 
@@ -1297,9 +1295,7 @@ pub(crate) mod test {
         let (priv_key, pub_key) = api.generate_key_pair().unwrap();
         let priv_signing_key = api.generate_ed25519_key_pair();
 
-        let encrypted_val = api
-            .encrypt(&pt, pub_key, &priv_signing_key)
-            .unwrap();
+        let encrypted_val = api.encrypt(&pt, pub_key, &priv_signing_key).unwrap();
 
         let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
 
@@ -1370,7 +1366,7 @@ pub(crate) mod test {
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let (server_private, server_public) = api.generate_key_pair().unwrap();
         let master_public_key = client_generated_pub.augment(&server_public).unwrap();
-        let encrypted_msg = api.encrypt(&pt, master_public_key,&signing_key).unwrap();
+        let encrypted_msg = api.encrypt(&pt, master_public_key, &signing_key).unwrap();
         let master_to_device_transform_key = api
             .generate_transform_key(&master_private_key, device_public_key, &signing_key)
             .unwrap();
@@ -1394,12 +1390,17 @@ pub(crate) mod test {
         let (group_master_private_key, group_master_public_key) = api.generate_key_pair().unwrap();
         let (user_master_private_key, user_master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
-        let encrypted_msg = api.encrypt(&pt, group_master_public_key, &signing_key).unwrap();
+        let encrypted_msg = api
+            .encrypt(&pt, group_master_public_key, &signing_key)
+            .unwrap();
 
         // now create two transform keys. Group -> User -> Device (arrows are the transform keys)
         let group_to_user_transform_key = api
-            .generate_transform_key(&group_master_private_key, user_master_public_key, &signing_key)
-            .unwrap();
+            .generate_transform_key(
+                &group_master_private_key,
+                user_master_public_key,
+                &signing_key,
+            ).unwrap();
 
         let user_to_device_transform_key = api
             .generate_transform_key(&user_master_private_key, device_public_key, &signing_key)
@@ -1409,8 +1410,11 @@ pub(crate) mod test {
             .transform(encrypted_msg, group_to_user_transform_key, &signing_key)
             .unwrap();
         let transformed_to_device = api
-            .transform(transformed_to_user, user_to_device_transform_key, &signing_key)
-            .unwrap();
+            .transform(
+                transformed_to_user,
+                user_to_device_transform_key,
+                &signing_key,
+            ).unwrap();
         let decrypted_result = api
             .decrypt(transformed_to_device, &device_private_key)
             .unwrap();
