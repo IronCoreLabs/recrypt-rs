@@ -4,7 +4,7 @@ use internal;
 use internal::bytedecoder::{BytesDecoder, DecodeErr};
 use internal::curve;
 pub use internal::ed25519::{
-    Ed25519, Ed25519Signature, Ed25519Signing, PrivateSigningKey, PublicSigningKey,
+    Ed25519, Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair,
 };
 use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
@@ -648,20 +648,17 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
 
 pub trait Ed25519Ops {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait.
-    fn generate_ed25519_key_pair(&mut self) -> (PrivateSigningKey, PublicSigningKey);
+    fn generate_ed25519_key_pair(&mut self) -> SigningKeypair;
 }
 
 impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Api<H, S, RandomBytes<CR>> {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
-    fn generate_ed25519_key_pair(&mut self) -> (PrivateSigningKey, PublicSigningKey) {
+    fn generate_ed25519_key_pair(&mut self) -> SigningKeypair {
         use ed25519_dalek;
         use sha2::Sha512;
         let keypair = ed25519_dalek::Keypair::generate::<Sha512, CR>(&mut self.random_bytes.rng);
-        (
-            PrivateSigningKey::new(keypair.to_bytes()),
-            PublicSigningKey::new(keypair.public.to_bytes()),
-        )
+        SigningKeypair::new(keypair.to_bytes())
     }
 }
 
@@ -685,8 +682,7 @@ pub trait KeyGenOps {
     /// # Arguments
     /// - `from_private_key`   - key that can currently decrypt the value. (delegator)
     /// - `to_public_key`      - key that we want to let decrypt the value. (delegatee)
-    /// - `from_public_signing_key`   - The public signing key of the person (or device) who is generating this transform key
-    /// - `from_private_signing_key`  - The private signing key of the person (or device) who is generating this transform key
+    /// - `from_private_signing_key`  - The signing keypair of the person (or device) who is generating this transform key
     ///
     /// # Return
     /// Key which allows a proxy to compute the transform. See `EncryptOps.transform`.
@@ -695,8 +691,7 @@ pub trait KeyGenOps {
         &mut self,
         from_private_key: &PrivateKey,
         to_public_key: PublicKey,
-        public_signing_key: PublicSigningKey,
-        private_signing_key: &PrivateSigningKey,
+        signing_keypair: &SigningKeypair,
     ) -> Result<TransformKey>;
 }
 
@@ -724,8 +719,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
         &mut self,
         from_private_key: &PrivateKey,
         to_public_key: PublicKey,
-        public_signing_key: PublicSigningKey,
-        private_signing_key: &PrivateSigningKey,
+        signing_keypair: &SigningKeypair,
     ) -> Result<TransformKey> {
         let ephem_reencryption_private_key = self.random_private_key();
         let temp_key = internal::KValue(gen_random_fp12(&mut self.random_bytes));
@@ -734,8 +728,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
             to_public_key._internal_key,
             ephem_reencryption_private_key._internal_key,
             temp_key,
-            public_signing_key,
-            private_signing_key,
+            signing_keypair,
             &self.curve_points,
             &self.pairing,
             &self.sha_256,
@@ -768,8 +761,7 @@ pub trait CryptoOps {
         &mut self,
         plaintext: &Plaintext,
         to_public_key: PublicKey,
-        public_signing_key: PublicSigningKey,
-        private_signing_key: &PrivateSigningKey,
+        signing_keypair: &SigningKeypair,
     ) -> Result<EncryptedValue>;
 
     /// Decrypt the value using `private_key`.
@@ -795,8 +787,8 @@ pub trait CryptoOps {
         &mut self,
         encrypted_value: EncryptedValue,
         transform_key: TransformKey,
-        public_signing_key: PublicSigningKey,
-        private_signing_key: &PrivateSigningKey,
+
+        signing_keypair: &SigningKeypair,
     ) -> Result<EncryptedValue>;
 }
 
@@ -814,8 +806,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
         &mut self,
         plaintext: &Plaintext,
         to_public_key: PublicKey,
-        public_signing_key: PublicSigningKey,
-        private_signing_key: &PrivateSigningKey,
+        signing_keypair: &SigningKeypair,
     ) -> Result<EncryptedValue> {
         //generate a ephemeral private key
         let ephem_private_key = self.random_private_key();
@@ -825,8 +816,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
             to_public_key._internal_key,
             plaintext_fp12,
             internal::PrivateKey::from(ephem_private_key),
-            public_signing_key,
-            private_signing_key,
+            signing_keypair,
             &self.pairing,
             &self.curve_points,
             &self.sha_256,
@@ -855,8 +845,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
         &mut self,
         encrypted_value: EncryptedValue,
         transform_key: TransformKey,
-        public_signing_key: PublicSigningKey,
-        private_signing_key: &PrivateSigningKey,
+        signing_keypair: &SigningKeypair,
     ) -> Result<EncryptedValue> {
         let plaintext = self.gen_plaintext();
         let random_private_key = self.random_private_key();
@@ -865,8 +854,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
             EncryptedValue::try_into(encrypted_value)?,
             internal::PrivateKey::from(random_private_key),
             plaintext.into(),
-            public_signing_key,
-            private_signing_key,
+            signing_keypair,
             &self.ed25519,
             &self.sha_256,
             &self.curve_points,
@@ -1031,9 +1019,10 @@ pub(crate) mod test {
     use rand;
     use std::ops::Mul;
 
+    //Writing a BS from conversion to make tests which contain `hex` constants easier to write.
     impl From<hex::FromHexError> for ApiErr {
         fn from(err: hex::FromHexError) -> Self {
-            unimplemented!()
+            panic!("Error '{:?}' was found when parsing hex in tests.", err);
         }
     }
 
@@ -1061,7 +1050,7 @@ pub(crate) mod test {
 
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
-        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Ed25519Signature {
+        fn sign<T: Hashable>(&self, _t: &T,  _signing_keypair: &SigningKeypair) -> Ed25519Signature {
             Ed25519Signature::new([0; 64])
         }
 
@@ -1225,10 +1214,9 @@ pub(crate) mod test {
 
     fn good_transform_key() -> TransformKey {
         let mut api = Api::new();
-        let pbsk = PublicSigningKey::new([0; 32]);
-        let pvsk = PrivateSigningKey::new([0; 64]);
+        let signing_key = SigningKeypair::new([0; 64]);
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
-        api.generate_transform_key(&master_priv, master_pub, pbsk, &pvsk)
+        api.generate_transform_key(&master_priv, master_pub, &signing_key)
             .unwrap()
     }
 
@@ -1307,14 +1295,11 @@ pub(crate) mod test {
         let mut api = Api::new_with_rand(rand::ChaChaRng::from_seed([0u8; 32]));
         let pt = api.gen_plaintext();
         let (priv_key, pub_key) = api.generate_key_pair().unwrap();
-        let (priv_signing_key, pub_signing_key) = api.generate_ed25519_key_pair();
+        let priv_signing_key = api.generate_ed25519_key_pair();
 
         let encrypted_val = api
-            .encrypt(&pt, pub_key, pub_signing_key, &priv_signing_key)
+            .encrypt(&pt, pub_key, &priv_signing_key)
             .unwrap();
-        println!("{:?}", pt);
-        println!("{:?}", priv_key);
-        println!("{:?}", encrypted_val);
 
         let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
 
@@ -1340,50 +1325,37 @@ pub(crate) mod test {
     #[test]
     fn transform_to_same_key() {
         let mut api = api_with(Some(RandomBytes::default()), DummyEd25519);
-        //        let mut api = api_with(RandomBytes::<ThreadRng>::new(), DummyEd25519);
-        let pbsk = PublicSigningKey::new([0; 32]);
-        let pvsk = PrivateSigningKey::new([0; 64]);
+        let signing_key = SigningKeypair::new([0; 64]);
 
         let plaintext = api.gen_plaintext();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
-        let enc_value = api.encrypt(&plaintext, master_pub, pbsk, &pvsk).unwrap();
+        let enc_value = api.encrypt(&plaintext, master_pub, &signing_key).unwrap();
         let master_to_master_transform_key = api
-            .generate_transform_key(&master_priv, master_pub, pbsk, &pvsk)
+            .generate_transform_key(&master_priv, master_pub, &signing_key)
             .unwrap();
         let transformed_value = api
-            .transform(
-                enc_value,
-                master_to_master_transform_key,
-                pbsk.clone(),
-                &pvsk,
-            ).unwrap();
+            .transform(enc_value, master_to_master_transform_key, &signing_key)
+            .unwrap();
         let decrypted_plaintext = api.decrypt(transformed_value, &master_priv).unwrap();
         assert_eq!(plaintext, decrypted_plaintext)
     }
 
     #[test]
     fn encrypt_decrypt_roundtrip_unaugmented_keys() {
-        let pbsk = PublicSigningKey::new([0; 32]);
-        let pvsk = PrivateSigningKey::new([0; 64]);
+        let signing_key = SigningKeypair::new([0; 64]);
         let mut api = api_with(Some(RandomBytes::default()), DummyEd25519);
 
         let pt = api.gen_plaintext();
         let (master_private_key, master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
-        let encrypted_msg = api
-            .encrypt(&pt, master_public_key, pbsk.clone(), &pvsk)
-            .unwrap();
+        let encrypted_msg = api.encrypt(&pt, master_public_key, &signing_key).unwrap();
         let master_to_device_transform_key = api
-            .generate_transform_key(&master_private_key, device_public_key, pbsk.clone(), &pvsk)
+            .generate_transform_key(&master_private_key, device_public_key, &signing_key)
             .unwrap();
 
         let transformed_msg = api
-            .transform(
-                encrypted_msg,
-                master_to_device_transform_key,
-                pbsk.clone(),
-                &pvsk,
-            ).unwrap();
+            .transform(encrypted_msg, master_to_device_transform_key, &signing_key)
+            .unwrap();
         let decrypted_pt = api.decrypt(transformed_msg, &device_private_key).unwrap();
 
         assert_eq!(pt, decrypted_pt)
@@ -1392,21 +1364,21 @@ pub(crate) mod test {
     #[test]
     fn encrypt_decrypt_roundtrip_augmented_keys() {
         let mut api = Api::new();
-        let (pvsk, pbsk) = api.generate_ed25519_key_pair();
+        let signing_key = api.generate_ed25519_key_pair();
         let pt = api.gen_plaintext();
         let (master_private_key, client_generated_pub) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let (server_private, server_public) = api.generate_key_pair().unwrap();
         let master_public_key = client_generated_pub.augment(&server_public).unwrap();
-        let encrypted_msg = api.encrypt(&pt, master_public_key, pbsk, &pvsk).unwrap();
+        let encrypted_msg = api.encrypt(&pt, master_public_key,&signing_key).unwrap();
         let master_to_device_transform_key = api
-            .generate_transform_key(&master_private_key, device_public_key, pbsk, &pvsk)
+            .generate_transform_key(&master_private_key, device_public_key, &signing_key)
             .unwrap();
         let augmented_transform_key = master_to_device_transform_key
             .augment(&server_private)
             .unwrap();
         let transformed_msg = api
-            .transform(encrypted_msg, augmented_transform_key, pbsk, &pvsk)
+            .transform(encrypted_msg, augmented_transform_key, &signing_key)
             .unwrap();
         let decrypted_pt = api.decrypt(transformed_msg, &device_private_key).unwrap();
 
@@ -1416,47 +1388,29 @@ pub(crate) mod test {
     #[test]
     fn two_level_transform_roundtrip() {
         let mut api = api_with(Some(RandomBytes::default()), DummyEd25519);
-        let (pvsk, pbsk) = api.generate_ed25519_key_pair();
+        let signing_key = api.generate_ed25519_key_pair();
 
         let pt = api.gen_plaintext();
         let (group_master_private_key, group_master_public_key) = api.generate_key_pair().unwrap();
         let (user_master_private_key, user_master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
-        let encrypted_msg = api
-            .encrypt(&pt, group_master_public_key, pbsk.clone(), &pvsk)
-            .unwrap();
+        let encrypted_msg = api.encrypt(&pt, group_master_public_key, &signing_key).unwrap();
 
         // now create two transform keys. Group -> User -> Device (arrows are the transform keys)
         let group_to_user_transform_key = api
-            .generate_transform_key(
-                &group_master_private_key,
-                user_master_public_key,
-                pbsk.clone(),
-                &pvsk,
-            ).unwrap();
+            .generate_transform_key(&group_master_private_key, user_master_public_key, &signing_key)
+            .unwrap();
 
         let user_to_device_transform_key = api
-            .generate_transform_key(
-                &user_master_private_key,
-                device_public_key,
-                pbsk.clone(),
-                &pvsk,
-            ).unwrap();
+            .generate_transform_key(&user_master_private_key, device_public_key, &signing_key)
+            .unwrap();
 
         let transformed_to_user = api
-            .transform(
-                encrypted_msg,
-                group_to_user_transform_key,
-                pbsk.clone(),
-                &pvsk,
-            ).unwrap();
+            .transform(encrypted_msg, group_to_user_transform_key, &signing_key)
+            .unwrap();
         let transformed_to_device = api
-            .transform(
-                transformed_to_user,
-                user_to_device_transform_key,
-                pbsk.clone(),
-                &pvsk,
-            ).unwrap();
+            .transform(transformed_to_user, user_to_device_transform_key, &signing_key)
+            .unwrap();
         let decrypted_result = api
             .decrypt(transformed_to_device, &device_private_key)
             .unwrap();
@@ -1468,8 +1422,8 @@ pub(crate) mod test {
     fn generate_ed25519_key_pair() {
         use rand::SeedableRng;
         let mut api = Api::new_with_rand(rand::ChaChaRng::from_seed([0u8; 32]));
-        let (priv_key, pub_key) = api.generate_ed25519_key_pair();
-        let expected_priv = PrivateSigningKey::new([
+        let signing_keypair = api.generate_ed25519_key_pair();
+        let expected_signing_keypair = SigningKeypair::new([
             118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
             25, 184, 160, 141, 237, 26, 168, 54, 239, 204, 139, 119, 13, 199, 32, 253, 186, 201,
             177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150, 215, 30, 78, 212,
@@ -1479,13 +1433,13 @@ pub(crate) mod test {
             32, 253, 186, 201, 177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150,
             215, 30, 78, 212, 76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
         ]);
-        assert_eq!(priv_key, expected_priv);
-        assert_eq!(pub_key, expected_pub);
+        assert_eq!(signing_keypair, expected_signing_keypair);
+        assert_eq!(signing_keypair.public_key(), expected_pub);
 
         //Assert that the generation doesn't just return the same value.
-        let (priv_key_two, pub_key_two) = api.generate_ed25519_key_pair();
-        assert_ne!(priv_key_two, expected_priv);
-        assert_ne!(pub_key_two, expected_pub);
+        let keypair_two = api.generate_ed25519_key_pair();
+        assert_ne!(keypair_two, expected_signing_keypair);
+        assert_ne!(keypair_two.public_key(), expected_pub);
     }
     #[test]
     //written against AuthHash, but valid for all types generated from that macro

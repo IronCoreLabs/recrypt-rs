@@ -17,10 +17,10 @@
 //!
 //! // generate a public/private keypair and some signing keys
 //! let (priv_key, pub_key) = api.generate_key_pair().unwrap();
-//! let (priv_signing_key, pub_signing_key) = api.generate_ed25519_key_pair();
+//! let signing_keypair = api.generate_ed25519_key_pair();
 //!
 //! // encrypt!
-//! let encrypted_val = api.encrypt(&pt, pub_key, pub_signing_key, &priv_signing_key).unwrap();
+//! let encrypted_val = api.encrypt(&pt, pub_key, &signing_keypair).unwrap();
 //!
 //! // decrypt!
 //! let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
@@ -40,13 +40,13 @@
 //! let pt = api.gen_plaintext();
 //!
 //! // generate signing keys
-//! let (priv_signing_key, pub_signing_key) = api.generate_ed25519_key_pair();
+//! let signing_keypair= api.generate_ed25519_key_pair();
 //!
 //! // generate a public/private keypair to encrypt the data to initially.
 //! let (initial_priv_key, initial_pub_key) = api.generate_key_pair().unwrap();
 //!
 //! // encrypt the data to `initial_pub_key`!
-//! let encrypted_val = api.encrypt(&pt, initial_pub_key, pub_signing_key, &priv_signing_key).unwrap();
+//! let encrypted_val = api.encrypt(&pt, initial_pub_key, &signing_keypair).unwrap();
 //!
 //! // generate a second public/private keypair as the target of the transform.
 //! // after applying the transform, `target_priv_key` will be able to decrypt the data!
@@ -56,16 +56,14 @@
 //! let initial_to_target_transform_key = api.generate_transform_key(
 //!     &initial_priv_key,
 //!     target_pub_key,
-//!     pub_signing_key,
-//!     &priv_signing_key).unwrap();
+//!     &signing_keypair).unwrap();
 //!
 //! // Transform the plaintext to be encrypted to the target!
 //! // The data is _not_ be decrypted here. Simply transformed!
 //! let transformed_val = api.transform(
 //!     encrypted_val,
 //!     initial_to_target_transform_key,
-//!     pub_signing_key,
-//!     &priv_signing_key).unwrap();
+//!     &signing_keypair).unwrap();
 //!
 //! // decrypt the transformed value with the target private key and recover the plaintext
 //! let decrypted_val = api.decrypt(transformed_val, &target_priv_key).unwrap();

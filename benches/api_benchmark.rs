@@ -29,7 +29,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("generate transform key", |b| {
         let api = RefCell::new(Api::new());
-        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
+        let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
         b.iter_with_setup(
             || {
                 let (from_pvk, _) = api.borrow_mut().generate_key_pair().unwrap();
@@ -38,7 +38,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
             |(from, to)| {
                 api.borrow_mut()
-                    .generate_transform_key(&from, to, pbsk, &pvsk)
+                    .generate_transform_key(&from, to, &signing_keypair)
                     .unwrap();
             },
         );
@@ -66,11 +66,11 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("encrypt (level 0)", |b| {
         let api = RefCell::new(Api::new());
         let (_, pbk) = api.borrow_mut().generate_key_pair().unwrap();
-        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
+        let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
         b.iter_with_setup(
             || api.borrow_mut().gen_plaintext(),
             |pt| {
-                api.borrow_mut().encrypt(&pt, pbk, pbsk, &pvsk).unwrap();
+                api.borrow_mut().encrypt(&pt, pbk, &signing_keypair).unwrap();
             },
         );
     });
@@ -78,9 +78,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("decrypt (level 0)", |b| {
         let mut api = Api::new();
         let (pvk, pbk) = api.generate_key_pair().unwrap();
-        let (pvsk, pbsk) = api.generate_ed25519_key_pair();
+        let signing_keypair = api.generate_ed25519_key_pair();
         let pt = api.gen_plaintext();
-        let encrypted_value = api.encrypt(&pt, pbk, pbsk, &pvsk).unwrap();
+        let encrypted_value = api.encrypt(&pt, pbk, &signing_keypair).unwrap();
         b.iter(|| api.decrypt(encrypted_value.clone(), &pvk).unwrap());
     });
 
@@ -88,21 +88,21 @@ fn criterion_benchmark(c: &mut Criterion) {
         let api = RefCell::new(Api::new());
         let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (_, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
+        let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
         let tk = api
             .borrow_mut()
-            .generate_transform_key(&level_0_pvk, level_1_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
             .unwrap();
         b.iter_with_setup(
             || {
                 let pt = api.borrow_mut().gen_plaintext();
                 api.borrow_mut()
-                    .encrypt(&pt, level_0_pbk, pbsk, &pvsk)
+                    .encrypt(&pt, level_0_pbk, &signing_keypair)
                     .unwrap()
             },
             |ev| {
                 api.borrow_mut()
-                    .transform(ev, tk.clone(), pbsk, &pvsk)
+                    .transform(ev, tk.clone(), &signing_keypair)
                     .unwrap()
             },
         );
@@ -110,22 +110,22 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("decrypt (level 1)", |b| {
         let api = RefCell::new(Api::new());
-        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
+        let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
         let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let tk = api
             .borrow_mut()
-            .generate_transform_key(&level_0_pvk, level_1_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
             .unwrap();
         b.iter_with_setup(
             || {
                 let pt = api.borrow_mut().gen_plaintext();
                 let ev = api
                     .borrow_mut()
-                    .encrypt(&pt, level_0_pbk, pbsk, &pvsk)
+                    .encrypt(&pt, level_0_pbk, &signing_keypair)
                     .unwrap();
                 api.borrow_mut()
-                    .transform(ev, tk.clone(), pbsk, &pvsk)
+                    .transform(ev, tk.clone(), &signing_keypair)
                     .unwrap()
             },
             |ev| {
@@ -139,29 +139,29 @@ fn criterion_benchmark(c: &mut Criterion) {
         let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (_, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
+        let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
         let tk_0_to_1 = api
             .borrow_mut()
-            .generate_transform_key(&level_0_pvk, level_1_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
             .unwrap();
         let tk_1_to_2 = api
             .borrow_mut()
-            .generate_transform_key(&level_1_pvk, level_2_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
             .unwrap();
         b.iter_with_setup(
             || {
                 let pt = api.borrow_mut().gen_plaintext();
                 api.borrow_mut()
-                    .encrypt(&pt, level_0_pbk, pbsk, &pvsk)
+                    .encrypt(&pt, level_0_pbk, &signing_keypair)
                     .unwrap()
             },
             |ev| {
                 let ev_to_1 = api
                     .borrow_mut()
-                    .transform(ev, tk_0_to_1.clone(), pbsk, &pvsk)
+                    .transform(ev, tk_0_to_1.clone(), &signing_keypair)
                     .unwrap();
                 api.borrow_mut()
-                    .transform(ev_to_1, tk_1_to_2.clone(), pbsk, &pvsk)
+                    .transform(ev_to_1, tk_1_to_2.clone(), &signing_keypair)
                     .unwrap();
             },
         );
@@ -169,31 +169,31 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("decrypt (level 2)", |b| {
         let api = RefCell::new(Api::new());
-        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
+        let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
         let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let tk_0_to_1 = api
             .borrow_mut()
-            .generate_transform_key(&level_0_pvk, level_1_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
             .unwrap();
         let tk_1_to_2 = api
             .borrow_mut()
-            .generate_transform_key(&level_1_pvk, level_2_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
             .unwrap();
         b.iter_with_setup(
             || {
                 let pt = api.borrow_mut().gen_plaintext();
                 let ev_to_0 = api
                     .borrow_mut()
-                    .encrypt(&pt, level_0_pbk, pbsk, &pvsk)
+                    .encrypt(&pt, level_0_pbk, &signing_keypair)
                     .unwrap();
                 let ev_to_1 = api
                     .borrow_mut()
-                    .transform(ev_to_0, tk_0_to_1.clone(), pbsk, &pvsk)
+                    .transform(ev_to_0, tk_0_to_1.clone(), &signing_keypair)
                     .unwrap();
                 api.borrow_mut()
-                    .transform(ev_to_1, tk_1_to_2.clone(), pbsk, &pvsk)
+                    .transform(ev_to_1, tk_1_to_2.clone(), &signing_keypair)
                     .unwrap()
             },
             |ev_to_2| {
@@ -208,37 +208,37 @@ fn criterion_benchmark(c: &mut Criterion) {
         let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (_, level_3_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
+        let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
         let tk_0_to_1 = api
             .borrow_mut()
-            .generate_transform_key(&level_0_pvk, level_1_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
             .unwrap();
         let tk_1_to_2 = api
             .borrow_mut()
-            .generate_transform_key(&level_1_pvk, level_2_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
             .unwrap();
         let tk_2_to_3 = api
             .borrow_mut()
-            .generate_transform_key(&level_2_pvk, level_3_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_2_pvk, level_3_pbk, &signing_keypair)
             .unwrap();
         b.iter_with_setup(
             || {
                 let pt = api.borrow_mut().gen_plaintext();
                 api.borrow_mut()
-                    .encrypt(&pt, level_0_pbk, pbsk, &pvsk)
+                    .encrypt(&pt, level_0_pbk, &signing_keypair)
                     .unwrap()
             },
             |ev| {
                 let ev_to_1 = api
                     .borrow_mut()
-                    .transform(ev, tk_0_to_1.clone(), pbsk, &pvsk)
+                    .transform(ev, tk_0_to_1.clone(), &signing_keypair)
                     .unwrap();
                 let ev_to_2 = api
                     .borrow_mut()
-                    .transform(ev_to_1, tk_1_to_2.clone(), pbsk, &pvsk)
+                    .transform(ev_to_1, tk_1_to_2.clone(), &signing_keypair)
                     .unwrap();
                 api.borrow_mut()
-                    .transform(ev_to_2, tk_2_to_3.clone(), pbsk, &pvsk)
+                    .transform(ev_to_2, tk_2_to_3.clone(), &signing_keypair)
                     .unwrap();
             },
         );
@@ -246,40 +246,40 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("decrypt (level 3)", |b| {
         let api = RefCell::new(Api::new());
-        let (pvsk, pbsk) = api.borrow_mut().generate_ed25519_key_pair();
+        let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
         let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let (level_3_pvk, level_3_pbk) = api.borrow_mut().generate_key_pair().unwrap();
         let tk_0_to_1 = api
             .borrow_mut()
-            .generate_transform_key(&level_0_pvk, level_1_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
             .unwrap();
         let tk_1_to_2 = api
             .borrow_mut()
-            .generate_transform_key(&level_1_pvk, level_2_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
             .unwrap();
         let tk_2_to_3 = api
             .borrow_mut()
-            .generate_transform_key(&level_2_pvk, level_3_pbk, pbsk, &pvsk)
+            .generate_transform_key(&level_2_pvk, level_3_pbk, &signing_keypair)
             .unwrap();
         b.iter_with_setup(
             || {
                 let pt = api.borrow_mut().gen_plaintext();
                 let ev_to_0 = api
                     .borrow_mut()
-                    .encrypt(&pt, level_0_pbk, pbsk, &pvsk)
+                    .encrypt(&pt, level_0_pbk, &signing_keypair)
                     .unwrap();
                 let ev_to_1 = api
                     .borrow_mut()
-                    .transform(ev_to_0, tk_0_to_1.clone(), pbsk, &pvsk)
+                    .transform(ev_to_0, tk_0_to_1.clone(), &signing_keypair)
                     .unwrap();
                 let ev_to_2 = api
                     .borrow_mut()
-                    .transform(ev_to_1, tk_1_to_2.clone(), pbsk, &pvsk)
+                    .transform(ev_to_1, tk_1_to_2.clone(), &signing_keypair)
                     .unwrap();
                 api.borrow_mut()
-                    .transform(ev_to_2, tk_2_to_3.clone(), pbsk, &pvsk)
+                    .transform(ev_to_2, tk_2_to_3.clone(), &signing_keypair)
                     .unwrap()
             },
             |ev_to_3| {
