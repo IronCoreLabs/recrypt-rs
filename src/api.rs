@@ -655,10 +655,7 @@ impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Api<H, S, RandomB
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
     fn generate_ed25519_key_pair(&mut self) -> SigningKeypair {
-        use ed25519_dalek;
-        use sha2::Sha512;
-        let keypair = ed25519_dalek::Keypair::generate::<Sha512, CR>(&mut self.random_bytes.rng);
-        SigningKeypair::new(keypair.to_bytes())
+        SigningKeypair::new(&mut self.random_bytes.rng)
     }
 }
 
@@ -1012,6 +1009,7 @@ impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr256> {
 pub(crate) mod test {
     use super::*;
     use hex;
+    use internal::ed25519;
     use internal::Square;
     use num_traits::{One, Zero};
     use rand;
@@ -1212,7 +1210,7 @@ pub(crate) mod test {
 
     fn good_transform_key() -> TransformKey {
         let mut api = Api::new();
-        let signing_key = SigningKeypair::new([0; 64]);
+        let signing_key = ed25519::test::good_signing_keypair();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
         api.generate_transform_key(&master_priv, master_pub, &signing_key)
             .unwrap()
@@ -1321,7 +1319,7 @@ pub(crate) mod test {
     #[test]
     fn transform_to_same_key() {
         let mut api = api_with(Some(RandomBytes::default()), DummyEd25519);
-        let signing_key = SigningKeypair::new([0; 64]);
+        let signing_key = ed25519::test::good_signing_keypair();
 
         let plaintext = api.gen_plaintext();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
@@ -1338,7 +1336,7 @@ pub(crate) mod test {
 
     #[test]
     fn encrypt_decrypt_roundtrip_unaugmented_keys() {
-        let signing_key = SigningKeypair::new([0; 64]);
+        let signing_key = ed25519::test::good_signing_keypair();
         let mut api = api_with(Some(RandomBytes::default()), DummyEd25519);
 
         let pt = api.gen_plaintext();
@@ -1427,7 +1425,7 @@ pub(crate) mod test {
         use rand::SeedableRng;
         let mut api = Api::new_with_rand(rand::ChaChaRng::from_seed([0u8; 32]));
         let signing_keypair = api.generate_ed25519_key_pair();
-        let expected_signing_keypair = SigningKeypair::new([
+        let expected_signing_keypair = SigningKeypair::new_unchecked([
             118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
             25, 184, 160, 141, 237, 26, 168, 54, 239, 204, 139, 119, 13, 199, 32, 253, 186, 201,
             177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150, 215, 30, 78, 212,

@@ -1124,7 +1124,7 @@ mod test {
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
-        let signing_keypair = SigningKeypair::new([0;64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
 
         //37777967648492203239675772600961898148040325589588086812374811831221462604944
         let parsed_priv_key = Fp256::new(
@@ -1307,7 +1307,7 @@ mod test {
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
         let salt = KValue(gen_rth_root(&pairing, salt_fp12));
-        let signing_keypair = SigningKeypair::new([0; 64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
 
         let re_private = PrivateKey::from_fp256(
             //22002131259228303741090495322318969764532178674829148099822698556219881568451
@@ -1399,7 +1399,7 @@ mod test {
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let salt1 = gen_rth_root(&pairing, gen_random_fp12(&mut DummyRandomBytes));
-        let signing_keypair = SigningKeypair::new([0; 64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
         let priv_key = PrivateKey::from_fp256(
             //43966559432365357341903140497410248873099149633601160471165130153973144042658
             Fp256::new([
@@ -1450,7 +1450,7 @@ mod test {
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let salt1 = gen_rth_root(&pairing, gen_random_fp12(&mut DummyRandomBytes));
-        let signing_keypair = SigningKeypair::new([0; 64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
         let priv_key = PrivateKey::from_fp256(
             //43966559432365357341903140497410248873099149633601160471165130153973144042658
             Fp256::new([
@@ -1575,7 +1575,7 @@ mod test {
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
         let salt1 = KValue(gen_rth_root(&pairing, salt_1_fp12));
-        let signing_keypair = SigningKeypair::new([0; 64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
 
         let re_private = PrivateKey::from_fp256(
             //22002131259228303741090495322318969764532178674829148099822698556219881568451
@@ -1753,16 +1753,7 @@ mod test {
     }
 
     fn good_signing_keys() -> SigningKeypair {
-        // pub/priv signing keys precomputed
-        let pub_signing_key = [
-            138, 136, 227, 221, 116, 9, 241, 149, 253, 82, 219, 45, 60, 186, 93, 114, 202, 103, 9,
-            191, 29, 148, 18, 27, 243, 116, 136, 1, 180, 15, 111, 92,
-        ];
-        let priv_signing_key = [
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1,
-        ];
-        SigningKeypair::new(array_concat_32(&priv_signing_key, &pub_signing_key))
+        ed25519::test::good_signing_keypair()
     }
 
     proptest! {
@@ -1862,7 +1853,7 @@ mod test {
                 to_public_key,
                 *reencryption_private_key,
                 KValue(*new_k),
-                &SigningKeypair::new([0;64]),
+                &ed25519::test::good_signing_keypair(),
                 &curve_points,
                 &pairing,
                 &Mocks,
