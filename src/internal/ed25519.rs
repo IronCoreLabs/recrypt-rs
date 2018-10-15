@@ -107,6 +107,11 @@ impl SigningKeypair {
         PublicSigningKey::from(self)
     }
 
+    ///Export the bytes of the keypair.
+    pub fn bytes(&self) -> [u8;64] {
+        self.bytes
+    }
+
     ///
     ///Create a signature by signing over the bytes produced by the hashable instance of `message`.
     ///
