@@ -9,7 +9,8 @@ pub use internal::ed25519::{
 use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
-use internal::hashable::{Hashable, Hashable32};
+pub use internal::hashable::Hashable;
+use internal::hashable::Hashable32;
 use internal::homogeneouspoint::HomogeneousPoint;
 use internal::pairing;
 pub use internal::rand_bytes::*;
