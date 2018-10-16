@@ -400,9 +400,10 @@ pub struct EncryptedTempKey {
     _internal_fp12: Fp12Elem<Fp256>,
 }
 
-
-impl Hashable for EncryptedTempKey{
-    fn to_bytes(&self) -> ByteVector {self._internal_fp12.to_bytes() }
+impl Hashable for EncryptedTempKey {
+    fn to_bytes(&self) -> ByteVector {
+        self._internal_fp12.to_bytes()
+    }
 }
 
 impl EncryptedTempKey {
@@ -443,9 +444,10 @@ pub struct HashedValue {
     _internal_value: HomogeneousPoint<Fp2Elem<Fp256>>,
 }
 
-
-impl Hashable for HashedValue{
-    fn to_bytes(&self) -> ByteVector {self._internal_value.to_bytes() }
+impl Hashable for HashedValue {
+    fn to_bytes(&self) -> ByteVector {
+        self._internal_value.to_bytes()
+    }
 }
 
 impl HashedValue {
@@ -911,8 +913,10 @@ pub struct PublicKey {
     _internal_key: internal::PublicKey<Fp256>,
 }
 
-impl Hashable for PublicKey{
-    fn to_bytes(&self) -> ByteVector {self._internal_key.to_bytes() }
+impl Hashable for PublicKey {
+    fn to_bytes(&self) -> ByteVector {
+        self._internal_key.to_bytes()
+    }
 }
 
 impl PublicKey {

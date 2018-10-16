@@ -784,12 +784,7 @@ pub struct ReencryptionKey<FP: Field> {
 
 impl<FP: Field + Hashable> Hashable for ReencryptionKey<FP> {
     fn to_bytes(&self) -> ByteVector {
-        (
-            &self.re_public_key,
-            &self.to_public_key,
-            &self.encrypted_k,
-        )
-            .to_bytes()
+        (&self.re_public_key, &self.to_public_key, &self.encrypted_k).to_bytes()
     }
 }
 
