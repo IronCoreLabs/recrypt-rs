@@ -514,7 +514,7 @@ pub struct TransformKey {
     hashed_temp_key: HashedValue,
     public_signing_key: PublicSigningKey,
     signature: Ed25519Signature,
-    pub(crate) _internal_key: internal::SignedValue<internal::ReencryptionKey<Fp256>>,
+    _internal_key: internal::SignedValue<internal::ReencryptionKey<Fp256>>,
 }
 
 impl Hashable for TransformKey {
