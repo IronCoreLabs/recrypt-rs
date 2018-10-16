@@ -29,6 +29,11 @@ debug = true
 opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
 debug = true
 
+[profile.release]
+opt-level = 3 # Build deps with optimization, don't build ourselves with optimization
+debug = false
+lto = true
+
 [dev-dependencies]
 proptest = "0.8.3"
 hex = "0.3.2"
