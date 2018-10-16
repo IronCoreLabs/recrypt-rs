@@ -108,7 +108,7 @@ impl SigningKeypair {
     }
 
     ///Export the bytes of the keypair.
-    pub fn bytes(&self) -> [u8;64] {
+    pub fn bytes(&self) -> [u8; 64] {
         self.bytes
     }
 
