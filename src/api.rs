@@ -402,7 +402,7 @@ pub struct EncryptedTempKey {
 
 impl Hashable for EncryptedTempKey {
     fn to_bytes(&self) -> ByteVector {
-        self._internal_fp12.to_bytes()
+        self.bytes().to_vec()
     }
 }
 
