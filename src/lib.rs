@@ -92,6 +92,9 @@ extern crate hex;
 extern crate lazy_static;
 
 #[macro_use]
+extern crate quick_error;
+
+#[macro_use]
 mod internal; // this needs to come before `api` as api relies on macros defined in `internal`
 pub mod api;
 pub mod nonemptyvec;

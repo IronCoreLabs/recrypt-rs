@@ -23,7 +23,7 @@ macro_rules! new_from_slice {
                 dest.copy_from_slice(bytes);
                 Ok($t::new(dest))
             } else {
-                Err(ApiErr::InputWrongSize($t::ENCODED_SIZE_BYTES))
+                Err(ApiErr::InputWrongSize(&stringify!($t),$t::ENCODED_SIZE_BYTES))
             }
         }
     };
