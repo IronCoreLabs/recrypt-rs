@@ -81,11 +81,3 @@ macro_rules! new_bytes_type {
         _bytes_core!($t, $n);
     };
 }
-
-/// macro for generation of "new-types" around a byte array with a standard pattern for construction and access
-macro_rules! new_bytes_type_no_derive {
-    ($t: ident, $n: expr) => {
-        _bytes_struct!($t);
-        _bytes_core!($t, $n);
-    };
-}

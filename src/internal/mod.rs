@@ -1,7 +1,7 @@
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal::curve::CurvePoints;
-use internal::ed25519::{Ed25519Signature, Ed25519Signing, PrivateSigningKey, PublicSigningKey};
+use internal::ed25519::{Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair};
 use internal::field::ExtensionField;
 use internal::field::Field;
 use internal::fp::fr_256::Fr256;
@@ -367,22 +367,21 @@ where
 ///
 /// # Arguments
 /// `payload` - value to sign; must be a type with an associated Hashable instance
-/// `public_signing_key` - the Ed25519 public key to embed in the output; can be used to validate signature
-/// `private_signing_key` - the Ed25519 private key that is used to compute the signature
+/// `signing_keypair` - the Ed25519 keypair that is used to compute the signature
 /// `ed25519` - Implementation of `Ed25519Signing` trait
 ///
 /// # Return
 /// SignedValue<T> - contains the value `payload`, the public signingkey, and the computed signature
 fn sign_value<T, F: Ed25519Signing>(
     payload: T,
-    public_signing_key: PublicSigningKey,
-    private_signing_key: &PrivateSigningKey,
+    signing_keypair: &SigningKeypair,
     ed25519: &F,
 ) -> SignedValue<T>
 where
     T: Hashable + Clone,
 {
-    let signature = ed25519.sign(&(public_signing_key, payload.clone()), private_signing_key);
+    let public_signing_key = signing_keypair.public_key();
+    let signature = ed25519.sign(&(public_signing_key, payload.clone()), signing_keypair);
     SignedValue {
         public_signing_key,
         signature,
@@ -405,8 +404,7 @@ where
 /// `to_public_key`         - the public key to encrypt to
 /// `plaintext`             - the value to encrypt - must be an element of G_T
 /// `encrypting_key`        - a random private key value chosen just for this plaintext
-/// `public_signing_key`    - the public portion of the encrypter's signing key pair
-/// `private_signing_key`   - the private portion of the encrypter's signing key pair
+/// `signing_keypair`       - the public portion of the encrypter's signing key pair
 /// `pairing`               - Optimal Ate Pairing
 /// `curve_points`          - IronCore's curve
 /// `hash`                  - Sha256Hashing instance
@@ -419,8 +417,7 @@ pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     to_public_key: PublicKey<T>,
     plaintext: Fp12Elem<T>, // @clintfred can this be any fp12? or an rth root?
     encrypting_key: PrivateKey<T>,
-    public_signing_key: PublicSigningKey,
-    private_signing_key: &PrivateSigningKey,
+    signing_keypair: &SigningKeypair,
     pairing: &Pairing<T>,
     curve_points: &CurvePoints<T>,
     hash: &F,
@@ -441,8 +438,7 @@ where
             encrypted_message,
             auth_hash,
         }),
-        public_signing_key,
-        private_signing_key,
+        signing_keypair,
         sign,
     )
 }
@@ -666,8 +662,7 @@ fn verify_signed_value<T: Hashable + Clone, G: Ed25519Signing>(
 /// `to_public_key`             - the public key to transform to
 /// `reencryption_private_key`  - a random private key
 /// `new_k`                     - a random FP12 element
-/// `public_signing_key`        - Ed25519 public key to include to validate signature
-/// `private_signing_key`       - Ed25519 private key to use to sign reencryption key
+/// `signing_keypair`           - Ed25519 keypair to use to sign reencryption key
 /// `curve_points`              - IronCore's curve
 /// `sha256`                    - Sha256 instance
 /// `ed25519`                   - Ed25519Signing instance
@@ -681,8 +676,7 @@ pub fn generate_reencryption_key<FP, H, S>(
     to_public_key: PublicKey<FP>,
     reencryption_private_key: PrivateKey<FP>,
     new_k: KValue<FP>,
-    public_signing_key: PublicSigningKey,
-    private_signing_key: &PrivateSigningKey,
+    signing_keypair: &SigningKeypair,
     curve_points: &CurvePoints<FP>,
     pairing: &Pairing<FP>,
     sha256: &H,
@@ -712,12 +706,7 @@ where
         hashed_k,
     };
 
-    sign_value(
-        reencryption_key,
-        public_signing_key,
-        private_signing_key,
-        ed25519,
-    )
+    sign_value(reencryption_key, signing_keypair, ed25519)
 }
 
 /// Fp12Elem that is private and is used in the transform/decrypt algorithms
@@ -840,8 +829,7 @@ pub fn reencrypt<FP, S, H>(
     signed_encrypted_value: SignedValue<EncryptedValue<FP>>,
     rand_re_priv_key: PrivateKey<FP>,
     rand_re_k: KValue<FP>,
-    public_signing_key: PublicSigningKey,
-    private_signing_key: &PrivateSigningKey,
+    signing_keypair: &SigningKeypair,
     ed25519: &S,
     sha256: &H,
     curve_points: &CurvePoints<FP>,
@@ -872,8 +860,7 @@ where
                 pairing,
                 sha256,
             )),
-            public_signing_key,
-            private_signing_key,
+            signing_keypair,
             ed25519,
         )),
 
@@ -887,8 +874,7 @@ where
                 pairing,
                 sha256,
             )),
-            public_signing_key,
-            private_signing_key,
+            signing_keypair,
             ed25519,
         )),
         (None, _) => Err(InternalError::SignatureFailed),
@@ -1053,7 +1039,7 @@ mod test {
     struct Mocks;
 
     impl Ed25519Signing for Mocks {
-        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Ed25519Signature {
+        fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {
             Ed25519Signature::new([0; 64])
         }
 
@@ -1076,7 +1062,7 @@ mod test {
     struct AlwaysFailVerifyEd25519Signing;
 
     impl Ed25519Signing for AlwaysFailVerifyEd25519Signing {
-        fn sign<T: Hashable>(&self, _t: &T, _private_key: &PrivateSigningKey) -> Ed25519Signature {
+        fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {
             Ed25519Signature::new([0; 64])
         }
 
@@ -1138,8 +1124,7 @@ mod test {
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
-        let pbsk = PublicSigningKey::new([0;32]);
-        let pvsk = PrivateSigningKey::new([0;64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
 
         //37777967648492203239675772600961898148040325589588086812374811831221462604944
         let parsed_priv_key = Fp256::new(
@@ -1213,8 +1198,7 @@ mod test {
             public_key,
             re_private_key,
             salt,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             curve_points,
             &pairing,
             sha256,
@@ -1323,8 +1307,7 @@ mod test {
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
         let salt = KValue(gen_rth_root(&pairing, salt_fp12));
-        let pbsk = PublicSigningKey::new([0; 32]);
-        let pvsk = PrivateSigningKey::new([0; 64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
 
         let re_private = PrivateKey::from_fp256(
             //22002131259228303741090495322318969764532178674829148099822698556219881568451
@@ -1359,8 +1342,7 @@ mod test {
             pub_key,
             plaintext,
             ephem_priv_key,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             &pairing,
             curve_points,
             sha256,
@@ -1381,8 +1363,7 @@ mod test {
             pub_key,
             re_private,
             salt,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             curve_points,
             &pairing,
             sha256,
@@ -1394,8 +1375,7 @@ mod test {
             encrypt_result,
             rand_re_priv_key,
             rand_re_k,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             ed25519,
             sha256,
             curve_points,
@@ -1419,8 +1399,7 @@ mod test {
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let salt1 = gen_rth_root(&pairing, gen_random_fp12(&mut DummyRandomBytes));
-        let pbsk = PublicSigningKey::new([0; 32]);
-        let pvsk = PrivateSigningKey::new([0; 64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
         let priv_key = PrivateKey::from_fp256(
             //43966559432365357341903140497410248873099149633601160471165130153973144042658
             Fp256::new([
@@ -1444,8 +1423,7 @@ mod test {
             pub_key,
             salt1,
             ephem_priv_key,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             &pairing,
             curve_points,
             sha256,
@@ -1472,8 +1450,7 @@ mod test {
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let salt1 = gen_rth_root(&pairing, gen_random_fp12(&mut DummyRandomBytes));
-        let pbsk = PublicSigningKey::new([0; 32]);
-        let pvsk = PrivateSigningKey::new([0; 64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
         let priv_key = PrivateKey::from_fp256(
             //43966559432365357341903140497410248873099149633601160471165130153973144042658
             Fp256::new([
@@ -1497,8 +1474,7 @@ mod test {
             pub_key,
             salt1,
             ephem_priv_key,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             &pairing,
             curve_points,
             sha256,
@@ -1599,8 +1575,7 @@ mod test {
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
         let salt1 = KValue(gen_rth_root(&pairing, salt_1_fp12));
-        let pbsk = PublicSigningKey::new([0; 32]);
-        let pvsk = PrivateSigningKey::new([0; 64]);
+        let signing_keypair = ed25519::test::good_signing_keypair();
 
         let re_private = PrivateKey::from_fp256(
             //22002131259228303741090495322318969764532178674829148099822698556219881568451
@@ -1658,8 +1633,7 @@ mod test {
             pub_key,
             plaintext,
             ephem_priv_key,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             &pairing,
             curve_points,
             sha256,
@@ -1680,8 +1654,7 @@ mod test {
             pub_key2,
             re_private,
             salt1,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             curve_points,
             &pairing,
             sha256,
@@ -1694,8 +1667,7 @@ mod test {
             encrypt_result,
             rand_re_priv_key,
             rand_re_k,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             ed25519,
             sha256,
             curve_points,
@@ -1728,8 +1700,7 @@ mod test {
             pub_key3,
             re_priv_2,
             salt2,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             curve_points,
             &pairing,
             sha256,
@@ -1741,8 +1712,7 @@ mod test {
             reencrypted_value,
             rand_re_priv_key_2,
             rand_re_k_2,
-            pbsk,
-            &pvsk,
+            &signing_keypair,
             ed25519,
             sha256,
             curve_points,
@@ -1782,41 +1752,29 @@ mod test {
         }
     }
 
-    fn good_signing_keys() -> (PrivateSigningKey, PublicSigningKey) {
-        // pub/priv signing keys precomputed
-        let pub_signing_key = ed25519::PublicSigningKey::new([
-            138, 136, 227, 221, 116, 9, 241, 149, 253, 82, 219, 45, 60, 186, 93, 114, 202, 103, 9,
-            191, 29, 148, 18, 27, 243, 116, 136, 1, 180, 15, 111, 92,
-        ]);
-        let priv_signing_key = ed25519::PrivateSigningKey::new([
-            88, 232, 110, 251, 117, 250, 78, 44, 65, 15, 70, 225, 109, 233, 246, 172, 174, 26, 23,
-            3, 82, 134, 81, 182, 155, 193, 118, 192, 136, 190, 243, 110, 177, 122, 42, 44, 243,
-            212, 164, 26, 142, 78, 24, 204, 69, 200, 101, 109, 85, 142, 206, 221, 176, 173, 180,
-            107, 250, 8, 138, 95, 83, 190, 210, 82,
-        ]);
-        (priv_signing_key, pub_signing_key)
+    fn good_signing_keys() -> SigningKeypair {
+        ed25519::test::good_signing_keypair()
     }
 
     proptest! {
         #[test]
         fn sign_verify_roundtrip(fp256 in arb_fp256()) {
-            let (priv_signing_key, pub_signing_key) = good_signing_keys();
-            let signed_value = sign_value(fp256, pub_signing_key, &priv_signing_key, &Ed25519);
+            let priv_signing_key = good_signing_keys();
+            let signed_value = sign_value(fp256, &priv_signing_key, &Ed25519);
             let verified = verify_signed_value(signed_value, &Ed25519);
-            assert!(verified.is_some())
+            prop_assert!(verified.is_some())
         }
         #[test]
         fn encrypt_decrypt_roundtrip(priv_key in arb_priv_key(), plaintext in arb_fp12().prop_filter("", |a| !(*a == Fp12Elem::<Fp256>::zero()))) {
             let pub_key = public_keygen(priv_key, curve::FP_256_CURVE_POINTS.generator);
             let ephem_secret_key = PrivateKey::from_fp256(Fp256::new_from_u64(42));
-            let (priv_signing_key, pub_signing_key) = good_signing_keys();
+            let priv_signing_key = good_signing_keys();
             let pairing = pairing::Pairing::new();
             let curve_points = &*curve::FP_256_CURVE_POINTS;
             let encrypt_result = encrypt(
                 pub_key,
                 plaintext,
                 ephem_secret_key,
-                pub_signing_key,
                 &priv_signing_key,
                 &pairing,
                 curve_points,
@@ -1895,8 +1853,7 @@ mod test {
                 to_public_key,
                 *reencryption_private_key,
                 KValue(*new_k),
-                PublicSigningKey::new([0; 32]),
-                &PrivateSigningKey::new([0;64]),
+                &ed25519::test::good_signing_keypair(),
                 &curve_points,
                 &pairing,
                 &Mocks,
