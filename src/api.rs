@@ -91,8 +91,10 @@ impl From<internal::InternalError> for ApiErr {
     fn from(err: internal::InternalError) -> Self {
         match err {
             internal::InternalError::AuthHashMatchFailed => ApiErr::DecryptFailed(err),
-            internal::InternalError::InvalidEncryptedMessageSignature => ApiErr::InvalidEncryptedMessageSignature(err),
-            internal::InternalError::PointInvalid(p_err) =>             ApiErr::InvalidPublicKey(p_err),
+            internal::InternalError::InvalidEncryptedMessageSignature => {
+                ApiErr::InvalidEncryptedMessageSignature(err)
+            }
+            internal::InternalError::PointInvalid(p_err) => ApiErr::InvalidPublicKey(p_err),
             internal::InternalError::CorruptReencryptionKey => ApiErr::InvalidTransformKey(err),
         }
     }
@@ -465,11 +467,14 @@ impl HashedValue {
     const ENCODED_SIZE_BYTES: usize = HomogeneousPoint::<Fp2Elem<Fp256>>::ENCODED_SIZE_BYTES;
 
     pub fn new(bytes: [u8; HashedValue::ENCODED_SIZE_BYTES]) -> Result<Self> {
-        Ok(HomogeneousPoint::<Fp2Elem<Fp256>>::decode(bytes.to_vec())
-            .map(|hpoint| HashedValue {
-                bytes,
-                _internal_value: hpoint,
-            })?)
+        Ok(
+            HomogeneousPoint::<Fp2Elem<Fp256>>::decode(bytes.to_vec()).map(|hpoint| {
+                HashedValue {
+                    bytes,
+                    _internal_value: hpoint,
+                }
+            })?,
+        )
     }
     pub fn bytes(&self) -> &[u8; HashedValue::ENCODED_SIZE_BYTES] {
         &self.bytes
@@ -480,7 +485,10 @@ impl HashedValue {
             dest.copy_from_slice(bytes);
             Ok(HashedValue::new(dest)?)
         } else {
-            Err(ApiErr::InputWrongSize("HashedValue", HashedValue::ENCODED_SIZE_BYTES))
+            Err(ApiErr::InputWrongSize(
+                "HashedValue",
+                HashedValue::ENCODED_SIZE_BYTES,
+            ))
         }
     }
 }
@@ -933,7 +941,7 @@ impl PublicKey {
     pub const ENCODED_SIZE_BYTES: usize = Fp256::ENCODED_SIZE_BYTES * 2;
 
     fn try_from(internal_key: &internal::PublicKey<Fp256>) -> Result<PublicKey> {
-       Ok(internal_key
+        Ok(internal_key
             .to_byte_vectors_32()
             .map(|(x, y)| PublicKey {
                 x,
@@ -964,7 +972,10 @@ impl PublicKey {
 
             Ok(PublicKey::new((x_dest, y_dest))?)
         } else {
-            Err(ApiErr::InputWrongSize("PublicKey", PublicKey::ENCODED_SIZE_BYTES))
+            Err(ApiErr::InputWrongSize(
+                "PublicKey",
+                PublicKey::ENCODED_SIZE_BYTES,
+            ))
         }
     }
     pub fn bytes_x_y(&self) -> (&[u8; 32], &[u8; 32]) {
