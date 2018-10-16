@@ -446,7 +446,7 @@ pub struct HashedValue {
 
 impl Hashable for HashedValue {
     fn to_bytes(&self) -> ByteVector {
-        self._internal_value.to_bytes()
+        self.bytes().to_vec()
     }
 }
 
