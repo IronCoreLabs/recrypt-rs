@@ -400,6 +400,11 @@ pub struct EncryptedTempKey {
     _internal_fp12: Fp12Elem<Fp256>,
 }
 
+
+impl Hashable for EncryptedTempKey{
+    fn to_bytes(&self) -> ByteVector {self._internal_fp12.to_bytes() }
+}
+
 impl EncryptedTempKey {
     const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES;
 
@@ -436,6 +441,11 @@ impl PartialEq for EncryptedTempKey {
 pub struct HashedValue {
     bytes: [u8; HashedValue::ENCODED_SIZE_BYTES],
     _internal_value: HomogeneousPoint<Fp2Elem<Fp256>>,
+}
+
+
+impl Hashable for HashedValue{
+    fn to_bytes(&self) -> ByteVector {self._internal_value.to_bytes() }
 }
 
 impl HashedValue {
@@ -507,7 +517,14 @@ pub struct TransformKey {
 
 impl Hashable for TransformKey {
     fn to_bytes(&self) -> ByteVector {
-        self._internal_key.payload.to_bytes()
+        (
+            &self.ephemeral_public_key,
+            &self.to_public_key,
+            &self.encrypted_temp_key,
+            &self.hashed_temp_key,
+            &self.public_signing_key,
+        )
+            .to_bytes()
     }
 }
 
@@ -892,6 +909,10 @@ pub struct PublicKey {
     x: [u8; 32],
     y: [u8; 32],
     _internal_key: internal::PublicKey<Fp256>,
+}
+
+impl Hashable for PublicKey{
+    fn to_bytes(&self) -> ByteVector {self._internal_key.to_bytes() }
 }
 
 impl PublicKey {

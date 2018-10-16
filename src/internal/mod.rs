@@ -133,6 +133,11 @@ pub struct SignedValue<T> {
     pub payload: T,
 }
 
+impl<T: Hashable> Hashable for SignedValue<T> {
+    fn to_bytes(&self) -> ByteVector {
+        (&self.public_signing_key, &self.payload).to_bytes()
+    }
+}
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
 /// It is a hash of the plaintext.
@@ -381,7 +386,7 @@ where
     T: Hashable + Clone,
 {
     let public_signing_key = signing_keypair.public_key();
-    let signature = ed25519.sign(&(public_signing_key, payload.clone()), signing_keypair);
+    let signature = ed25519.sign(&(&public_signing_key, &payload), signing_keypair);
     SignedValue {
         public_signing_key,
         signature,
@@ -431,7 +436,7 @@ where
     };
     let encrypted_message =
         pairing.pair(to_public_key.value.times(&encrypting_key), curve_points.g1) * plaintext;
-    let auth_hash = AuthHash::create(hash, &(ephem_pub_key, plaintext));
+    let auth_hash = AuthHash::create(hash, &(&ephem_pub_key, &plaintext));
     sign_value(
         EncryptedValue::EncryptedOnce(EncryptedOnceValue {
             ephemeral_public_key: ephem_pub_key,
@@ -515,7 +520,7 @@ fn compute_and_compare_auth_hash<FP, H: Sha256Hashing>(
 where
     FP: Field + ExtensionField + PairingConfig + NonAdjacentForm + Hashable,
 {
-    let computed_auth_hash = AuthHash::create(hash, &(public_key, unverified_plaintext));
+    let computed_auth_hash = AuthHash::create(hash, &(&public_key, &unverified_plaintext));
 
     if candidate_auth_hash != computed_auth_hash {
         Result::Err(InternalError::AuthHashMatchFailed)
@@ -640,10 +645,7 @@ fn verify_signed_value<T: Hashable + Clone, G: Ed25519Signing>(
     sign: &G,
 ) -> Option<T> {
     if sign.verify(
-        &(
-            signed_value.public_signing_key,
-            signed_value.payload.clone(),
-        ),
+        &signed_value,
         &signed_value.signature,
         &signed_value.public_signing_key,
     ) {
@@ -720,7 +722,7 @@ impl<FP: Default> Drop for KValue<FP> {
     }
 }
 
-impl<'a, FP> Hashable for &'a KValue<FP>
+impl<FP> Hashable for KValue<FP>
 where
     FP: Hashable + Default + Clear + Copy,
 {
@@ -755,8 +757,8 @@ where
     //Produce a 512 bit byte vector, which ensures we have a big enough value for 480 and Fp
     //We use a constant value combined with the entire fp12 element so we don't leak information about the fp12 structure.
     let bytes = array_concat_32(
-        &sha256.hash(&(0u8, &k_value)),
-        &sha256.hash(&(1u8, &k_value)),
+        &sha256.hash(&(&0u8, &k_value)),
+        &sha256.hash(&(&1u8, &k_value)),
     );
     let fp = FP::from(bytes);
     hash_element * fp
@@ -782,11 +784,10 @@ pub struct ReencryptionKey<FP: Field> {
 
 impl<FP: Field + Hashable> Hashable for ReencryptionKey<FP> {
     fn to_bytes(&self) -> ByteVector {
-        let clone = self;
         (
-            &clone.re_public_key,
-            &clone.to_public_key,
-            &clone.encrypted_k,
+            &self.re_public_key,
+            &self.to_public_key,
+            &self.encrypted_k,
         )
             .to_bytes()
     }
