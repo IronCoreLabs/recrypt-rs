@@ -52,7 +52,14 @@ impl<T: Hashable + Clone> Hashable for NonEmptyVec<T> {
         self.to_vec().to_bytes()
     }
 }
-impl<T: Hashable, U: Hashable> Hashable for (T, U) {
+
+impl<'a, T: Hashable, U: Hashable> Hashable for &'a (T, U) {
+    fn to_bytes(&self) -> ByteVector {
+        vec![self.0.to_bytes(), self.1.to_bytes()].to_bytes()
+    }
+}
+
+impl<'a, T: Hashable, U: Hashable> Hashable for (&'a T, &'a U) {
     fn to_bytes(&self) -> ByteVector {
         vec![self.0.to_bytes(), self.1.to_bytes()].to_bytes()
     }
@@ -61,6 +68,33 @@ impl<T: Hashable, U: Hashable> Hashable for (T, U) {
 impl<'a, T: Hashable, U: Hashable, V: Hashable> Hashable for (&'a T, &'a U, &'a V) {
     fn to_bytes(&self) -> ByteVector {
         vec![self.0.to_bytes(), self.1.to_bytes(), self.2.to_bytes()].to_bytes()
+    }
+}
+
+impl<'a, T: Hashable, U: Hashable, V: Hashable, W: Hashable> Hashable
+    for (&'a T, &'a U, &'a V, &'a W)
+{
+    fn to_bytes(&self) -> ByteVector {
+        vec![
+            self.0.to_bytes(),
+            self.1.to_bytes(),
+            self.2.to_bytes(),
+            self.3.to_bytes(),
+        ].to_bytes()
+    }
+}
+
+impl<'a, T: Hashable, U: Hashable, V: Hashable, W: Hashable, X: Hashable> Hashable
+    for (&'a T, &'a U, &'a V, &'a W, &'a X)
+{
+    fn to_bytes(&self) -> ByteVector {
+        vec![
+            self.0.to_bytes(),
+            self.1.to_bytes(),
+            self.2.to_bytes(),
+            self.3.to_bytes(),
+            self.4.to_bytes(),
+        ].to_bytes()
     }
 }
 

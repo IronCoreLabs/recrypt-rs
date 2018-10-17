@@ -196,7 +196,7 @@ where
 
 impl<T: Field + Hashable> Hashable for HomogeneousPoint<T> {
     fn to_bytes(&self) -> Vec<u8> {
-        self.normalize().to_bytes()
+        self.normalize().as_ref().to_bytes()
     }
 }
 

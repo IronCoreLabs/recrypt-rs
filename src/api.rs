@@ -9,7 +9,8 @@ pub use internal::ed25519::{
 use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
-use internal::hashable::{Hashable, Hashable32};
+pub use internal::hashable::Hashable;
+use internal::hashable::Hashable32;
 use internal::homogeneouspoint::HomogeneousPoint;
 use internal::pairing;
 pub use internal::rand_bytes::*;
@@ -399,6 +400,12 @@ pub struct EncryptedTempKey {
     _internal_fp12: Fp12Elem<Fp256>,
 }
 
+impl Hashable for EncryptedTempKey {
+    fn to_bytes(&self) -> ByteVector {
+        self.bytes().to_vec()
+    }
+}
+
 impl EncryptedTempKey {
     const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES;
 
@@ -435,6 +442,12 @@ impl PartialEq for EncryptedTempKey {
 pub struct HashedValue {
     bytes: [u8; HashedValue::ENCODED_SIZE_BYTES],
     _internal_value: HomogeneousPoint<Fp2Elem<Fp256>>,
+}
+
+impl Hashable for HashedValue {
+    fn to_bytes(&self) -> ByteVector {
+        self.bytes().to_vec()
+    }
 }
 
 impl HashedValue {
@@ -502,6 +515,19 @@ pub struct TransformKey {
     public_signing_key: PublicSigningKey,
     signature: Ed25519Signature,
     _internal_key: internal::SignedValue<internal::ReencryptionKey<Fp256>>,
+}
+
+impl Hashable for TransformKey {
+    fn to_bytes(&self) -> ByteVector {
+        (
+            &self.ephemeral_public_key,
+            &self.to_public_key,
+            &self.encrypted_temp_key,
+            &self.hashed_temp_key,
+            &self.public_signing_key,
+        )
+            .to_bytes()
+    }
 }
 
 impl TransformKey {
@@ -885,6 +911,12 @@ pub struct PublicKey {
     x: [u8; 32],
     y: [u8; 32],
     _internal_key: internal::PublicKey<Fp256>,
+}
+
+impl Hashable for PublicKey {
+    fn to_bytes(&self) -> ByteVector {
+        self._internal_key.to_bytes()
+    }
 }
 
 impl PublicKey {
