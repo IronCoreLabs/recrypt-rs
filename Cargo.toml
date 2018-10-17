@@ -45,3 +45,8 @@ unstable = []
 [[bench]]
 name = "api_benchmark"
 harness = false
+
+# disable libtest benches
+# workaround for https://github.com/rust-lang/rust/issues/47241
+[lib]
+bench = false

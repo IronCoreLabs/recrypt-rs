@@ -293,7 +293,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
 criterion_group! {
     name = benches;
-    config = Criterion::default().sample_size(20);
+    config = Criterion::default().sample_size(5); //TODO temp change for faster testing, change back to 20
     targets = criterion_benchmark
 }
 criterion_main!(benches);
