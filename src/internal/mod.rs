@@ -48,10 +48,6 @@ quick_error! {
             cause(err)
             from()
         }
-        // BytesDecodeFailed(err: bytedecoder::DecodeErr) {
-        //     from()
-        //     cause(err)
-        // }
         CorruptReencryptionKey {}
     }
 }
