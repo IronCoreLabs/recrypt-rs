@@ -59,26 +59,27 @@ quick_error!{
     #[derive(Debug, PartialEq)]
     pub enum ApiErr {
         DecryptFailed(err: internal::InternalError){
-            cause(err)
-        }
-        InvalidAuthHash(err: internal::InternalError){
+            display("The decryption failed. Ensure you're using the correct PrivateKey.")
             cause(err)
         }
         InvalidEncryptedMessageSignature(err: internal::InternalError){
+            display("The signature of the encrypted value could not be verified.")
             cause(err)
         }
         InvalidPublicKey(err: internal::homogeneouspoint::PointErr){
+            display("The public key was not valid. Ensure it was generated from a valid PrivateKey.")
             from()
             cause(err)
         }
         InvalidTransformKey(err: internal::InternalError){
             cause(err)
-            description("Invalid Transform Key")
             display("The transform key signature was incorrect.")
         }
-        InputWrongSize(desc: &'static str, req_size: usize){} // necessary size
+        InputWrongSize(desc: &'static str, req_size: usize){
+            display("The input value was the wrong size. Expected {} bytes. The error message was '{}'.", req_size, desc)
+        }
         DecodeFailure(err: internal::bytedecoder::DecodeErr){
-            description("The bytes could not be decoded into the appropriate data type.")
+            display("The bytes could not be decoded into the appropriate data type.")
             cause(err)
             from()
         }
