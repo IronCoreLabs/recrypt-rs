@@ -75,8 +75,8 @@ quick_error!{
             cause(err)
             display("The transform key signature was incorrect.")
         }
-        InputWrongSize(desc: &'static str, req_size: usize){
-            display("The input value was the wrong size. Expected {} bytes. The error message was '{}'.", req_size, desc)
+        InputWrongSize(typ: &'static str, req_size: usize){
+            display("The input value was the wrong size. Expected {} bytes for type {}.", req_size, typ)
         }
         DecodeFailure(err: internal::bytedecoder::DecodeErr){
             display("The bytes could not be decoded into the appropriate data type.")
