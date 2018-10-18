@@ -16,9 +16,8 @@ quick_error! {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum PointErr {
         PointNotOnCurve(x: Vec<u8>, y: Vec<u8>) {
-            //COLT: We should discuss how we want to represent x and y.
+            //Note that this will print the vectors, but since this error isn't exposed directly to the user that's not a huge concern IMO
             display("The point represented by {:?},{:?} is not on the curve.", x, y)
-            description("The point was not on the curve.")
         }
         ZeroPoint{}
     }
