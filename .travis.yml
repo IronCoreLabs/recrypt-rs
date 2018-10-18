@@ -11,3 +11,5 @@ script:
   - cargo build --verbose
   - cargo test --verbose
   - cargo fmt -- --check
+after_success:
+  - ./.travis_scripts/cmp-bench.sh
