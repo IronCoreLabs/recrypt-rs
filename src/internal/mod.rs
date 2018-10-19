@@ -808,8 +808,8 @@ impl<FP: Field + NonAdjacentForm> ReencryptionKey<FP> {
 /// `public_signing_key`      - The ED25519 public key matching the private_signing_key.
 ///
 /// # Return
-/// ReencryptedValue - if the value could be successfully reencrypted
-/// - Left(InvalidEncryptedMessageSignature|ReencryptionKeyIsCorrupt) - if the signatures weren't valid.
+/// Ok(ReencryptedValue) - if the value could be successfully reencrypted
+/// - Err(InvalidEncryptedMessageSignature|ReencryptionKeyIsCorrupt) - if the signatures weren't valid.
 pub fn reencrypt<FP, S, H>(
     signed_reencryption_key: SignedValue<ReencryptionKey<FP>>,
     signed_encrypted_value: SignedValue<EncryptedValue<FP>>,
