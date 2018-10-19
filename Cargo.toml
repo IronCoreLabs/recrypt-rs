@@ -12,13 +12,13 @@ description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-en
 
 [dependencies]
 rand = "~0.5"
-sha2 = "0.7.1"
+sha2 = "~0.7"
 num-traits = "0.2"
-lazy_static = "1.0.1"
+lazy_static = "~1.1"
 arrayvec = "0.4.7"
 ed25519-dalek = "~0.8"
 curve25519-dalek = "0.20" #Can get rid of it as soon as https://github.com/dalek-cryptography/ed25519-dalek/issues/39 is resolved
-clear_on_drop = "0.2"
+clear_on_drop = "~0.2"
 gridiron = "0.2"
 quick-error = "~1.2"
 
@@ -46,3 +46,8 @@ unstable = []
 [[bench]]
 name = "api_benchmark"
 harness = false
+
+# disable libtest benches
+# workaround for https://github.com/rust-lang/rust/issues/47241
+[lib]
+bench = false
