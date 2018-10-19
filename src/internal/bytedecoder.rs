@@ -35,16 +35,19 @@ impl BytesDecoder for Fp256 {
     }
 }
 
-#[derive(Debug)]
-pub enum DecodeErr {
-    BytesNotCorrectLength {
-        required_length: usize,
-        bad_bytes: ByteVector,
-    },
-    BytesInvalid {
-        message: String,
-        bad_bytes: ByteVector,
-    },
+quick_error! {
+    #[derive(Debug, PartialEq, Eq)]
+    pub enum DecodeErr {
+        BytesNotCorrectLength {
+            required_length: usize,
+            bad_bytes: ByteVector,
+        } {
+        }
+        BytesInvalid {
+            message: String,
+            bad_bytes: ByteVector,
+        }{}
+    }
 }
 
 /// Needed for error handing when ArrayVec.into_inner is called on an instance that is not

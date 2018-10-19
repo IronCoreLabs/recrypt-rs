@@ -12,10 +12,15 @@ use num_traits::Pow;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::option::Option;
 
-#[derive(Clone, Debug)]
-pub enum PointErr {
-    PointNotOnCurve(Vec<u8>, Vec<u8>),
-    InvalidCoordinate(Vec<u8>, String),
+quick_error! {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub enum PointErr {
+        PointNotOnCurve(x: Vec<u8>, y: Vec<u8>) {
+            //Note that this will print the vectors, but since this error isn't exposed directly to the user that's not a huge concern IMO
+            display("The point represented by {:?},{:?} is not on the curve.", x, y)
+        }
+        ZeroPoint{}
+    }
 }
 
 ///HomogeneousPoint which is either Zero or an x,y coordinate which has a z it carries

@@ -1,4 +1,3 @@
-// use gmp::mpz::Mpz;
 use gridiron::fp_256::Fp256;
 use internal::fp2elem::Fp2Elem;
 use internal::homogeneouspoint::HomogeneousPoint;

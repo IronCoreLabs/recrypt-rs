@@ -39,25 +39,16 @@ use api;
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
 
-#[derive(Debug)]
-pub enum InternalError {
-    AuthHashMatchFailed,
-    SignatureFailed,
-    PrivateKeyFailed,
-    PointInvalid(PointErr),
-    BytesDecodeFailed(bytedecoder::DecodeErr),
-    CorruptReencryptionKey,
-}
-
-impl From<PointErr> for InternalError {
-    fn from(p: PointErr) -> InternalError {
-        InternalError::PointInvalid(p)
-    }
-}
-
-impl From<bytedecoder::DecodeErr> for InternalError {
-    fn from(decode_err: bytedecoder::DecodeErr) -> Self {
-        InternalError::BytesDecodeFailed(decode_err)
+quick_error! {
+    #[derive(Debug, PartialEq, Eq)]
+    pub enum InternalError {
+        AuthHashMatchFailed {}
+        InvalidEncryptedMessageSignature {}
+        PointInvalid(err: PointErr) {
+            cause(err)
+            from()
+        }
+        CorruptReencryptionKey {}
     }
 }
 
@@ -79,9 +70,8 @@ impl<T: Field + Hashable32> PublicKey<T> {
 }
 
 impl PublicKey<Fp256> {
-    pub fn from_x_y_fp256(x: Fp256, y: Fp256) -> Result<PublicKey<Fp256>, InternalError> {
-        let result = HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?;
-        Ok(result)
+    pub fn from_x_y_fp256(x: Fp256, y: Fp256) -> ErrorOr<PublicKey<Fp256>> {
+        Ok(HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?)
     }
 }
 
@@ -481,7 +471,7 @@ where
         + Default,
 {
     verify_signed_value(signed_encrypted_value, signing).map_or(
-        Result::Err(InternalError::SignatureFailed),
+        Result::Err(InternalError::InvalidEncryptedMessageSignature),
         |good_encrypted_value| match good_encrypted_value {
             EncryptedValue::EncryptedOnce(encrypted_once_value) => {
                 let unverified_plaintext = decrypt_encrypted_once(
@@ -818,8 +808,8 @@ impl<FP: Field + NonAdjacentForm> ReencryptionKey<FP> {
 /// `public_signing_key`      - The ED25519 public key matching the private_signing_key.
 ///
 /// # Return
-/// ReencryptedValue - if the value could be successfully reencrypted
-/// - Left(SignatureFailed|ReencryptionKeyIsCorrupt) - if the signatures weren't valid.
+/// Ok(ReencryptedValue) - if the value could be successfully reencrypted
+/// - Err(InvalidEncryptedMessageSignature|ReencryptionKeyIsCorrupt) - if the signatures weren't valid.
 pub fn reencrypt<FP, S, H>(
     signed_reencryption_key: SignedValue<ReencryptionKey<FP>>,
     signed_encrypted_value: SignedValue<EncryptedValue<FP>>,
@@ -830,7 +820,7 @@ pub fn reencrypt<FP, S, H>(
     sha256: &H,
     curve_points: &CurvePoints<FP>,
     pairing: &Pairing<FP>,
-) -> Result<SignedValue<EncryptedValue<FP>>, InternalError>
+) -> ErrorOr<SignedValue<EncryptedValue<FP>>>
 where
     FP: Field
         + Hashable
@@ -873,7 +863,7 @@ where
             signing_keypair,
             ed25519,
         )),
-        (None, _) => Err(InternalError::SignatureFailed),
+        (None, _) => Err(InternalError::InvalidEncryptedMessageSignature),
         (_, None) => Err(InternalError::CorruptReencryptionKey),
     }
 }
@@ -1433,7 +1423,7 @@ mod test {
             sha256,
             &AlwaysFailVerifyEd25519Signing,
         );
-        if let Err(InternalError::SignatureFailed) = decrypt_result {
+        if let Err(InternalError::InvalidEncryptedMessageSignature) = decrypt_result {
             //pass
         } else {
             assert!(false, "Error should have been returned")
