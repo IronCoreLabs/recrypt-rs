@@ -790,6 +790,10 @@ pub trait CryptoOps {
     /// Convert our plaintext into a DecryptedSymmetricKey by hashing it.
     fn derive_symmetric_key(&self, decrypted_value: &Plaintext) -> DerivedSymmetricKey;
 
+    ///Compute the stable hash of a value. This can be used to hash a Plaintext into a symmetric key or to generate a
+    ///PrivateKey from a Plaintext which you're encrypting to someone else.
+    fn hash_256<T: Hashable>(&self, to_hash: &T) -> [u8; 32];
+
     /// Encrypt the plaintext to the `to_public_key`.
     ///
     /// # Arguments
@@ -840,7 +844,11 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
     }
 
     fn derive_symmetric_key(&self, decrypted_value: &Plaintext) -> DerivedSymmetricKey {
-        DerivedSymmetricKey::new(self.sha_256.hash(decrypted_value))
+        DerivedSymmetricKey::new(self.hash_256(decrypted_value))
+    }
+
+    fn hash_256<T: Hashable>(&self, to_hash: &T) -> [u8; 32] {
+        self.sha_256.hash(to_hash)
     }
 
     fn encrypt(
