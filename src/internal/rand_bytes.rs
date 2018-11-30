@@ -12,9 +12,9 @@ pub struct RandomBytes<T: CryptoRng + RngCore> {
     pub(crate) rng: T,
 }
 
-impl Default for RandomBytes<rand::ThreadRng> {
+impl Default for RandomBytes<rand::rngs::ThreadRng> {
     fn default() -> Self {
-        RandomBytes::<rand::ThreadRng>::new(rand::thread_rng())
+        RandomBytes::<rand::rngs::ThreadRng>::new(rand::thread_rng())
     }
 }
 
