@@ -88,6 +88,9 @@ extern crate proptest;
 #[cfg(test)]
 extern crate hex;
 
+#[cfg(test)]
+extern crate rand_chacha;
+
 #[macro_use]
 extern crate lazy_static;
 

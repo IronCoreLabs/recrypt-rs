@@ -1073,6 +1073,7 @@ pub(crate) mod test {
     use internal::Square;
     use num_traits::{One, Zero};
     use rand;
+    use rand_chacha;
     use std::ops::Mul;
 
     //Writing a BS from conversion to make tests which contain `hex` constants easier to write.
@@ -1348,7 +1349,7 @@ pub(crate) mod test {
     #[test]
     fn encrypt_decrypt_roundtrip() -> Result<()> {
         use rand::SeedableRng;
-        let mut api = Api::new_with_rand(rand::ChaChaRng::from_seed([0u8; 32]));
+        let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
         let pt = api.gen_plaintext();
         let (priv_key, pub_key) = api.generate_key_pair().unwrap();
         let priv_signing_key = api.generate_ed25519_key_pair();
@@ -1483,7 +1484,7 @@ pub(crate) mod test {
     #[test]
     fn generate_ed25519_key_pair() {
         use rand::SeedableRng;
-        let mut api = Api::new_with_rand(rand::ChaChaRng::from_seed([0u8; 32]));
+        let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
         let signing_keypair = api.generate_ed25519_key_pair();
         let expected_signing_keypair = SigningKeypair::new_unchecked([
             118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
