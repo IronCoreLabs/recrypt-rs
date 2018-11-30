@@ -1,6 +1,10 @@
 Changelog
 ====================
-
+## 0.4.0
+- [#20] Update dependencies (rand 0.6, sha 0.8, ed25519 1.0.0-pre.0)
+- [#18] Add a way to hash a Plaintext to 32 bytes. 
+- [#17] Add quick_error to all of our error ADTS 
+- [#14] Add benchmarking on Travis 
 ## 0.3.0
 
 - Add hashable instance for TransformKey (#13)
