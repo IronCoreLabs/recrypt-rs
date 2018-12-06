@@ -85,7 +85,6 @@ extern crate sha2;
 #[macro_use]
 extern crate proptest;
 
-#[cfg(test)]
 extern crate hex;
 
 #[cfg(test)]

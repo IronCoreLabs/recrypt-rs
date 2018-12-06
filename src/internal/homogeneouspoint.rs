@@ -291,9 +291,7 @@ where
                 naf.reverse();
                 naf.iter().fold(zero(), |res, &cur| {
                     let doubled = res.double();
-                    if cur == -1 {
-                        (doubled - *self)
-                    } else if cur == 1 {
+                    if cur == 1 {
                         doubled + *self
                     } else {
                         doubled
@@ -321,6 +319,7 @@ pub mod test {
     use hex;
     use internal::curve;
     use internal::curve::FP_256_CURVE_POINTS;
+    use internal::fp::fp256_unsafe_from;
     use internal::test::arb_fp256;
     use num_traits::One;
     use proptest::prelude::*;
@@ -328,14 +327,14 @@ pub mod test {
     #[test]
     fn eq_will_divide_by_z() {
         let point = HomogeneousPoint {
-            x: Fp256::from(100),
-            y: Fp256::from(200),
-            z: Fp256::from(100),
+            x: Fp256::from(100u32),
+            y: Fp256::from(200u32),
+            z: Fp256::from(100u32),
         };
         let point2 = HomogeneousPoint {
-            x: Fp256::from(1),
-            y: Fp256::from(2),
-            z: Fp256::from(1),
+            x: Fp256::from(1u32),
+            y: Fp256::from(2u32),
+            z: Fp256::from(1u32),
         };
         assert_eq!(point, point2);
     }
@@ -344,27 +343,23 @@ pub mod test {
     fn addition_to_self_laws() {
         let g2 = HomogeneousPoint {
             //65000549695646603732796438742359905742825358107623003571877145026864184071691
-            x: Fp256::new([
-                1755467536201717259,
-                17175472035685840286,
-                12281294985516866593,
-                10355184993929758713,
-            ]),
+            x: fp256_unsafe_from(
+                "8fb501e34aa387f9aa6fecb86184dc21ee5b88d120b5b59e185cac6c5e08960b",
+            ),
             //65000549695646603732796438742359905742825358107623003571877145026864184071772
-            y: Fp256::new([
-                1755467536201717340,
-                17175472035685840286,
-                12281294985516866593,
-                10355184993929758713,
-            ]),
+            y: fp256_unsafe_from(
+                "8fb501e34aa387f9aa6fecb86184dc21ee5b88d120b5b59e185cac6c5e08965c",
+            ),
             //64
-            z: Fp256::new([64, 0, 0, 0]),
+            z: fp256_unsafe_from(
+                "0000000000000000000000000000000000000000000000000000000000000040",
+            ),
         };
 
         let computed_g2 = FP_256_CURVE_POINTS.generator + FP_256_CURVE_POINTS.generator;
         assert_eq!(g2, computed_g2);
         assert_eq!(
-            FP_256_CURVE_POINTS.generator.times(&Fp256::from(2)),
+            FP_256_CURVE_POINTS.generator.times(&Fp256::from(2u8)),
             computed_g2
         );
         assert_eq!(FP_256_CURVE_POINTS.generator.double(), computed_g2);

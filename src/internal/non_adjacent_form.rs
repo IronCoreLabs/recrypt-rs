@@ -5,17 +5,17 @@ use internal::fp::fr_256::Fr256;
 ///
 ///This is possible for all numeric types.
 pub trait NonAdjacentForm {
-    fn to_naf(&self) -> Vec<i8>;
+    fn to_naf(&self) -> Vec<u8>;
 }
 
 impl NonAdjacentForm for Fp256 {
-    fn to_naf(&self) -> Vec<i8> {
-        (*self).create_naf()
+    fn to_naf(&self) -> Vec<u8> {
+        (*self).iter_bit().map(|x| x.0 as u8).collect()
     }
 }
 
 impl NonAdjacentForm for Fr256 {
-    fn to_naf(&self) -> Vec<i8> {
-        (*self).create_naf()
+    fn to_naf(&self) -> Vec<u8> {
+        (*self).iter_bit().map(|x| x.0 as u8).collect()
     }
 }
