@@ -79,7 +79,8 @@ impl<'a, T: Hashable, U: Hashable, V: Hashable, W: Hashable> Hashable
             self.1.to_bytes(),
             self.2.to_bytes(),
             self.3.to_bytes(),
-        ].to_bytes()
+        ]
+        .to_bytes()
     }
 }
 
@@ -93,7 +94,8 @@ impl<'a, T: Hashable, U: Hashable, V: Hashable, W: Hashable, X: Hashable> Hashab
             self.2.to_bytes(),
             self.3.to_bytes(),
             self.4.to_bytes(),
-        ].to_bytes()
+        ]
+        .to_bytes()
     }
 }
 

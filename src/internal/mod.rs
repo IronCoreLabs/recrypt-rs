@@ -229,7 +229,7 @@ impl<FP: Field + Hashable> Hashable for ReencryptionBlock<FP> {
             &self.rand_re_public_key.to_bytes()[..],
             &self.encrypted_rand_re_temp_key.to_bytes()[..],
         ]
-            .concat()
+        .concat()
     }
 }
 /// A value which has been encrypted, but not transformed.
@@ -254,7 +254,8 @@ impl<T: Field + Hashable> Hashable for EncryptedValue<T> {
                 ephemeral_public_key.to_bytes(),
                 encrypted_message.to_bytes(),
                 auth_hash.to_bytes(),
-            ].to_bytes(),
+            ]
+            .to_bytes(),
             EncryptedValue::Reencrypted(ReencryptedValue {
                 ephemeral_public_key,
                 encrypted_message,
@@ -265,7 +266,8 @@ impl<T: Field + Hashable> Hashable for EncryptedValue<T> {
                 encrypted_message.to_bytes(),
                 auth_hash.to_bytes(),
                 encryption_blocks.to_bytes(),
-            ].to_bytes(),
+            ]
+            .to_bytes(),
         }
     }
 }
@@ -589,10 +591,11 @@ where
             * pairing.pair(-re_pub_key_last.value * private_key.value, curve_points.g1),
     );
     let sec_to_last_rand_re_k = KValue(
-        *enc_rand_re_k_last * pairing.pair(
-            -rand_re_pub_key_last.value * private_key.value,
-            curve_points.g1,
-        ),
+        *enc_rand_re_k_last
+            * pairing.pair(
+                -rand_re_pub_key_last.value * private_key.value,
+                curve_points.g1,
+            ),
     );
     //We're going through the list backwards because we unravel the reencryption blocks from last to first, the last one is special so it's done first.
     let (first_k, first_rand_re_k) = re_blocks.to_vec().iter().rev().skip(1).fold(
@@ -607,18 +610,20 @@ where
             let curr_k_hash = hash2(curr_k, curve_points, sha256);
             let new_k = KValue(*next_enc_k * pairing.pair(-next_re_pub_key.value, curr_k_hash));
             let new_rand_re_k = KValue(
-                *next_enc_rand_re_k * pairing.pair(
-                    -next_rand_re_pub_key.value,
-                    hash2(curr_rand_re_k, curve_points, sha256) + curr_k_hash,
-                ),
+                *next_enc_rand_re_k
+                    * pairing.pair(
+                        -next_rand_re_pub_key.value,
+                        hash2(curr_rand_re_k, curve_points, sha256) + curr_k_hash,
+                    ),
             );
             (new_k, new_rand_re_k)
         },
     );
-    reencrypted_value.encrypted_message * pairing.pair(
-        reencrypted_value.ephemeral_public_key.value.neg(),
-        hash2(first_k, curve_points, sha256) + hash2(first_rand_re_k, curve_points, sha256),
-    )
+    reencrypted_value.encrypted_message
+        * pairing.pair(
+            reencrypted_value.ephemeral_public_key.value.neg(),
+            hash2(first_k, curve_points, sha256) + hash2(first_rand_re_k, curve_points, sha256),
+        )
 }
 
 /// Verifies the Ed25519 signature on a signed value.
@@ -977,10 +982,11 @@ where
     let enc_rand_re_temp_key =
         pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1) * rand_re_temp_key.0;
     // Modify the enc_rand_re_temp_key of the last block with the new random reencryption K
-    let rand_re_k_last_prime = *enc_rand_re_k_last * pairing.pair(
-        rand_re_pub_key_last.value,
-        hash2(rand_re_temp_key, curve_points, sha256) + hashed_k,
-    );
+    let rand_re_k_last_prime = *enc_rand_re_k_last
+        * pairing.pair(
+            rand_re_pub_key_last.value,
+            hash2(rand_re_temp_key, curve_points, sha256) + hashed_k,
+        );
     let re_block_last_prime =
         re_blocks_last.with_temp_key(encrypted_k_prime_last, rand_re_k_last_prime);
     let new_re_block = ReencryptionBlock {
@@ -1324,7 +1330,8 @@ mod test {
             sha256,
             curve_points,
             &pairing,
-        ).unwrap();
+        )
+        .unwrap();
 
         let decrypted_value = decrypt(
             priv_key,
@@ -1333,7 +1340,8 @@ mod test {
             curve_points,
             sha256,
             ed25519,
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(decrypted_value, plaintext)
     }
 
@@ -1566,7 +1574,8 @@ mod test {
             sha256,
             curve_points,
             &pairing,
-        ).unwrap();
+        )
+        .unwrap();
 
         // the fun has just begun! Do a second level of reencryption
         let rand_re_priv_key_2 = PrivateKey::from_fp256(
@@ -1601,7 +1610,8 @@ mod test {
             sha256,
             curve_points,
             &pairing,
-        ).unwrap();
+        )
+        .unwrap();
 
         if let EncryptedValue::Reencrypted(v) = reencrypted_value_2.payload.clone() {
             assert_eq!(2, v.encryption_blocks.len())
@@ -1616,7 +1626,8 @@ mod test {
             curve_points,
             sha256,
             ed25519,
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(decrypted_value, plaintext);
 
         //finally, show that a invalid private key will force an auth hash failure

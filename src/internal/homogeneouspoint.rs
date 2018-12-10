@@ -104,33 +104,35 @@ where
                     y: y2,
                     z: z2,
                 },
-            ) => if x1 == x2 && y1 == -(y2) && z1 == z2 {
-                Zero::zero()
-            } else if self == other {
-                self.double()
-            } else {
-                let y_times_z2 = y1 * z2;
-                let x_times_z2 = x1 * z2;
-                let x2_times_z = x2 * z1;
-                let a = (y2 * z1) - y_times_z2;
-                let b = x2_times_z - x_times_z2;
-                let z_times_z2 = z1 * z2;
-                let b_squared = b.square();
-                let b_cubed = b_squared * b;
-                let a_squared = a.square();
-                let z_times_z2_times_a_squared = z_times_z2 * a_squared;
-                let x_times_z2_plus_x2_times_z = x_times_z2 + x2_times_z;
-                let x3 =
-                    b * (z_times_z2_times_a_squared - (b_squared * x_times_z2_plus_x2_times_z));
-                let y3 = a * b_squared * (x_times_z2 + x_times_z2_plus_x2_times_z)
-                    - ((z_times_z2_times_a_squared * a) + (y_times_z2 * b_cubed));
-                let z3 = z_times_z2 * b_cubed;
-                HomogeneousPoint {
-                    x: x3,
-                    y: y3,
-                    z: z3,
+            ) => {
+                if x1 == x2 && y1 == -(y2) && z1 == z2 {
+                    Zero::zero()
+                } else if self == other {
+                    self.double()
+                } else {
+                    let y_times_z2 = y1 * z2;
+                    let x_times_z2 = x1 * z2;
+                    let x2_times_z = x2 * z1;
+                    let a = (y2 * z1) - y_times_z2;
+                    let b = x2_times_z - x_times_z2;
+                    let z_times_z2 = z1 * z2;
+                    let b_squared = b.square();
+                    let b_cubed = b_squared * b;
+                    let a_squared = a.square();
+                    let z_times_z2_times_a_squared = z_times_z2 * a_squared;
+                    let x_times_z2_plus_x2_times_z = x_times_z2 + x2_times_z;
+                    let x3 =
+                        b * (z_times_z2_times_a_squared - (b_squared * x_times_z2_plus_x2_times_z));
+                    let y3 = a * b_squared * (x_times_z2 + x_times_z2_plus_x2_times_z)
+                        - ((z_times_z2_times_a_squared * a) + (y_times_z2 * b_cubed));
+                    let z3 = z_times_z2 * b_cubed;
+                    HomogeneousPoint {
+                        x: x3,
+                        y: y3,
+                        z: z3,
+                    }
                 }
-            },
+            }
         }
     }
 }
@@ -284,20 +286,22 @@ where
     pub fn times<A: NonAdjacentForm>(&self, multiple: &A) -> HomogeneousPoint<T> {
         match self {
             ref p if p.is_zero() => Zero::zero(),
-            HomogeneousPoint { y, .. } => if *y == zero() {
-                *self
-            } else {
-                let mut naf = multiple.to_naf();
-                naf.reverse();
-                naf.iter().fold(zero(), |res, &cur| {
-                    let doubled = res.double();
-                    if cur == 1 {
-                        doubled + *self
-                    } else {
-                        doubled
-                    }
-                })
-            },
+            HomogeneousPoint { y, .. } => {
+                if *y == zero() {
+                    *self
+                } else {
+                    let mut naf = multiple.to_naf();
+                    naf.reverse();
+                    naf.iter().fold(zero(), |res, &cur| {
+                        let doubled = res.double();
+                        if cur == 1 {
+                            doubled + *self
+                        } else {
+                            doubled
+                        }
+                    })
+                }
+            }
         }
     }
 

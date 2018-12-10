@@ -83,14 +83,15 @@ where
         let (ell3, ell4) = self.add_line_eval(px, py, -point_q2, point_r);
         f1 = f1 * ell3;
         f2 = f2 * ell4;
-        let f = f1 * Fp12Elem {
-            elem1: Zero::zero(),
-            elem2: Fp6Elem {
+        let f = f1
+            * Fp12Elem {
                 elem1: Zero::zero(),
-                elem2: Zero::zero(),
-                elem3: f2.inv(),
-            },
-        };
+                elem2: Fp6Elem {
+                    elem1: Zero::zero(),
+                    elem2: Zero::zero(),
+                    elem3: f2.inv(),
+                },
+            };
         self.final_exp(f)
     }
 
@@ -158,16 +159,18 @@ where
                 let new_numerator = Fp12Elem::create(
                     Zero::zero(),
                     x * numerator - y * denominator,
-                    -z * numerator * Fp2Elem {
-                        elem1: Zero::zero(),
-                        elem2: px,
-                    },
+                    -z * numerator
+                        * Fp2Elem {
+                            elem1: Zero::zero(),
+                            elem2: px,
+                        },
                     Zero::zero(),
                     Zero::zero(),
-                    z * denominator * Fp2Elem {
-                        elem1: Zero::zero(),
-                        elem2: py,
-                    },
+                    z * denominator
+                        * Fp2Elem {
+                            elem1: Zero::zero(),
+                            elem2: py,
+                        },
                 );
                 (new_numerator, z * denominator)
             }

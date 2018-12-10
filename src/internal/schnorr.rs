@@ -192,7 +192,8 @@ mod test {
                 fp256_unsafe_from(
                     "67c71804fc824e10ffe0383425492a83642433ef8c75a869ef30f5856573711f",
                 ),
-            )).unwrap(),
+            ))
+            .unwrap(),
         );
         //65000549695646603732796438742359905742825358107623003571877145026864184071782
         let priv_key = PrivateKey::from_fp256(fp256_unsafe_from(
