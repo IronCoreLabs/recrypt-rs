@@ -1,10 +1,10 @@
 use gridiron::fp_256::Fp256;
 use internal::array_concat_32;
+use internal::bit_repr::BitRepr;
 use internal::curve::FP_256_CURVE_POINTS;
 use internal::fp::fr_256::Fr256;
 use internal::hashable::Hashable;
 use internal::homogeneouspoint::HomogeneousPoint;
-use internal::non_adjacent_form::NonAdjacentForm;
 use internal::sha256::Sha256;
 use internal::sha256::Sha256Hashing;
 use internal::{field, PrivateKey, PublicKey};
@@ -59,8 +59,8 @@ fn compute_double_hash<A: Hashable, B: Hashable, H: Sha256Hashing>(
 
 impl<FP, FR, H> SchnorrSigning<FP, FR> for SchnorrSign<FP, FR, H>
 where
-    FP: field::Field + NonAdjacentForm + Hashable + From<[u8; 64]>,
-    FR: field::Field + NonAdjacentForm + From<FP> + From<[u8; 64]> + Hashable,
+    FP: field::Field + BitRepr + Hashable + From<[u8; 64]>,
+    FR: field::Field + BitRepr + From<FP> + From<[u8; 64]> + Hashable,
     H: Sha256Hashing,
 {
     fn sign<A: Hashable>(
@@ -144,6 +144,7 @@ pub trait SchnorrSigning<T: field::Field, U> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use internal::fp::fp256_unsafe_from;
     use internal::fp::fr_256::Fr256;
     use internal::test::arb_priv_key;
     use internal::PublicKey;
@@ -185,50 +186,37 @@ mod test {
         //46939991746311747972637410299323006395308387045114925817569453518797610905887)
         let pub_key = PublicKey::new(
             HomogeneousPoint::from_x_y((
-                Fp256::new([
-                    13106811952939269267,
-                    4141828384527557607,
-                    7080725402398640391,
-                    1445861572479947833,
-                ]),
-                Fp256::new([
-                    17235545727228408095,
-                    7215949606901098601,
-                    18437798671069817475,
-                    7477972115967331856,
-                ]),
-            )).unwrap(),
+                fp256_unsafe_from(
+                    "1410bb708e0e14396243ca3cfa0e4907397abaf8ac6523e7b5e4c00740c9fc93",
+                ),
+                fp256_unsafe_from(
+                    "67c71804fc824e10ffe0383425492a83642433ef8c75a869ef30f5856573711f",
+                ),
+            ))
+            .unwrap(),
         );
         //65000549695646603732796438742359905742825358107623003571877145026864184071782
-        let priv_key = PrivateKey::from_fp256(Fp256::new([
-            1755467536201717350,
-            17175472035685840286,
-            12281294985516866593,
-            10355184993929758713,
-        ]));
+        let priv_key = PrivateKey::from_fp256(fp256_unsafe_from(
+            "8fb501e34aa387f9aa6fecb86184dc21ee5b88d120b5b59e185cac6c5e089666",
+        ));
         //65000549695646603732796438742359905742570406053903786389881062969044166799967
         let k = Fr256::new([
-            1886713967064937055,
-            3354493509585025316,
-            12281294985516866593,
-            10355184993929758713,
+            1470919263, 878569654, 1621943440, 1953263767, 407749138, 1308464908, 685899370,
+            1518399909, 143,
         ]);
+
         let message = 1u8;
         //SchnorrSignature(
         //  4062534355977912733299777421397494108926584881726437723242321564179011504485,
         //  54576864563267907144762780592548274163132236814713061179326750530890377205812)
         let expected_result = SchnorrSignature {
             r: Fr256::new([
-                16250617785508464997,
-                2226388506837211993,
-                11143874478056426946,
-                647199062120609919,
+                1172343141, 1124832653, 1210936679, 1999488104, 1636097057, 1423956336, 713957350,
+                2108165914, 8,
             ]),
             s: Fr256::new([
-                17737603127845853236,
-                17684162376844168118,
-                5021827597828301695,
-                8694596147071348058,
+                572266548, 1817264162, 947859163, 727064549, 1022507007, 908309245, 1790662289,
+                1421119645, 120,
             ]),
         };
 

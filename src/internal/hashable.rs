@@ -1,6 +1,5 @@
 use gridiron::fp_256;
 use gridiron::fp_256::Fp256;
-use internal::fp::fr_256;
 use internal::fp::fr_256::Fr256;
 use internal::ByteVector;
 use nonemptyvec::NonEmptyVec;
@@ -80,7 +79,8 @@ impl<'a, T: Hashable, U: Hashable, V: Hashable, W: Hashable> Hashable
             self.1.to_bytes(),
             self.2.to_bytes(),
             self.3.to_bytes(),
-        ].to_bytes()
+        ]
+        .to_bytes()
     }
 }
 
@@ -94,7 +94,8 @@ impl<'a, T: Hashable, U: Hashable, V: Hashable, W: Hashable, X: Hashable> Hashab
             self.2.to_bytes(),
             self.3.to_bytes(),
             self.4.to_bytes(),
-        ].to_bytes()
+        ]
+        .to_bytes()
     }
 }
 
@@ -118,13 +119,13 @@ impl<T: Hashable32> Hashable for T {
 }
 
 impl Hashable32 for Fp256 {
-    fn to_bytes_32(&self) -> [u8; fp_256::NUMBYTES] {
+    fn to_bytes_32(&self) -> [u8; fp_256::PRIMEBYTES] {
         self.to_bytes_array()
     }
 }
 
 impl Hashable32 for Fr256 {
-    fn to_bytes_32(&self) -> [u8; fr_256::NUMBYTES] {
+    fn to_bytes_32(&self) -> [u8; fp_256::PRIMEBYTES] {
         self.to_bytes_array()
     }
 }

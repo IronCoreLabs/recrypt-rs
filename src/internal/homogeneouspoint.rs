@@ -1,9 +1,9 @@
+use internal::bit_repr::BitRepr;
 use internal::bytedecoder::{BytesDecoder, DecodeErr};
 use internal::field::ExtensionField;
 use internal::field::Field;
 use internal::fp2elem::Fp2Elem;
 use internal::hashable::Hashable;
-use internal::non_adjacent_form::NonAdjacentForm;
 use internal::ByteVector;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
@@ -76,7 +76,7 @@ impl<T> Eq for HomogeneousPoint<T> where T: Field {}
 impl<T, U> Mul<U> for HomogeneousPoint<T>
 where
     T: Field,
-    U: NonAdjacentForm,
+    U: BitRepr,
 {
     type Output = HomogeneousPoint<T>;
     fn mul(self, rhs: U) -> HomogeneousPoint<T> {
@@ -104,33 +104,35 @@ where
                     y: y2,
                     z: z2,
                 },
-            ) => if x1 == x2 && y1 == -(y2) && z1 == z2 {
-                Zero::zero()
-            } else if self == other {
-                self.double()
-            } else {
-                let y_times_z2 = y1 * z2;
-                let x_times_z2 = x1 * z2;
-                let x2_times_z = x2 * z1;
-                let a = (y2 * z1) - y_times_z2;
-                let b = x2_times_z - x_times_z2;
-                let z_times_z2 = z1 * z2;
-                let b_squared = b.square();
-                let b_cubed = b_squared * b;
-                let a_squared = a.square();
-                let z_times_z2_times_a_squared = z_times_z2 * a_squared;
-                let x_times_z2_plus_x2_times_z = x_times_z2 + x2_times_z;
-                let x3 =
-                    b * (z_times_z2_times_a_squared - (b_squared * x_times_z2_plus_x2_times_z));
-                let y3 = a * b_squared * (x_times_z2 + x_times_z2_plus_x2_times_z)
-                    - ((z_times_z2_times_a_squared * a) + (y_times_z2 * b_cubed));
-                let z3 = z_times_z2 * b_cubed;
-                HomogeneousPoint {
-                    x: x3,
-                    y: y3,
-                    z: z3,
+            ) => {
+                if x1 == x2 && y1 == -(y2) && z1 == z2 {
+                    Zero::zero()
+                } else if self == other {
+                    self.double()
+                } else {
+                    let y_times_z2 = y1 * z2;
+                    let x_times_z2 = x1 * z2;
+                    let x2_times_z = x2 * z1;
+                    let a = (y2 * z1) - y_times_z2;
+                    let b = x2_times_z - x_times_z2;
+                    let z_times_z2 = z1 * z2;
+                    let b_squared = b.square();
+                    let b_cubed = b_squared * b;
+                    let a_squared = a.square();
+                    let z_times_z2_times_a_squared = z_times_z2 * a_squared;
+                    let x_times_z2_plus_x2_times_z = x_times_z2 + x2_times_z;
+                    let x3 =
+                        b * (z_times_z2_times_a_squared - (b_squared * x_times_z2_plus_x2_times_z));
+                    let y3 = a * b_squared * (x_times_z2 + x_times_z2_plus_x2_times_z)
+                        - ((z_times_z2_times_a_squared * a) + (y_times_z2 * b_cubed));
+                    let z3 = z_times_z2 * b_cubed;
+                    HomogeneousPoint {
+                        x: x3,
+                        y: y3,
+                        z: z3,
+                    }
                 }
-            },
+            }
         }
     }
 }
@@ -281,25 +283,25 @@ where
     }
 
     ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
-    pub fn times<A: NonAdjacentForm>(&self, multiple: &A) -> HomogeneousPoint<T> {
+    pub fn times<A: BitRepr>(&self, multiple: &A) -> HomogeneousPoint<T> {
         match self {
             ref p if p.is_zero() => Zero::zero(),
-            HomogeneousPoint { y, .. } => if *y == zero() {
-                *self
-            } else {
-                let mut naf = multiple.to_naf();
-                naf.reverse();
-                naf.iter().fold(zero(), |res, &cur| {
-                    let doubled = res.double();
-                    if cur == -1 {
-                        (doubled - *self)
-                    } else if cur == 1 {
-                        doubled + *self
-                    } else {
-                        doubled
-                    }
-                })
-            },
+            HomogeneousPoint { y, .. } => {
+                if *y == zero() {
+                    *self
+                } else {
+                    let mut naf = multiple.to_bits();
+                    naf.reverse();
+                    naf.iter().fold(zero(), |res, &cur| {
+                        let doubled = res.double();
+                        if cur == 1 {
+                            doubled + *self
+                        } else {
+                            doubled
+                        }
+                    })
+                }
+            }
         }
     }
 
@@ -321,6 +323,7 @@ pub mod test {
     use hex;
     use internal::curve;
     use internal::curve::FP_256_CURVE_POINTS;
+    use internal::fp::fp256_unsafe_from;
     use internal::test::arb_fp256;
     use num_traits::One;
     use proptest::prelude::*;
@@ -328,14 +331,14 @@ pub mod test {
     #[test]
     fn eq_will_divide_by_z() {
         let point = HomogeneousPoint {
-            x: Fp256::from(100),
-            y: Fp256::from(200),
-            z: Fp256::from(100),
+            x: Fp256::from(100u32),
+            y: Fp256::from(200u32),
+            z: Fp256::from(100u32),
         };
         let point2 = HomogeneousPoint {
-            x: Fp256::from(1),
-            y: Fp256::from(2),
-            z: Fp256::from(1),
+            x: Fp256::from(1u32),
+            y: Fp256::from(2u32),
+            z: Fp256::from(1u32),
         };
         assert_eq!(point, point2);
     }
@@ -344,27 +347,23 @@ pub mod test {
     fn addition_to_self_laws() {
         let g2 = HomogeneousPoint {
             //65000549695646603732796438742359905742825358107623003571877145026864184071691
-            x: Fp256::new([
-                1755467536201717259,
-                17175472035685840286,
-                12281294985516866593,
-                10355184993929758713,
-            ]),
+            x: fp256_unsafe_from(
+                "8fb501e34aa387f9aa6fecb86184dc21ee5b88d120b5b59e185cac6c5e08960b",
+            ),
             //65000549695646603732796438742359905742825358107623003571877145026864184071772
-            y: Fp256::new([
-                1755467536201717340,
-                17175472035685840286,
-                12281294985516866593,
-                10355184993929758713,
-            ]),
+            y: fp256_unsafe_from(
+                "8fb501e34aa387f9aa6fecb86184dc21ee5b88d120b5b59e185cac6c5e08965c",
+            ),
             //64
-            z: Fp256::new([64, 0, 0, 0]),
+            z: fp256_unsafe_from(
+                "0000000000000000000000000000000000000000000000000000000000000040",
+            ),
         };
 
         let computed_g2 = FP_256_CURVE_POINTS.generator + FP_256_CURVE_POINTS.generator;
         assert_eq!(g2, computed_g2);
         assert_eq!(
-            FP_256_CURVE_POINTS.generator.times(&Fp256::from(2)),
+            FP_256_CURVE_POINTS.generator.times(&Fp256::from(2u8)),
             computed_g2
         );
         assert_eq!(FP_256_CURVE_POINTS.generator.double(), computed_g2);

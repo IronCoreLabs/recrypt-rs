@@ -156,7 +156,8 @@ impl Ed25519Signing for Ed25519 {
             .and_then(|pk| {
                 ed25519_dalek::Signature::from_bytes(&signature.bytes[..])
                     .and_then(|sig| pk.verify::<Sha512>(&t.to_bytes()[..], &sig))
-            }).map(|_| true)
+            })
+            .map(|_| true)
             .unwrap_or(false)
     }
 }

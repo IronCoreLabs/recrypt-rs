@@ -259,28 +259,28 @@ pub mod test {
 
     pub fn get_fp2s() -> [Fp2Elem<Fp256>; 6] {
         let fp2a = Fp2Elem {
-            elem1: Fp256::from(100),
-            elem2: Fp256::from(200),
+            elem1: Fp256::from(100u32),
+            elem2: Fp256::from(200u32),
         };
         let fp2b = Fp2Elem {
-            elem1: Fp256::from(300),
-            elem2: Fp256::from(400),
+            elem1: Fp256::from(300u32),
+            elem2: Fp256::from(400u32),
         };
         let fp2c = Fp2Elem {
-            elem1: Fp256::from(500),
-            elem2: Fp256::from(600),
+            elem1: Fp256::from(500u32),
+            elem2: Fp256::from(600u32),
         };
         let fp2d = Fp2Elem {
-            elem1: Fp256::from(700),
-            elem2: Fp256::from(800),
+            elem1: Fp256::from(700u32),
+            elem2: Fp256::from(800u32),
         };
         let fp2e = Fp2Elem {
-            elem1: Fp256::from(900),
-            elem2: Fp256::from(1000),
+            elem1: Fp256::from(900u32),
+            elem2: Fp256::from(1000u32),
         };
         let fp2f = Fp2Elem {
-            elem1: Fp256::from(1100),
-            elem2: Fp256::from(1200),
+            elem1: Fp256::from(1100u32),
+            elem2: Fp256::from(1200u32),
         };
 
         [fp2a, fp2b, fp2c, fp2d, fp2e, fp2f]
@@ -290,8 +290,8 @@ pub mod test {
     #[cfg_attr(rustfmt, rustfmt_skip)]
     fn hashable() {
         let fp2 = Fp2Elem {
-            elem1: Fp256::from(256),
-            elem2: Fp256::from(255),
+            elem1: Fp256::from(256u32),
+            elem2: Fp256::from(255u32),
         };
 
         let bytes = fp2.to_bytes();
@@ -312,8 +312,8 @@ pub mod test {
     #[test]
     fn round_trip_bytes() {
         let fp2 = Fp2Elem {
-            elem1: Fp256::from(256),
-            elem2: Fp256::from(255),
+            elem1: Fp256::from(256u32),
+            elem2: Fp256::from(255u32),
         };
 
         let bytes = fp2.to_bytes();
@@ -325,14 +325,14 @@ pub mod test {
     #[test]
     fn test_add_fixed() {
         let fp2 = Fp2Elem {
-            elem1: Fp256::from(2),
-            elem2: Fp256::from(1),
+            elem1: Fp256::from(2u32),
+            elem2: Fp256::from(1u32),
         };
         assert_eq!(
             fp2 + fp2,
             Fp2Elem {
-                elem1: Fp256::from(4),
-                elem2: Fp256::from(2),
+                elem1: Fp256::from(4u32),
+                elem2: Fp256::from(2u32),
             }
         );
     }
@@ -341,8 +341,8 @@ pub mod test {
     fn pow_by_five_should_be_five_muls() {
         let five = 5;
         let fp2 = Fp2Elem {
-            elem1: Fp256::from(4),
-            elem2: Fp256::from(2),
+            elem1: Fp256::from(4u32),
+            elem2: Fp256::from(2u32),
         };
         let five_times = fp2 * fp2 * fp2 * fp2 * fp2;
         assert_eq!(fp2.pow(five), five_times);

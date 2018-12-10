@@ -63,4 +63,4 @@ macro_rules! from_arrayvec_n { ($($n: expr), *) => {
 })+
 }}
 
-from_arrayvec_n!{32, 128, 384}
+from_arrayvec_n! {32, 128, 384}
