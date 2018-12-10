@@ -1,10 +1,10 @@
 use gridiron::fp_256::Fp256;
 use internal::array_concat_32;
+use internal::bit_repr::BitRepr;
 use internal::curve::FP_256_CURVE_POINTS;
 use internal::fp::fr_256::Fr256;
 use internal::hashable::Hashable;
 use internal::homogeneouspoint::HomogeneousPoint;
-use internal::non_adjacent_form::NonAdjacentForm;
 use internal::sha256::Sha256;
 use internal::sha256::Sha256Hashing;
 use internal::{field, PrivateKey, PublicKey};
@@ -59,8 +59,8 @@ fn compute_double_hash<A: Hashable, B: Hashable, H: Sha256Hashing>(
 
 impl<FP, FR, H> SchnorrSigning<FP, FR> for SchnorrSign<FP, FR, H>
 where
-    FP: field::Field + NonAdjacentForm + Hashable + From<[u8; 64]>,
-    FR: field::Field + NonAdjacentForm + From<FP> + From<[u8; 64]> + Hashable,
+    FP: field::Field + BitRepr + Hashable + From<[u8; 64]>,
+    FR: field::Field + BitRepr + From<FP> + From<[u8; 64]> + Hashable,
     H: Sha256Hashing,
 {
     fn sign<A: Hashable>(

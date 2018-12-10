@@ -785,6 +785,12 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
 /// Encrypt, Decrypt, Transform, and supporting operations.
 pub trait CryptoOps {
     /// Using the random_bytes, generate a random element of G_T, which is one of the rth roots of unity in FP12.
+    ///
+    /// What it means to be an rth root (for Fp256):
+    /// let curve_order = 6500054969564660373279643874235990574257040605390378638988106296904416679996; (this is "r" -- also defined as the prime for Fr256)
+    /// let rth_pow = plaintext.pow(curve_order);
+    /// assert_eq!(rth_pow, Fp12Elem::one());
+    /// Note that this cannot be implemented here as we do not define a way to do: Fp12.pow(Fp256)
     fn gen_plaintext(&mut self) -> Plaintext;
 
     /// Convert our plaintext into a DecryptedSymmetricKey by hashing it.
@@ -1082,27 +1088,6 @@ pub(crate) mod test {
         }
     }
 
-    //    ///Duplicated here for the generate plaintext test
-    //    fn pow_for_square<T: One + Mul<T, Output = T> + Copy + Square>(t: T, exp: Fp256) -> T {
-    //        if exp == Fp256::zero() {
-    //            T::one()
-    //        } else {
-    //            let mut mut_exp = exp;
-    //            let mut y = T::one();
-    //            let mut x = t;
-    //            while mut_exp > Fp256::one() {
-    //                if mut_exp.is_even() {
-    //                    y = x * y;
-    //                    x = x.square();
-    //                } else {
-    //                    x = x.square();
-    //                }
-    //                mut_exp = mut_exp.div(Fp256::from(2u8)); // This isn't really div 2! This is modular division
-    //            }
-    //            y * x
-    //        }
-    //    }
-
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
         fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {
@@ -1274,21 +1259,6 @@ pub(crate) mod test {
             Fp12Elem::decode(etk.bytes.to_vec()).unwrap()
         )
     }
-
-    //        #[test]
-    //        fn gen_plaintext_always_produce_rth_root() {
-    //            let mut api = api_with(None::<RandomBytes<rand::rngs::ThreadRng>>, DummyEd25519);
-    //            let pt = api.gen_plaintext();
-    //            let fp12 = <Fp12Elem<Fp256>>::decode(pt.bytes.to_vec()).unwrap();
-    //            // 65000549695646603732796438742359905742570406053903786389881062969044166799969.digits(2^31) (this is "r" -- also defined in Fr256)
-    //            let curve_order =
-    //    Fp256::new([
-    //        1470919265, 878569654, 1621943440, 1953263767, 407749138, 1308464908, 685899370,
-    //        1518399909, 143
-    //    ]);
-    //            let rth_pow = pow_for_square(fp12, curve_order);
-    //            assert_eq!(rth_pow, Fp12Elem::one());
-    //        }
 
     #[test]
     fn roundtrip_transform_block() {

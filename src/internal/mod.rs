@@ -1,5 +1,6 @@
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
+use internal::bit_repr::BitRepr;
 use internal::curve::CurvePoints;
 use internal::ed25519::{Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair};
 use internal::field::ExtensionField;
@@ -9,7 +10,6 @@ use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
 use internal::hashable::{Hashable, Hashable32};
 use internal::homogeneouspoint::{HomogeneousPoint, PointErr};
-use internal::non_adjacent_form::NonAdjacentForm;
 use internal::pairing::Pairing;
 use internal::pairing::PairingConfig;
 use internal::sha256::Sha256Hashing;
@@ -18,6 +18,7 @@ use num_traits::{One, Zero};
 use std::ops::{Add, Mul, Neg};
 #[macro_use]
 pub mod macros;
+pub mod bit_repr;
 pub mod bytedecoder;
 pub mod curve;
 pub mod ed25519;
@@ -28,7 +29,6 @@ pub mod fp2elem;
 pub mod fp6elem;
 pub mod hashable;
 pub mod homogeneouspoint;
-pub mod non_adjacent_form;
 pub mod pairing;
 pub mod rand_bytes;
 pub mod schnorr;
@@ -107,12 +107,12 @@ impl PrivateKey<Fp256> {
     }
 }
 
-impl<T> NonAdjacentForm for PrivateKey<T>
+impl<T> BitRepr for PrivateKey<T>
 where
-    T: NonAdjacentForm + Copy,
+    T: BitRepr + Copy,
 {
-    fn to_naf(&self) -> Vec<u8> {
-        self.value.to_naf()
+    fn to_bits(&self) -> Vec<u8> {
+        self.value.to_bits()
     }
 }
 
@@ -353,7 +353,7 @@ where
 ///Generate a public key using the private key and generator point.
 pub fn public_keygen<T>(private_key: PrivateKey<T>, generator: HomogeneousPoint<T>) -> PublicKey<T>
 where
-    T: Field + NonAdjacentForm,
+    T: Field + BitRepr,
 {
     PublicKey {
         value: generator * private_key.value,
@@ -421,7 +421,7 @@ pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     sign: &G,
 ) -> SignedValue<EncryptedValue<T>>
 where
-    T: Field + ExtensionField + PairingConfig + NonAdjacentForm + Hashable,
+    T: Field + ExtensionField + PairingConfig + BitRepr + Hashable,
 {
     let ephem_pub_key = PublicKey {
         value: curve_points.generator * encrypting_key,
@@ -464,13 +464,7 @@ pub fn decrypt<T, H: Sha256Hashing, G: Ed25519Signing>(
     signing: &G,
 ) -> ErrorOr<Fp12Elem<T>>
 where
-    T: Field
-        + ExtensionField
-        + PairingConfig
-        + NonAdjacentForm
-        + Hashable
-        + From<[u8; 64]>
-        + Default,
+    T: Field + ExtensionField + PairingConfig + BitRepr + Hashable + From<[u8; 64]> + Default,
 {
     verify_signed_value(signed_encrypted_value, signing).map_or(
         Result::Err(InternalError::InvalidEncryptedMessageSignature),
@@ -510,7 +504,7 @@ fn compute_and_compare_auth_hash<FP, H: Sha256Hashing>(
     hash: &H,
 ) -> ErrorOr<Fp12Elem<FP>>
 where
-    FP: Field + ExtensionField + PairingConfig + NonAdjacentForm + Hashable,
+    FP: Field + ExtensionField + PairingConfig + BitRepr + Hashable,
 {
     let computed_auth_hash = AuthHash::create(hash, &(&public_key, &unverified_plaintext));
 
@@ -538,7 +532,7 @@ fn decrypt_encrypted_once<T>(
     curve_points: &CurvePoints<T>,
 ) -> Fp12Elem<T>
 where
-    T: Field + ExtensionField + PairingConfig + NonAdjacentForm,
+    T: Field + ExtensionField + PairingConfig + BitRepr,
 {
     let g1 = curve_points.g1;
     let EncryptedOnceValue {
@@ -567,13 +561,7 @@ fn decrypt_reencrypted_value<FP, H>(
     sha256: &H,
 ) -> Fp12Elem<FP>
 where
-    FP: Field
-        + Hashable
-        + ExtensionField
-        + PairingConfig
-        + NonAdjacentForm
-        + From<[u8; 64]>
-        + Default,
+    FP: Field + Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
     H: Sha256Hashing,
 {
     let re_blocks = &reencrypted_value.encryption_blocks;
@@ -680,13 +668,7 @@ pub fn generate_reencryption_key<FP, H, S>(
     ed25519: &S,
 ) -> SignedValue<ReencryptionKey<FP>>
 where
-    FP: Field
-        + ExtensionField
-        + PairingConfig
-        + NonAdjacentForm
-        + Hashable
-        + From<[u8; 64]>
-        + Default,
+    FP: Field + ExtensionField + PairingConfig + BitRepr + Hashable + From<[u8; 64]> + Default,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -745,7 +727,7 @@ fn hash2<FP, H>(
     sha256: &H,
 ) -> HomogeneousPoint<Fp2Elem<FP>>
 where
-    FP: Field + Hashable + From<[u8; 64]> + NonAdjacentForm + Default,
+    FP: Field + Hashable + From<[u8; 64]> + BitRepr + Default,
     H: Sha256Hashing,
 {
     let hash_element = curve_points.hash_element;
@@ -783,7 +765,7 @@ impl<FP: Field + Hashable> Hashable for ReencryptionKey<FP> {
     }
 }
 
-impl<FP: Field + NonAdjacentForm> ReencryptionKey<FP> {
+impl<FP: Field + BitRepr> ReencryptionKey<FP> {
     ///Augment this ReencryptionKey with a priv_key. This is useful if the ReencryptionKey was from an unaugmented
     ///private key.
     pub fn augment(
@@ -827,13 +809,7 @@ pub fn reencrypt<FP, S, H>(
     pairing: &Pairing<FP>,
 ) -> ErrorOr<SignedValue<EncryptedValue<FP>>>
 where
-    FP: Field
-        + Hashable
-        + ExtensionField
-        + PairingConfig
-        + NonAdjacentForm
-        + From<[u8; 64]>
-        + Default,
+    FP: Field + Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -900,13 +876,7 @@ fn reencrypt_encrypted_once<FP, H>(
     sha256: &H,
 ) -> ReencryptedValue<FP>
 where
-    FP: Field
-        + Hashable
-        + ExtensionField
-        + PairingConfig
-        + NonAdjacentForm
-        + From<[u8; 64]>
-        + Default,
+    FP: Field + Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
     H: Sha256Hashing,
 {
     // encrypt and product auth hashes for the rand_re_temp_key
@@ -959,13 +929,7 @@ fn reencrypt_reencrypted_value<FP, H>(
     sha256: &H,
 ) -> ReencryptedValue<FP>
 where
-    FP: Field
-        + Hashable
-        + ExtensionField
-        + PairingConfig
-        + NonAdjacentForm
-        + From<[u8; 64]>
-        + Default,
+    FP: Field + Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
     H: Sha256Hashing,
 {
     let re_blocks = reencrypted_value.encryption_blocks.clone();

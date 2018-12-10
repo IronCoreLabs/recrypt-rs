@@ -1,9 +1,9 @@
+use internal::bit_repr::BitRepr;
 use internal::bytedecoder::{BytesDecoder, DecodeErr};
 use internal::field::ExtensionField;
 use internal::field::Field;
 use internal::fp2elem::Fp2Elem;
 use internal::hashable::Hashable;
-use internal::non_adjacent_form::NonAdjacentForm;
 use internal::ByteVector;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
@@ -76,7 +76,7 @@ impl<T> Eq for HomogeneousPoint<T> where T: Field {}
 impl<T, U> Mul<U> for HomogeneousPoint<T>
 where
     T: Field,
-    U: NonAdjacentForm,
+    U: BitRepr,
 {
     type Output = HomogeneousPoint<T>;
     fn mul(self, rhs: U) -> HomogeneousPoint<T> {
@@ -283,14 +283,14 @@ where
     }
 
     ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
-    pub fn times<A: NonAdjacentForm>(&self, multiple: &A) -> HomogeneousPoint<T> {
+    pub fn times<A: BitRepr>(&self, multiple: &A) -> HomogeneousPoint<T> {
         match self {
             ref p if p.is_zero() => Zero::zero(),
             HomogeneousPoint { y, .. } => {
                 if *y == zero() {
                     *self
                 } else {
-                    let mut naf = multiple.to_naf();
+                    let mut naf = multiple.to_bits();
                     naf.reverse();
                     naf.iter().fold(zero(), |res, &cur| {
                         let doubled = res.double();
