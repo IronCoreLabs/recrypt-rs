@@ -21,8 +21,7 @@ ed25519-dalek = { git = "https://github.com/IronCoreLabs/ed25519-dalek", branch 
 curve25519-dalek = "1.0.0-pre.1"
 clear_on_drop = "~0.2"
 # gridiron = "0.3"
-# gridiron = { git = "https://github.com/IronCoreLabs/gridiron", branch="recrypt-consume"}
-gridiron = {path = "../gridiron"}
+gridiron = { git = "https://github.com/IronCoreLabs/gridiron", branch="recrypt-consume"}
 quick-error = "~1.2"
 hex="~0.3"
 
