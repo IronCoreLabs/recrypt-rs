@@ -1,5 +1,11 @@
 Changelog
 ====================
+
+## 0.5.0
+- [[#21](#21)] Consume gridiron 0.4.0 (primatives are now constant time)
+  * `NonAdjacentForm` renamed to `BitRepr`
+  * Upgrade to Rust 1.31.0
+
 ## 0.4.0
 - [#20] Update dependencies (rand 0.6, sha 0.8, ed25519 1.0.0-pre.0)
 - [#18] Add a way to hash a Plaintext to 32 bytes. 
