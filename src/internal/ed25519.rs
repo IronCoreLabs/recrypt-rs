@@ -39,10 +39,19 @@ pub enum Ed25519Error {
 
 impl fmt::Display for Ed25519Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-       match *self {
-           Ed25519Error::PublicKeyInvalid(_) => write!(f, "The signing public key provided was invalid."),
-           Ed25519Error::InputWrongSize { expected: ex, actual: ac } => write!(f, "The key pair provided was of an invalid length. Expected '{}' but found '{}'.", ex, ac),
-       }
+        match *self {
+            Ed25519Error::PublicKeyInvalid(_) => {
+                write!(f, "The signing public key provided was invalid.")
+            }
+            Ed25519Error::InputWrongSize {
+                expected: ex,
+                actual: ac,
+            } => write!(
+                f,
+                "The key pair provided was of an invalid length. Expected '{}' but found '{}'.",
+                ex, ac
+            ),
+        }
     }
 }
 
