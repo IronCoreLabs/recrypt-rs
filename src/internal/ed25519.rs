@@ -37,6 +37,15 @@ pub enum Ed25519Error {
     InputWrongSize { expected: usize, actual: usize },
 }
 
+impl fmt::Display for Ed25519Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+       match *self {
+           Ed25519Error::PublicKeyInvalid(_) => write!(f, "The signing public key provided was invalid."),
+           Ed25519Error::InputWrongSize { expected: ex, actual: ac } => write!(f, "The key pair provided was of an invalid length. Expected '{}' but found '{}'.", ex, ac),
+       }
+    }
+}
+
 // we don't derive Copy or Clone here on purpose. SigningKeypair is a sensitive value and
 // should be passed by reference to avoid needless duplication
 /// The first 32 bytes of this are the Secret Ed25519 key and the 2nd 32 bytes are the Compressed Y form
