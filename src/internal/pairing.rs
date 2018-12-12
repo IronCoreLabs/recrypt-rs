@@ -1,3 +1,4 @@
+use internal::homogeneouspoint::TwistedHPoint;
 use gridiron::fp_256::Fp256;
 use internal::field::{ExtensionField, Field};
 use internal::fp12elem::Fp12Elem;
@@ -38,7 +39,7 @@ where
     pub fn pair(
         &self,
         point_p: HomogeneousPoint<T>,
-        point_q: HomogeneousPoint<Fp2Elem<T>>,
+        point_q: TwistedHPoint<T>,
     ) -> Fp12Elem<T> {
         let (px, py) = point_p
             .normalize()

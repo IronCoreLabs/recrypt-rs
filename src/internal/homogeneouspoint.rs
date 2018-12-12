@@ -316,6 +316,202 @@ where
     }
 }
 
+
+///HomogeneousPoint on the twisted curve which is either Zero or an x,y coordinate which has a z it carries
+///along. In order to get the real x,y you must call `normalize` which divides out by the z.
+#[derive(Clone, Debug, Copy)]
+#[repr(C)]
+pub struct TwistedHPoint<T> {
+    pub x: Fp2Elem<T>,
+    pub y: Fp2Elem<T>,
+    pub z: Fp2Elem<T>,
+}
+
+
+
+impl<T> PartialEq for TwistedHPoint<T>
+where
+    T: Field,
+{
+    fn eq(&self, other: &TwistedHPoint<T>) -> bool {
+        match (*self, *other) {
+            (ref p1, ref p2) if p1.is_zero() && p2.is_zero() => true,
+            (ref p1, ref p2) if p1.is_zero() || p2.is_zero() => false,
+            (
+                TwistedHPoint {
+                    x: x1,
+                    y: y1,
+                    z: z1,
+                },
+                TwistedHPoint {
+                    x: x2,
+                    y: y2,
+                    z: z2,
+                },
+            ) => x1 * z2 == x2 * z1 && y1 * z2 == y2 * z1,
+        }
+    }
+}
+
+impl<T> Eq for TwistedHPoint<T> where T: Field {}
+
+impl<T, U> Mul<U> for TwistedHPoint<T>
+where
+    T: Field,
+    U: BitRepr,
+{
+    type Output = TwistedHPoint<T>;
+    fn mul(self, rhs: U) -> TwistedHPoint<T> {
+        self.times(&rhs)
+    }
+}
+
+impl<T> Add for TwistedHPoint<T>
+where
+    T: Field + Eq,
+{
+    type Output = TwistedHPoint<T>;
+    fn add(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
+        unimplemented!()
+    }
+}
+
+impl<T> AddAssign for TwistedHPoint<T>
+where
+    T: Field + Eq,
+{
+    fn add_assign(&mut self, other: TwistedHPoint<T>) {
+        *self = *self + other
+    }
+}
+
+impl<T> Zero for TwistedHPoint<T>
+where
+    T: Field + Eq,
+{
+    fn zero() -> TwistedHPoint<T> {
+        TwistedHPoint {
+            x: Zero::zero(),
+            y: Zero::zero(),
+            z: Zero::zero(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.z == Zero::zero()
+    }
+}
+
+impl<T> Neg for TwistedHPoint<T>
+where
+    T: Field,
+{
+    type Output = TwistedHPoint<T>;
+    fn neg(self) -> TwistedHPoint<T> {
+        if self.is_zero() {
+            Zero::zero()
+        } else {
+            let neg_y: Fp2Elem<T> = -self.y;
+            TwistedHPoint::<T> {
+                x: self.x,
+                y: neg_y,
+                z: self.z,
+            }
+        }
+    }
+}
+
+impl<T> Sub for TwistedHPoint<T>
+where
+    T: Field + Eq,
+{
+    type Output = TwistedHPoint<T>;
+    fn sub(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
+        self + -other
+    }
+}
+
+impl<T> SubAssign for TwistedHPoint<T>
+where
+    T: Field + Eq,
+{
+    fn sub_assign(&mut self, other: TwistedHPoint<T>) {
+        *self = *self - other
+    }
+}
+
+impl<T: Field + Hashable> Hashable for TwistedHPoint<T> {
+    fn to_bytes(&self) -> Vec<u8> {
+        self.normalize().as_ref().to_bytes()
+    }
+}
+
+impl<T: Field + ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
+    // TwistedHPoint<Fp2Elem<T>> is 2 Fp2s -- x and y
+    const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
+
+    /// Decodes and validates that the resultant TwistedHPoint is on the curve
+    fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
+        unimplemented!()
+    }
+}
+
+impl<T> TwistedHPoint<T>
+where
+    T: Field,
+{
+    pub fn new(x: Fp2Elem<T>, y: Fp2Elem<T>) -> TwistedHPoint<T> {
+        TwistedHPoint {
+            x,
+            y,
+            z: One::one(),
+        }
+    }
+}
+
+impl<T> TwistedHPoint<T>
+where
+    T: Field,
+{
+    pub fn double(&self) -> TwistedHPoint<T> {
+        unimplemented!()
+    }
+
+    ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
+    pub fn times<A: BitRepr>(&self, multiple: &A) -> TwistedHPoint<T> {
+        match self {
+            ref p if p.is_zero() => Zero::zero(),
+            TwistedHPoint { y, .. } => {
+                if *y == zero() {
+                    *self
+                } else {
+                    let mut naf = multiple.to_bits();
+                    naf.reverse();
+                    naf.iter().fold(zero(), |res, &cur| {
+                        let doubled = res.double();
+                        if cur == 1 {
+                            doubled + *self
+                        } else {
+                            doubled
+                        }
+                    })
+                }
+            }
+        }
+    }
+
+    ///Divide out by the z we've been carrying around.
+    pub fn normalize(&self) -> Option<(Fp2Elem<T>, Fp2Elem<T>)> {
+        if self.is_zero() {
+            Option::None
+        } else {
+            let z_inv: Fp2Elem<T> = self.z.inv();
+            Some((self.x * z_inv, self.y * z_inv))
+        }
+    }
+}
+
+
 #[cfg(test)]
 pub mod test {
     use super::*;

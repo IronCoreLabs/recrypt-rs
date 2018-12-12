@@ -1,3 +1,4 @@
+use internal::homogeneouspoint::TwistedHPoint;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal::bit_repr::BitRepr;
@@ -756,7 +757,7 @@ pub struct ReencryptionKey<FP: Field> {
     pub re_public_key: PublicKey<FP>,
     pub to_public_key: PublicKey<FP>,
     pub encrypted_k: Fp12Elem<FP>,
-    pub hashed_k: HomogeneousPoint<Fp2Elem<FP>>,
+    pub hashed_k: TwistedHPoint<FP>,
 }
 
 impl<FP: Field + Hashable> Hashable for ReencryptionKey<FP> {
@@ -771,7 +772,7 @@ impl<FP: Field + BitRepr> ReencryptionKey<FP> {
     pub fn augment(
         &self,
         priv_key: &PrivateKey<FP>,
-        g1: &HomogeneousPoint<Fp2Elem<FP>>,
+        g1: &TwistedHPoint<FP>,
     ) -> ReencryptionKey<FP> {
         //Note that because priv_key is an Fp negating it would not work, we have to negate the point or the result of
         //the multiplication.

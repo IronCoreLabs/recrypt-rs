@@ -1,3 +1,4 @@
+use internal::homogeneouspoint::TwistedHPoint;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal;
@@ -455,7 +456,7 @@ impl PartialEq for EncryptedTempKey {
 #[derive(Clone, Copy)]
 pub struct HashedValue {
     bytes: [u8; HashedValue::ENCODED_SIZE_BYTES],
-    _internal_value: HomogeneousPoint<Fp2Elem<Fp256>>,
+    _internal_value: TwistedHPoint<Fp256>,
 }
 
 impl Hashable for HashedValue {
@@ -469,7 +470,7 @@ impl HashedValue {
 
     pub fn new(bytes: [u8; HashedValue::ENCODED_SIZE_BYTES]) -> Result<Self> {
         Ok(
-            HomogeneousPoint::<Fp2Elem<Fp256>>::decode(bytes.to_vec()).map(|hpoint| {
+            TwistedHPoint::<Fp256>::decode(bytes.to_vec()).map(|hpoint| {
                 HashedValue {
                     bytes,
                     _internal_value: hpoint,
@@ -502,8 +503,8 @@ impl PartialEq for HashedValue {
     }
 }
 
-impl From<HomogeneousPoint<Fp2Elem<Fp256>>> for HashedValue {
-    fn from(hp: HomogeneousPoint<Fp2Elem<Fp256>>) -> Self {
+impl From<TwistedHPoint<Fp256>> for HashedValue {
+    fn from(hp: TwistedHPoint<Fp256>) -> Self {
         // convert hashed_k to fixed array.
         // Assume the point is valid (on the curve, etc) since we're coming from internal types
         let src = &hp.to_bytes()[..];
