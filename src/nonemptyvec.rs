@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// A simple-minded NonEmptyVec implementation
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NonEmptyVec<T> {
@@ -7,6 +9,12 @@ pub struct NonEmptyVec<T> {
 
 #[derive(Debug)]
 pub struct EmptyVectorErr;
+
+impl fmt::Display for EmptyVectorErr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "NonEmptyVec should not be empty.")
+    }
+}
 
 impl<T> NonEmptyVec<T>
 where
