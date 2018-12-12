@@ -726,9 +726,9 @@ fn hash2<FP, H>(
     k_value: KValue<FP>,
     curve_points: &CurvePoints<FP>,
     sha256: &H,
-) -> HomogeneousPoint<Fp2Elem<FP>>
+) -> TwistedHPoint<FP>
 where
-    FP: Field + Hashable + From<[u8; 64]> + BitRepr + Default,
+    FP: Field + Hashable + From<[u8; 64]> + BitRepr + Default + ExtensionField,
     H: Sha256Hashing,
 {
     let hash_element = curve_points.hash_element;
@@ -766,7 +766,7 @@ impl<FP: Field + Hashable> Hashable for ReencryptionKey<FP> {
     }
 }
 
-impl<FP: Field + BitRepr> ReencryptionKey<FP> {
+impl<FP: Field + BitRepr + ExtensionField> ReencryptionKey<FP> {
     ///Augment this ReencryptionKey with a priv_key. This is useful if the ReencryptionKey was from an unaugmented
     ///private key.
     pub fn augment(

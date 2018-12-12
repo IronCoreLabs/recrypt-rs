@@ -47,7 +47,7 @@ where
         let mut f1: Fp12Elem<T> = One::one();
         let mut f2: Fp2Elem<T> = One::one();
         let neg_q = -point_q;
-        let point_result: HomogeneousPoint<Fp2Elem<T>> = <T as PairingConfig>::naf_for_loop()
+        let point_result: TwistedHPoint<T> = <T as PairingConfig>::naf_for_loop()
             .iter()
             .fold(point_q, |acc, naf_value| {
                 let mut point_r = acc;
@@ -104,17 +104,17 @@ where
         &self,
         px: T,
         py: T,
-        q: HomogeneousPoint<Fp2Elem<T>>,
-        r: HomogeneousPoint<Fp2Elem<T>>,
+        q: TwistedHPoint<T>,
+        r: TwistedHPoint<T>,
     ) -> (Fp12Elem<T>, Fp2Elem<T>) {
         match (q, r) {
             (
-                HomogeneousPoint {
+                TwistedHPoint {
                     x: qx,
                     y: qy,
                     z: qz,
                 },
-                HomogeneousPoint {
+                TwistedHPoint {
                     x: rx,
                     y: ry,
                     z: rz,
@@ -135,10 +135,10 @@ where
         &self,
         px: T,
         py: T,
-        r: HomogeneousPoint<Fp2Elem<T>>,
+        r: TwistedHPoint<T>,
     ) -> (Fp12Elem<T>, Fp2Elem<T>) {
         match r {
-            HomogeneousPoint { x, y, z } => {
+            TwistedHPoint { x, y, z } => {
                 let numerator = x.square() * 3;
                 let denominator = y * z * 2;
                 self.finalize_eval(r, px, py, numerator, denominator)
@@ -149,14 +149,14 @@ where
     /// last step for double_line_eval or add_line_eval
     fn finalize_eval(
         &self,
-        q: HomogeneousPoint<Fp2Elem<T>>,
+        q: TwistedHPoint<T>,
         px: T,
         py: T,
         numerator: Fp2Elem<T>,
         denominator: Fp2Elem<T>,
     ) -> (Fp12Elem<T>, Fp2Elem<T>) {
         match q {
-            HomogeneousPoint { x, y, z } => {
+            TwistedHPoint { x, y, z } => {
                 let new_numerator = Fp12Elem::create(
                     Zero::zero(),
                     x * numerator - y * denominator,
@@ -248,9 +248,9 @@ where
         }
     }
 
-    fn frobenius(&self, point: HomogeneousPoint<Fp2Elem<T>>) -> HomogeneousPoint<Fp2Elem<T>> {
+    fn frobenius(&self, point: TwistedHPoint<T>) -> TwistedHPoint<T> {
         match point {
-            HomogeneousPoint { x, y, z } => {
+            TwistedHPoint { x, y, z } => {
                 let new_x = (self.pairing_frobenius_factor_1 * x.frobenius())
                     .to_fp2()
                     .unwrap_or_else(|| {
@@ -261,7 +261,7 @@ where
                     .unwrap_or_else(|| {
                         panic!("frobenius not defined when the y of `point` can't convert to fp2.")
                     });
-                HomogeneousPoint {
+                TwistedHPoint {
                     x: new_x,
                     y: new_y,
                     z: z.frobenius(),

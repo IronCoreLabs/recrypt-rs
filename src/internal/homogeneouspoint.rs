@@ -207,40 +207,6 @@ impl<T: Field + Hashable> Hashable for HomogeneousPoint<T> {
     }
 }
 
-/// It is important to note that this is a BytesDecoder for HomogeneousPoint<Fp2Elem<T>>, NOT HomogeneousPoint<T>
-impl<T: Field + ExtensionField + BytesDecoder> BytesDecoder for HomogeneousPoint<Fp2Elem<T>> {
-    // HomogeneousPoint<Fp2Elem<T>> is 2 Fp2s -- x and y
-    const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
-
-    /// Decodes and validates that the resultant HomogeneousPoint is on the curve
-    fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
-        if bytes.len() == Self::ENCODED_SIZE_BYTES {
-            //   3 / (u + 3)
-            let twisted_curve_const_coeff: Fp2Elem<T> = ExtensionField::xi().inv() * 3;
-
-            let (x_bytes, y_bytes) = bytes.split_at(Self::ENCODED_SIZE_BYTES / 2);
-            let hpoint = HomogeneousPoint::new(
-                Fp2Elem::<T>::decode(x_bytes.to_vec())?,
-                Fp2Elem::<T>::decode(y_bytes.to_vec())?,
-            );
-
-            if hpoint.y.pow(2) == (hpoint.x.pow(3) + twisted_curve_const_coeff) {
-                Result::Ok(hpoint)
-            } else {
-                Result::Err(DecodeErr::BytesInvalid {
-                    message: "Point does not satisfy the curve equation".to_string(),
-                    bad_bytes: bytes.clone(),
-                })
-            }
-        } else {
-            Result::Err(DecodeErr::BytesNotCorrectLength {
-                required_length: Self::ENCODED_SIZE_BYTES,
-                bad_bytes: bytes,
-            })
-        }
-    }
-}
-
 impl<T> HomogeneousPoint<T>
 where
     T: One,
@@ -357,7 +323,7 @@ impl<T> Eq for TwistedHPoint<T> where T: Field {}
 
 impl<T, U> Mul<U> for TwistedHPoint<T>
 where
-    T: Field,
+    T: Field + ExtensionField,
     U: BitRepr,
 {
     type Output = TwistedHPoint<T>;
@@ -440,7 +406,7 @@ where
     }
 }
 
-impl<T: Field + Hashable> Hashable for TwistedHPoint<T> {
+impl<T: Field + Hashable + ExtensionField> Hashable for TwistedHPoint<T> {
     fn to_bytes(&self) -> Vec<u8> {
         self.normalize().as_ref().to_bytes()
     }
@@ -471,9 +437,10 @@ where
 
 impl<T> TwistedHPoint<T>
 where
-    T: Field,
+    T: Field + ExtensionField,
 {
     pub fn double(&self) -> TwistedHPoint<T> {
+        T::xi();
         unimplemented!()
     }
 

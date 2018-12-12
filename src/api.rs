@@ -466,7 +466,7 @@ impl Hashable for HashedValue {
 }
 
 impl HashedValue {
-    const ENCODED_SIZE_BYTES: usize = HomogeneousPoint::<Fp2Elem<Fp256>>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = TwistedHPoint::<Fp256>::ENCODED_SIZE_BYTES;
 
     pub fn new(bytes: [u8; HashedValue::ENCODED_SIZE_BYTES]) -> Result<Self> {
         Ok(
