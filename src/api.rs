@@ -1,4 +1,3 @@
-use internal::homogeneouspoint::TwistedHPoint;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal;
@@ -13,6 +12,7 @@ use internal::fp2elem::Fp2Elem;
 pub use internal::hashable::Hashable;
 use internal::hashable::Hashable32;
 use internal::homogeneouspoint::HomogeneousPoint;
+use internal::homogeneouspoint::TwistedHPoint;
 use internal::pairing;
 pub use internal::rand_bytes::*;
 use internal::schnorr::{SchnorrSign, SchnorrSigning};
@@ -470,11 +470,9 @@ impl HashedValue {
 
     pub fn new(bytes: [u8; HashedValue::ENCODED_SIZE_BYTES]) -> Result<Self> {
         Ok(
-            TwistedHPoint::<Fp256>::decode(bytes.to_vec()).map(|hpoint| {
-                HashedValue {
-                    bytes,
-                    _internal_value: hpoint,
-                }
+            TwistedHPoint::<Fp256>::decode(bytes.to_vec()).map(|hpoint| HashedValue {
+                bytes,
+                _internal_value: hpoint,
             })?,
         )
     }
@@ -1247,7 +1245,7 @@ pub(crate) mod test {
         let hashedvalue = tk.hashed_temp_key;
         assert_eq!(
             tk._internal_key.payload.hashed_k,
-            HomogeneousPoint::<Fp2Elem<Fp256>>::decode(hashedvalue.bytes.to_vec()).unwrap()
+            TwistedHPoint::<Fp256>::decode(hashedvalue.bytes.to_vec()).unwrap()
         )
     }
 

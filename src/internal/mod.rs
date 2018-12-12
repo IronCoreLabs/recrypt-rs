@@ -1,4 +1,3 @@
-use internal::homogeneouspoint::TwistedHPoint;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use internal::bit_repr::BitRepr;
@@ -10,6 +9,7 @@ use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
 use internal::hashable::{Hashable, Hashable32};
+use internal::homogeneouspoint::TwistedHPoint;
 use internal::homogeneouspoint::{HomogeneousPoint, PointErr};
 use internal::pairing::Pairing;
 use internal::pairing::PairingConfig;
@@ -753,14 +753,14 @@ where
 /// `hashed_k`      - a combination of the hash of K and the secret key of the delegator,
 ///                   used to recover `K` from `encrypted_k`
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct ReencryptionKey<FP: Field> {
+pub struct ReencryptionKey<FP: Field + ExtensionField> {
     pub re_public_key: PublicKey<FP>,
     pub to_public_key: PublicKey<FP>,
     pub encrypted_k: Fp12Elem<FP>,
     pub hashed_k: TwistedHPoint<FP>,
 }
 
-impl<FP: Field + Hashable> Hashable for ReencryptionKey<FP> {
+impl<FP: Field + Hashable + ExtensionField> Hashable for ReencryptionKey<FP> {
     fn to_bytes(&self) -> ByteVector {
         (&self.re_public_key, &self.to_public_key, &self.encrypted_k).to_bytes()
     }

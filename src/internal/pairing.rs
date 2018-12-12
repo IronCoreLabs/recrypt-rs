@@ -1,10 +1,10 @@
-use internal::homogeneouspoint::TwistedHPoint;
 use gridiron::fp_256::Fp256;
 use internal::field::{ExtensionField, Field};
 use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
 use internal::fp6elem::Fp6Elem;
 use internal::homogeneouspoint::HomogeneousPoint;
+use internal::homogeneouspoint::TwistedHPoint;
 use internal::Square;
 use num_traits::{Inv, One, Zero};
 
@@ -36,44 +36,41 @@ where
     /// Hess, et al., from 2006. Our implementation is based on the paper "High-Speed Software
     /// Implementation of the Optimal Ate Pairing over Barreto-Naehrig Curves" by Beuchat et al,
     /// from 2010.
-    pub fn pair(
-        &self,
-        point_p: HomogeneousPoint<T>,
-        point_q: TwistedHPoint<T>,
-    ) -> Fp12Elem<T> {
+    pub fn pair(&self, point_p: HomogeneousPoint<T>, point_q: TwistedHPoint<T>) -> Fp12Elem<T> {
         let (px, py) = point_p
             .normalize()
             .unwrap_or_else(|| panic!("Pairing is undefined on the zero point."));
         let mut f1: Fp12Elem<T> = One::one();
         let mut f2: Fp2Elem<T> = One::one();
         let neg_q = -point_q;
-        let point_result: TwistedHPoint<T> = <T as PairingConfig>::naf_for_loop()
-            .iter()
-            .fold(point_q, |acc, naf_value| {
-                let mut point_r = acc;
-                let mut point_s = point_r.double();
-                let (ell1, ell2) = self.double_line_eval(px, py, point_r);
-                f1 = ell1 * f1.square();
-                f2 = ell2 * f2.square();
-                point_r = point_s;
-                if *naf_value == -1 {
-                    point_s = neg_q + point_r;
-                    let (ell1, ell2) = self.add_line_eval(px, py, neg_q, point_r);
-                    f1 = f1 * ell1;
-                    f2 = f2 * ell2;
+        let point_result: TwistedHPoint<T> =
+            <T as PairingConfig>::naf_for_loop()
+                .iter()
+                .fold(point_q, |acc, naf_value| {
+                    let mut point_r = acc;
+                    let mut point_s = point_r.double();
+                    let (ell1, ell2) = self.double_line_eval(px, py, point_r);
+                    f1 = ell1 * f1.square();
+                    f2 = ell2 * f2.square();
                     point_r = point_s;
-                    point_r
-                } else if *naf_value == 1 {
-                    point_s = point_q + point_r;
-                    let (ell1, ell2) = self.add_line_eval(px, py, point_q, point_r);
-                    f1 = f1 * ell1;
-                    f2 = f2 * ell2;
-                    point_r = point_s;
-                    point_r
-                } else {
-                    point_r
-                }
-            });
+                    if *naf_value == -1 {
+                        point_s = neg_q + point_r;
+                        let (ell1, ell2) = self.add_line_eval(px, py, neg_q, point_r);
+                        f1 = f1 * ell1;
+                        f2 = f2 * ell2;
+                        point_r = point_s;
+                        point_r
+                    } else if *naf_value == 1 {
+                        point_s = point_q + point_r;
+                        let (ell1, ell2) = self.add_line_eval(px, py, point_q, point_r);
+                        f1 = f1 * ell1;
+                        f2 = f2 * ell2;
+                        point_r = point_s;
+                        point_r
+                    } else {
+                        point_r
+                    }
+                });
         let point_q1 = self.frobenius(point_q);
         let point_q2 = self.frobenius(point_q1);
         let point_s = point_q1 + point_result;
@@ -131,12 +128,7 @@ where
     /// Script l with multiplication in the denominator from Miller's Algorithm
     /// Used in step 4 of Algorithm 1 in High-Speed Software Implementation of
     /// the Optimal Ate Pairing over Barreto–Naehrig Curves
-    fn double_line_eval(
-        &self,
-        px: T,
-        py: T,
-        r: TwistedHPoint<T>,
-    ) -> (Fp12Elem<T>, Fp2Elem<T>) {
+    fn double_line_eval(&self, px: T, py: T, r: TwistedHPoint<T>) -> (Fp12Elem<T>, Fp2Elem<T>) {
         match r {
             TwistedHPoint { x, y, z } => {
                 let numerator = x.square() * 3;
