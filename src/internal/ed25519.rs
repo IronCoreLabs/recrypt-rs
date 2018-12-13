@@ -31,10 +31,16 @@ impl Hashable for PublicSigningKey {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum Ed25519Error {
-    PublicKeyInvalid([u8; 32]),
-    InputWrongSize { expected: usize, actual: usize },
+quick_error! {
+    #[derive(Debug, PartialEq, Eq)]
+    pub enum Ed25519Error {
+        PublicKeyInvalid(invalid_bytes: [u8; 32]){
+            display("The signing public key provided was invalid.")
+        }
+        InputWrongSize(expected: usize, actual: usize) {
+            display("The key pair provided was of an invalid length. Expected '{}', but found '{}'.", expected, actual)
+        }
+    }
 }
 
 // we don't derive Copy or Clone here on purpose. SigningKeypair is a sensitive value and
@@ -72,10 +78,10 @@ impl SigningKeypair {
             dest.copy_from_slice(bytes);
             Ok(dest)
         } else {
-            Err(Ed25519Error::InputWrongSize {
-                expected: SigningKeypair::ENCODED_SIZE_BYTES,
-                actual: bytes_size,
-            })
+            Err(Ed25519Error::InputWrongSize(
+                SigningKeypair::ENCODED_SIZE_BYTES,
+                bytes_size,
+            ))
         }?;
         SigningKeypair::from_bytes(&sized_bytes)
     }
@@ -216,13 +222,7 @@ pub(crate) mod test {
         let bytes = [0u8; 63];
         let error = SigningKeypair::from_byte_slice(&bytes)
             .expect_err("Keypair should be too short so this can't happen.");
-        assert_eq!(
-            error,
-            Ed25519Error::InputWrongSize {
-                expected: 64,
-                actual: 63
-            }
-        );
+        assert_eq!(error, Ed25519Error::InputWrongSize(64, 63));
 
         let error2 = SigningKeypair::from_byte_slice(&[0u8; 64])
             .expect_err("Public key error should happen.");
