@@ -1,6 +1,9 @@
 Changelog
 ====================
 
+## 0.5.1
+ [[#24](#24)] Added better errors for Ed25519 and NonEmptyVec
+
 ## 0.5.0
 - [[#21](#21)] Consume gridiron 0.4.0 (primatives are now constant time)
   * `NonAdjacentForm` renamed to `BitRepr`
