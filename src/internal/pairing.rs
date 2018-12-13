@@ -311,7 +311,7 @@ mod test {
     use proptest::prelude::*;
 
     lazy_static! {
-        static ref GOOD_HPOINT: HomogeneousPoint<Fp2Elem<Fp256>> = HomogeneousPoint {
+        static ref GOOD_TWISTED_HPOINT: TwistedHPoint<Fp256> = TwistedHPoint {
             x: Fp2Elem {
                 //39898887170429929807040143276261848585078991568615066857293752634765338134660
                 elem1:
@@ -374,7 +374,7 @@ mod test {
 
         let pairing: Pairing<Fp256> = Pairing::new();
 
-        let result = pairing.pair(FP_256_CURVE_POINTS.generator, GOOD_HPOINT.clone());
+        let result = pairing.pair(FP_256_CURVE_POINTS.generator, GOOD_TWISTED_HPOINT.clone());
 
         assert_eq!(expected_good_result, result);
     }
@@ -429,8 +429,8 @@ mod test {
         let result = Pairing::new().add_line_eval(
             BASE_POINT_X.clone(),
             BASE_POINT_Y.clone(),
-            GOOD_HPOINT.clone(),
-            GOOD_HPOINT.double(),
+            GOOD_TWISTED_HPOINT.clone(),
+            GOOD_TWISTED_HPOINT.double(),
         );
         assert_eq!(expected_good_result, result);
     }
@@ -490,8 +490,8 @@ mod test {
         let result = Pairing::new().add_line_eval(
             point_x,
             point_y,
-            GOOD_HPOINT.double(),
-            GOOD_HPOINT.double().double(),
+            GOOD_TWISTED_HPOINT.double(),
+            GOOD_TWISTED_HPOINT.double().double(),
         );
         assert_eq!(expected_good_result, result);
     }
@@ -547,14 +547,14 @@ mod test {
         let result = Pairing::new().double_line_eval(
             BASE_POINT_X.clone(),
             BASE_POINT_Y.clone(),
-            GOOD_HPOINT.clone(),
+            GOOD_TWISTED_HPOINT.clone(),
         );
         assert_eq!(expected_good_result, result);
     }
 
     #[test]
     fn frobenius_match_good_value() {
-        let generator = HomogeneousPoint {
+        let generator = TwistedHPoint {
             x: Fp2Elem {
                 //39898887170429929807040143276261848585078991568615066857293752634765338134660
                 elem1: fp256_unsafe_from(
@@ -587,7 +587,7 @@ mod test {
             },
         };
 
-        let expected_result = HomogeneousPoint {
+        let expected_result = TwistedHPoint {
             x: Fp2Elem {
                 //3493288303413595898714519891264492301560207456168827437424957567620529428904
                 elem1: fp256_unsafe_from(

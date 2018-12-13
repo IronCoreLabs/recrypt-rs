@@ -1167,7 +1167,7 @@ mod test {
                 fp256_unsafe_from("6e6a0c315c47fa2990268bc2010eeda17b78cc32e7ab6f093bf1aa2234491d7f")
             );
 
-            let good_hashed_k = HomogeneousPoint {
+            let good_hashed_k = TwistedHPoint {
                 x: fp2elem::Fp2Elem {
                     //22422077836615563303859289302360681993513791649150629779433386726239734002618
                     elem1: fp256_unsafe_from("319272423a484aae2063912bbbf6a61f58ae4eaa9b0aca8dd493a050a6aef3ba"),

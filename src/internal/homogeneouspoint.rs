@@ -440,12 +440,35 @@ impl<T: Field + Hashable + ExtensionField> Hashable for TwistedHPoint<T> {
 }
 
 impl<T: Field + ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
-    // TwistedHPoint<Fp2Elem<T>> is 2 Fp2s -- x and y
+    // TwistedHPoint<T> is 2 Fp2s -- x and y
     const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
 
     /// Decodes and validates that the resultant TwistedHPoint is on the curve
     fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
-        unimplemented!()
+        if bytes.len() == Self::ENCODED_SIZE_BYTES {
+            //   3 / (u + 3)
+            let twisted_curve_const_coeff: Fp2Elem<T> = ExtensionField::xi().inv() * 3;
+
+            let (x_bytes, y_bytes) = bytes.split_at(Self::ENCODED_SIZE_BYTES / 2);
+            let hpoint = TwistedHPoint::new(
+                Fp2Elem::<T>::decode(x_bytes.to_vec())?,
+                Fp2Elem::<T>::decode(y_bytes.to_vec())?,
+            );
+
+            if hpoint.y.pow(2) == (hpoint.x.pow(3) + twisted_curve_const_coeff) {
+                Result::Ok(hpoint)
+            } else {
+                Result::Err(DecodeErr::BytesInvalid {
+                    message: "Point does not satisfy the curve equation".to_string(),
+                    bad_bytes: bytes.clone(),
+                })
+            }
+        } else {
+            Result::Err(DecodeErr::BytesNotCorrectLength {
+                required_length: Self::ENCODED_SIZE_BYTES,
+                bad_bytes: bytes,
+            })
+        }
     }
 }
 
@@ -664,11 +687,12 @@ pub mod test {
         }
 
         #[test]
-        fn roundtrip_bytes(arb_hpoint in arb_homogeneous_fp2()) {
-            let hashed_value_bytes = arb_hpoint.to_bytes();
+        fn roundtrip_bytes(arb_tw_hpoint in arb_homogeneous_fp2()) {
+            let hashed_value_bytes = arb_tw_hpoint.to_bytes();
+            println!("POINT: {:?} -- bytes: {:?}", arb_tw_hpoint, hashed_value_bytes);
             let hpoint = TwistedHPoint::<Fp256>::decode(hashed_value_bytes).unwrap();
 
-            assert_eq!(arb_hpoint, hpoint)
+            assert_eq!(arb_tw_hpoint, hpoint)
         }
 
         #[test]
