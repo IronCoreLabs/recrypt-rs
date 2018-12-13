@@ -1,18 +1,15 @@
-use std::fmt;
-
 /// A simple-minded NonEmptyVec implementation
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NonEmptyVec<T> {
     first: T,
     rest: Vec<T>,
 }
-
-#[derive(Debug)]
-pub struct EmptyVectorErr;
-
-impl fmt::Display for EmptyVectorErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "NonEmptyVec should not be empty.")
+quick_error! {
+    #[derive(Debug)]
+    pub enum NonEmptyVecError {
+        EmptyVectorErr {
+            display("NonEmptyVec cannot be empty.")
+        }
     }
 }
 
@@ -46,9 +43,9 @@ where
         self.clone().into()
     }
 
-    pub fn try_from(v: &[T]) -> Result<NonEmptyVec<T>, EmptyVectorErr> {
+    pub fn try_from(v: &[T]) -> Result<NonEmptyVec<T>, NonEmptyVecError> {
         if v.is_empty() {
-            Err(EmptyVectorErr)
+            Err(NonEmptyVecError::EmptyVectorErr)
         } else {
             let first = v[0].clone();
             let rest = v[1..].to_vec();
