@@ -530,6 +530,9 @@ pub mod test {
     use internal::test::arb_fp256;
     use num_traits::One;
     use proptest::prelude::*;
+    fn order() -> Fp256 {
+        fp256_unsafe_from("8fb501e34aa387f9aa6fecb86184dc212e8d8e12f82b39241a2ef45b57ac7261")
+    }
 
     #[test]
     fn eq_will_divide_by_z() {
@@ -546,9 +549,19 @@ pub mod test {
         assert_eq!(point, point2);
     }
     #[test]
-    fn colt_xi() {
-        let result = Fp256::xi().inv() * 3u64 * 3;
-        println!("{:?}", result);
+    fn generator_times_order_is_reasonable() {
+        let point = FP_256_CURVE_POINTS.generator;
+        assert_eq!(point * order(), zero());
+        assert!((point * order()).is_zero());
+        assert_eq!(point, point * order() + point);
+    }
+
+    #[test]
+    fn g1_times_order_is_reasonable() {
+        let point = FP_256_CURVE_POINTS.g1;
+        assert_eq!(point * order(), zero());
+        assert!((point * order()).is_zero());
+        assert_eq!(point, point * order() + point);
     }
 
     #[test]
@@ -596,19 +609,11 @@ pub mod test {
 
     #[test]
     fn double_zero_is_zero() {
-        let zero_fp256 = HomogeneousPoint {
-            x: Fp256::zero(),
-            y: Fp256::zero(),
-            z: Fp256::zero(),
-        };
+        let zero_fp256 = HomogeneousPoint::<Fp256>::zero();
         let double = zero_fp256.double();
         assert_eq!(zero_fp256, double);
 
-        let zero_fp2: HomogeneousPoint<Fp2Elem<Fp256>> = HomogeneousPoint {
-            x: Fp2Elem::zero(),
-            y: Fp2Elem::zero(),
-            z: Fp2Elem::zero(),
-        };
+        let zero_fp2: HomogeneousPoint<Fp2Elem<Fp256>> = zero();
         assert_eq!(zero_fp2, zero_fp2.double());
     }
 
@@ -625,7 +630,7 @@ pub mod test {
             prop_assert!(a * Fp256::one() == a);
             prop_assert!(a + Zero::zero() == a);
             prop_assert!(a - a == Zero::zero());
-            prop_assert!(<HomogeneousPoint<Fp256> as Zero>::zero() + a == a);
+            prop_assert!(HomogeneousPoint::<Fp256>::zero() + a == a);
         }
 
         #[test]
