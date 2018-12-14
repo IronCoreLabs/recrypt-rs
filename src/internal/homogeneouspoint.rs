@@ -91,8 +91,6 @@ where
     type Output = HomogeneousPoint<T>;
     fn add(self, other: HomogeneousPoint<T>) -> HomogeneousPoint<T> {
         match (self, other) {
-            (ref p1, o) if p1.is_zero() => o,
-            (o, ref p2) if p2.is_zero() => o,
             (
                 HomogeneousPoint {
                     x: x1,
@@ -105,32 +103,22 @@ where
                     z: z2,
                 },
             ) => {
-                if x1 == x2 && y1 == -(y2) && z1 == z2 {
-                    Zero::zero()
-                } else if self == other {
-                    self.double()
-                } else {
-                    let y_times_z2 = y1 * z2;
-                    let x_times_z2 = x1 * z2;
-                    let x2_times_z = x2 * z1;
-                    let a = (y2 * z1) - y_times_z2;
-                    let b = x2_times_z - x_times_z2;
-                    let z_times_z2 = z1 * z2;
-                    let b_squared = b.square();
-                    let b_cubed = b_squared * b;
-                    let a_squared = a.square();
-                    let z_times_z2_times_a_squared = z_times_z2 * a_squared;
-                    let x_times_z2_plus_x2_times_z = x_times_z2 + x2_times_z;
-                    let x3 =
-                        b * (z_times_z2_times_a_squared - (b_squared * x_times_z2_plus_x2_times_z));
-                    let y3 = a * b_squared * (x_times_z2 + x_times_z2_plus_x2_times_z)
-                        - ((z_times_z2_times_a_squared * a) + (y_times_z2 * b_cubed));
-                    let z3 = z_times_z2 * b_cubed;
-                    HomogeneousPoint {
-                        x: x3,
-                        y: y3,
-                        z: z3,
-                    }
+                let x1x2 = x1 * x2;
+                let y1y2 = y1 * y2;
+                let z1z2 = z1 * z2;
+                let cxy = (x1 + y1) * (x2 + y2) - x1x2 - y1y2;
+                let cxz = (x1 + z1) * (x2 + z2) - x1x2 - z1z2;
+                let cyz = (y1 + z1) * (y2 + z2) - y1y2 - z1z2;
+                let tbzz = z1z2 * 9;
+                let dmyz = y1y2 - tbzz;
+                let dpyz = y1y2 + tbzz;
+                let x3 = cxy * dmyz - cyz * cxz * 9;
+                let y3 = dpyz * dmyz + x1x2 * 27 * cxz;
+                let z3 = cyz * dpyz + x1x2 * 3 * cxy;
+                HomogeneousPoint {
+                    x: x3,
+                    y: y3,
+                    z: z3,
                 }
             }
         }
@@ -153,7 +141,7 @@ where
     fn zero() -> HomogeneousPoint<T> {
         HomogeneousPoint {
             x: Zero::zero(),
-            y: Zero::zero(),
+            y: One::one(),
             z: Zero::zero(),
         }
     }
@@ -225,26 +213,24 @@ where
     T: Field,
 {
     pub fn double(&self) -> HomogeneousPoint<T> {
-        match *self {
-            ref p if p.is_zero() => Zero::zero(),
-            HomogeneousPoint { y, .. } if y == zero() => zero(),
-            HomogeneousPoint { x, y, z } => {
-                let x_cubed = x.pow(3);
-                let y_squared = y.pow(2);
-                let z_squared = z.pow(2);
-                let y_squared_times_z = y_squared * z;
-                let eight_times_y_squared_times_z = y_squared_times_z * 8;
-                let nine_times_x_cubed = x_cubed * 9;
-                let x2 = x * 2 * y * z * (nine_times_x_cubed - eight_times_y_squared_times_z);
-                let y2 = nine_times_x_cubed * (y_squared_times_z * 4 - x_cubed * 3)
-                    - eight_times_y_squared_times_z * y_squared_times_z;
-                let z2: T = eight_times_y_squared_times_z * y * z_squared;
-                HomogeneousPoint {
-                    x: x2,
-                    y: y2,
-                    z: z2,
-                }
-            }
+        let three_b = 9;
+        let x = self.x;
+        let y = self.y;
+        let z = self.z;
+
+        let y_squared = y.pow(2);
+        let z_squared = z.pow(2);
+        let three_b_times_z_squared = z_squared * three_b;
+        let eight_times_y_squared = y_squared * 8u64; // 8Y^2
+        let m1 = y_squared - (three_b_times_z_squared * 3u64); // Y^2 - 9bZ^2
+        let m2 = y_squared + three_b_times_z_squared; // Y^2 + 3bZ^2
+        let x3 = x * y * m1 * 2u64;
+        let y3 = m1 * m2 + three_b_times_z_squared * eight_times_y_squared;
+        let z3 = eight_times_y_squared * y * z;
+        HomogeneousPoint {
+            x: x3,
+            y: y3,
+            z: z3,
         }
     }
 

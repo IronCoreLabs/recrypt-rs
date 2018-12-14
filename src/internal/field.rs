@@ -114,6 +114,7 @@ where
     /// v^p == Xi^((p-1)/3) * v
     fn xi() -> Fp2Elem<Self>;
 
+    ///Precomputed xi.inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self>;
 
     /// Used in frobenius, this is Xi^((p-1)/3)
