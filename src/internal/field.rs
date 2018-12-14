@@ -114,6 +114,8 @@ where
     /// v^p == Xi^((p-1)/3) * v
     fn xi() -> Fp2Elem<Self>;
 
+    fn xi_inv_times_9() -> Fp2Elem<Self>;
+
     /// Used in frobenius, this is Xi^((p-1)/3)
     /// Fp6Elem[A](Fp2Elem.Zero, Fp2Elem.One, Fp2Elem.Zero).frobenius
     /// Xi  ^ ((p - p % 3) /3) because of the prime we've chosen, p % 3 == 1
@@ -138,6 +140,21 @@ impl ExtensionField for Fp256 {
             elem2: Self::from(3u8),
         }
     }
+
+    //precalculate this since it's used in every double and add operation in the extension field.
+    fn xi_inv_times_9() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: Fp256::new([
+                0x29c2d1e, 0x41d13441, 0x2740738a, 0x2275485c, 0x74a8709, 0x30ff46ea, 0x7f76ff86,
+                0xe59e217, 0x2b,
+            ]),
+            elem2: Fp256::new([
+                0x56340f0d, 0x6b45bc15, 0xd157bd8, 0xb7c6d74, 0x26e2d03, 0x3affc24e, 0x2a7cffd7,
+                0x2f734b5d, 0xe,
+            ]),
+        }
+    }
+
     fn frobenius_factor_1() -> Fp2Elem<Self> {
         Fp2Elem {
             // 26098034838977895781559542626833399156321265654106457577426020397262786167059

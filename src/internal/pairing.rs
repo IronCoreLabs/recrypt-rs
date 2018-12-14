@@ -382,7 +382,7 @@ mod test {
     #[test]
     fn add_line_match_known_good_value_1() {
         // matches values verified by recrypt-scala
-        let expected_good_result = (
+        let (expected_good_result_num, expected_good_result_denom) = (
             Fp12Elem::create_from_t(
                 Fp256::zero(),
                 Fp256::zero(),
@@ -426,18 +426,22 @@ mod test {
                 ),
             },
         );
-        let result = Pairing::new().add_line_eval(
+        let (result_num, result_denom) = Pairing::new().add_line_eval(
             BASE_POINT_X.clone(),
             BASE_POINT_Y.clone(),
             GOOD_TWISTED_HPOINT.clone(),
             GOOD_TWISTED_HPOINT.double(),
         );
+        //Normalize the values so that we don't have to care about _how_ we got to the result. Different * and double algorithms will
+        //give different values here, but when you normalize it should come out to the same.
+        let result = result_num * result_denom.inv();
+        let expected_good_result = expected_good_result_num * expected_good_result_denom.inv();
         assert_eq!(expected_good_result, result);
     }
 
     #[test]
     fn add_line_match_known_good_value_2() {
-        let expected_good_result = (
+        let (expected_good_result_num, expected_good_result_denom) = (
             // matches values verified by recrypt-scala
             Fp12Elem::create_from_t(
                 Fp256::zero(),
@@ -487,12 +491,16 @@ mod test {
             .double()
             .normalize()
             .expect("normalize failed");
-        let result = Pairing::new().add_line_eval(
+        let (result_num, result_denom) = Pairing::new().add_line_eval(
             point_x,
             point_y,
             GOOD_TWISTED_HPOINT.double(),
             GOOD_TWISTED_HPOINT.double().double(),
         );
+        //Normalize the values so that we don't have to care about _how_ we got to the result. Different * and double algorithms will
+        //give different values here, but when you normalize it should come out to the same.
+        let result = result_num * result_denom.inv();
+        let expected_good_result = expected_good_result_num * expected_good_result_denom.inv();
         assert_eq!(expected_good_result, result);
     }
 
