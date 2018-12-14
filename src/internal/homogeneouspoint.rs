@@ -297,15 +297,8 @@ where
 {
     type Output = TwistedHPoint<T>;
     fn add(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
-        let (x3, y3, z3) = add_core(
-            self.x,
-            self.y,
-            self.z,
-            other.x,
-            other.y,
-            other.z,
-            T::xi_inv_times_9(),
-        );
+        let three_b = T::xi_inv_times_9();
+        let (x3, y3, z3) = add_core(self.x, self.y, self.z, other.x, other.y, other.z, three_b);
         TwistedHPoint {
             x: x3,
             y: y3,
