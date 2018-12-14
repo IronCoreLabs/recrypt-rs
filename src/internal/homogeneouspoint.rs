@@ -90,37 +90,11 @@ where
 {
     type Output = HomogeneousPoint<T>;
     fn add(self, other: HomogeneousPoint<T>) -> HomogeneousPoint<T> {
-        match (self, other) {
-            (
-                HomogeneousPoint {
-                    x: x1,
-                    y: y1,
-                    z: z1,
-                },
-                HomogeneousPoint {
-                    x: x2,
-                    y: y2,
-                    z: z2,
-                },
-            ) => {
-                let x1x2 = x1 * x2;
-                let y1y2 = y1 * y2;
-                let z1z2 = z1 * z2;
-                let cxy = (x1 + y1) * (x2 + y2) - x1x2 - y1y2;
-                let cxz = (x1 + z1) * (x2 + z2) - x1x2 - z1z2;
-                let cyz = (y1 + z1) * (y2 + z2) - y1y2 - z1z2;
-                let tbzz = z1z2 * 9;
-                let dmyz = y1y2 - tbzz;
-                let dpyz = y1y2 + tbzz;
-                let x3 = cxy * dmyz - cyz * cxz * 9;
-                let y3 = dpyz * dmyz + x1x2 * 27 * cxz;
-                let z3 = cyz * dpyz + x1x2 * 3 * cxy;
-                HomogeneousPoint {
-                    x: x3,
-                    y: y3,
-                    z: z3,
-                }
-            }
+        let (x3, y3, z3) = add_core(self.x, self.y, self.z, other.x, other.y, other.z, 9);
+        HomogeneousPoint {
+            x: x3,
+            y: y3,
+            z: z3,
         }
     }
 }
@@ -323,40 +297,19 @@ where
 {
     type Output = TwistedHPoint<T>;
     fn add(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
-        let three_b = T::xi_inv_times_9();
-        match (self, other) {
-            (
-                TwistedHPoint {
-                    x: x1,
-                    y: y1,
-                    z: z1,
-                },
-                TwistedHPoint {
-                    x: x2,
-                    y: y2,
-                    z: z2,
-                },
-            ) => {
-                let x1x2 = x1 * x2;
-                let y1y2 = y1 * y2;
-                let z1z2 = z1 * z2;
-                let cxy = (x1 + y1) * (x2 + y2) - x1x2 - y1y2;
-                let cxz = (x1 + z1) * (x2 + z2) - x1x2 - z1z2;
-                let cyz = (y1 + z1) * (y2 + z2) - y1y2 - z1z2;
-                let tbzz = three_b * z1z2;
-                let hx = three_b * (cyz * cxz);
-                let hy = three_b * (x1x2 * cxz);
-                let dmyz = y1y2 - tbzz;
-                let dpyz = y1y2 + tbzz;
-                let x3 = cxy * dmyz - hx;
-                let y3 = dpyz * dmyz + hy * 3;
-                let z3 = cyz * dpyz + x1x2 * cxy * 3;
-                TwistedHPoint {
-                    x: x3,
-                    y: y3,
-                    z: z3,
-                }
-            }
+        let (x3, y3, z3) = add_core(
+            self.x,
+            self.y,
+            self.z,
+            other.x,
+            other.y,
+            other.z,
+            T::xi_inv_times_9(),
+        );
+        TwistedHPoint {
+            x: x3,
+            y: y3,
+            z: z3,
         }
     }
 }
@@ -541,6 +494,37 @@ where
             Some((self.x * z_inv, self.y * z_inv))
         }
     }
+}
+
+//   J. Renes, C. Castello, and L. Batina,
+//   "Complete addition formulas for prime order elliptic curves",
+//   https://eprint.iacr.org/2015/1060
+// (For y^2=x^3+b, doubling formulas, page 12.)
+// Mind that the main curve uses b = 3, but the twisted curve uses
+// b = 3/(u+3). The code below _assumes_ that the twisted curve is used
+// when the base field is FP2Elem (this is quite ugly).
+//
+// Since the formulas are complete, there is no need for make a special for zero.
+fn add_core<T, U>(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T, three_b: U) -> (T, T, T)
+where
+    T: Field + Mul<U, Output = T>,
+    U: Copy,
+{
+    let x1x2 = x1 * x2;
+    let y1y2 = y1 * y2;
+    let z1z2 = z1 * z2;
+    let cxy = (x1 + y1) * (x2 + y2) - x1x2 - y1y2;
+    let cxz = (x1 + z1) * (x2 + z2) - x1x2 - z1z2;
+    let cyz = (y1 + z1) * (y2 + z2) - y1y2 - z1z2;
+    let tbzz = z1z2 * three_b;
+    let hx = cyz * cxz * three_b;
+    let hy = x1x2 * cxz * three_b;
+    let dmyz = y1y2 - tbzz;
+    let dpyz = y1y2 + tbzz;
+    let x3 = cxy * dmyz - hx;
+    let y3 = dpyz * dmyz + hy * 3;
+    let z3 = cyz * dpyz + x1x2 * cxy * 3;
+    (x3, y3, z3)
 }
 
 #[cfg(test)]
