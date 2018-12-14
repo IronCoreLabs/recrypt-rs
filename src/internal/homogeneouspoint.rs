@@ -182,32 +182,49 @@ where
     }
 }
 
+pub trait Double {
+    fn double(&self) -> Self;
+}
+
+//   J. Renes, C. Castello, and L. Batina,
+//   "Complete addition formulas for prime order elliptic curves",
+//   https://eprint.iacr.org/2015/1060
+// (For y^2=x^3+b, doubling formulas, page 12.)
+// Mind that the main curve uses b = 3, but the twisted curve uses
+// b = 3/(u+3). The code below _assumes_ that the twisted curve is used
+// when the base field is FP2Elem (this is quite ugly).
+//
+// Since the formulas are complete, there is no need for make a special for zero.
+fn double<T,U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
+where T: Field + Copy + Mul<U, Output=T>,
+U: Copy, {
+
+    let y_squared = y.pow(2);
+    let z_squared = z.pow(2);
+    let three_b_times_z_squared = z_squared * three_b;
+    let eight_times_y_squared = y_squared * 8u64; // 8Y^2
+    let m1 = y_squared - (three_b_times_z_squared * 3u64); // Y^2 - 9bZ^2
+    let m2 = y_squared + three_b_times_z_squared; // Y^2 + 3bZ^2
+    let x3 = x * y * m1 * 2u64;
+    let y3 = m1 * m2 + three_b_times_z_squared * eight_times_y_squared;
+    let z3 = eight_times_y_squared * y * z;
+    (x3, y3, z3)
+}
+
+
+impl <T: Field> Double for HomogeneousPoint<T> {
+    fn double(&self) -> HomogeneousPoint<T> {
+        let (x, y, z) = double(self.x, self.y, self.z, 9u64);
+        HomogeneousPoint { x, y, z}
+    }
+}
+
+
+
 impl<T> HomogeneousPoint<T>
 where
     T: Field,
 {
-    pub fn double(&self) -> HomogeneousPoint<T> {
-        let three_b = 9;
-        let x = self.x;
-        let y = self.y;
-        let z = self.z;
-
-        let y_squared = y.pow(2);
-        let z_squared = z.pow(2);
-        let three_b_times_z_squared = z_squared * three_b;
-        let eight_times_y_squared = y_squared * 8u64; // 8Y^2
-        let m1 = y_squared - (three_b_times_z_squared * 3u64); // Y^2 - 9bZ^2
-        let m2 = y_squared + three_b_times_z_squared; // Y^2 + 3bZ^2
-        let x3 = x * y * m1 * 2u64;
-        let y3 = m1 * m2 + three_b_times_z_squared * eight_times_y_squared;
-        let z3 = eight_times_y_squared * y * z;
-        HomogeneousPoint {
-            x: x3,
-            y: y3,
-            z: z3,
-        }
-    }
-
     ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
     pub fn times<A: BitRepr>(&self, multiple: &A) -> HomogeneousPoint<T> {
         match self {
@@ -423,40 +440,17 @@ where
     }
 }
 
+impl <T: Field + ExtensionField> Double for TwistedHPoint<T> {
+    fn double(&self) -> Self {
+        let (x, y, z) = double(self.x, self.y, self.z, T::xi_inv_times_9());
+        TwistedHPoint { x, y, z}
+    }
+}
+
 impl<T> TwistedHPoint<T>
 where
     T: Field + ExtensionField,
 {
-    //   J. Renes, C. Castello, and L. Batina,
-    //   "Complete addition formulas for prime order elliptic curves",
-    //   https://eprint.iacr.org/2015/1060
-    // (For y^2=x^3+b, doubling formulas, page 12.)
-    // Mind that the main curve uses b = 3, but the twisted curve uses
-    // b = 3/(u+3). The code below _assumes_ that the twisted curve is used
-    // when the base field is FP2Elem (this is quite ugly).
-    //
-    // Since the formulas are complete, there is no need for make a special for zero.
-    pub fn double(&self) -> TwistedHPoint<T> {
-        let three_b = T::xi_inv_times_9();
-        let x = self.x;
-        let y = self.y;
-        let z = self.z;
-
-        let y_squared = y.pow(2);
-        let z_squared = z.pow(2);
-        let three_b_times_z_squared = three_b * z_squared;
-        let eight_times_y_squared = y_squared * 8u64; // 8Y^2
-        let m1 = y_squared - (three_b_times_z_squared * 3u64); // Y^2 - 9bZ^2
-        let m2 = y_squared + three_b_times_z_squared; // Y^2 + 3bZ^2
-        let x3 = x * y * m1 * 2u64;
-        let y3 = m1 * m2 + three_b_times_z_squared * eight_times_y_squared;
-        let z3 = eight_times_y_squared * y * z;
-        TwistedHPoint {
-            x: x3,
-            y: y3,
-            z: z3,
-        }
-    }
 
     ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
     pub fn times<A: BitRepr>(&self, multiple: &A) -> TwistedHPoint<T> {
@@ -746,7 +740,7 @@ pub mod test {
             } else if seed == 1 {
                 FP_256_CURVE_POINTS.g1
             } else {
-                FP_256_CURVE_POINTS.g1// * Fp256::from(seed)
+                FP_256_CURVE_POINTS.g1 * Fp256::from(seed)
             }
         }
     }

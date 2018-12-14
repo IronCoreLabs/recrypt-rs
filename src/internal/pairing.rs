@@ -7,6 +7,7 @@ use internal::homogeneouspoint::HomogeneousPoint;
 use internal::homogeneouspoint::TwistedHPoint;
 use internal::Square;
 use num_traits::{Inv, One, Zero};
+use internal::homogeneouspoint::Double;
 
 #[derive(Debug)]
 pub struct Pairing<T> {
@@ -309,6 +310,7 @@ mod test {
     use internal::fp::fp256_unsafe_from;
     use num_traits::Pow;
     use proptest::prelude::*;
+    use internal::homogeneouspoint::Double;
 
     lazy_static! {
         static ref GOOD_TWISTED_HPOINT: TwistedHPoint<Fp256> = TwistedHPoint {
