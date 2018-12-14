@@ -1,13 +1,13 @@
 use gridiron::fp_256::Fp256;
-use internal::field::{ExtensionField, Field};
+use internal::field::ExtensionField;
 use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
 use internal::fp6elem::Fp6Elem;
+use internal::homogeneouspoint::Double;
 use internal::homogeneouspoint::HomogeneousPoint;
 use internal::homogeneouspoint::TwistedHPoint;
 use internal::Square;
 use num_traits::{Inv, One, Zero};
-use internal::homogeneouspoint::Double;
 
 #[derive(Debug)]
 pub struct Pairing<T> {
@@ -17,7 +17,7 @@ pub struct Pairing<T> {
 
 impl<T> Pairing<T>
 where
-    T: Field + ExtensionField + PairingConfig,
+    T: ExtensionField + PairingConfig,
 {
     pub fn new() -> Pairing<T> {
         // w^2 = v
@@ -308,9 +308,9 @@ mod test {
     use super::*;
     use internal::curve::FP_256_CURVE_POINTS;
     use internal::fp::fp256_unsafe_from;
+    use internal::homogeneouspoint::Double;
     use num_traits::Pow;
     use proptest::prelude::*;
-    use internal::homogeneouspoint::Double;
 
     lazy_static! {
         static ref GOOD_TWISTED_HPOINT: TwistedHPoint<Fp256> = TwistedHPoint {

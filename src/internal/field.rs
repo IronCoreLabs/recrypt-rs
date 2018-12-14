@@ -106,7 +106,8 @@ impl Field for Fr256 {}
 
 /// Contains the values needed to configure a new Fp type to be used as an extension field
 /// (FP2Elem, FP6Elem, FP12Elem)
-pub trait ExtensionField
+/// All `ExtensionField`s are `Field`s
+pub trait ExtensionField: Field
 where
     Self: Sized,
 {

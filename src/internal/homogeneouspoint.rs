@@ -195,10 +195,11 @@ pub trait Double {
 // when the base field is FP2Elem (this is quite ugly).
 //
 // Since the formulas are complete, there is no need for make a special for zero.
-fn double<T,U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
-where T: Field + Copy + Mul<U, Output=T>,
-U: Copy, {
-
+fn double<T, U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
+where
+    T: Field + Copy + Mul<U, Output = T>,
+    U: Copy,
+{
     let y_squared = y.pow(2);
     let z_squared = z.pow(2);
     let three_b_times_z_squared = z_squared * three_b;
@@ -211,15 +212,12 @@ U: Copy, {
     (x3, y3, z3)
 }
 
-
-impl <T: Field> Double for HomogeneousPoint<T> {
+impl<T: Field> Double for HomogeneousPoint<T> {
     fn double(&self) -> HomogeneousPoint<T> {
         let (x, y, z) = double(self.x, self.y, self.z, 9u64);
-        HomogeneousPoint { x, y, z}
+        HomogeneousPoint { x, y, z }
     }
 }
-
-
 
 impl<T> HomogeneousPoint<T>
 where
@@ -273,7 +271,7 @@ pub struct TwistedHPoint<T> {
 
 impl<T> PartialEq for TwistedHPoint<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
 {
     fn eq(&self, other: &TwistedHPoint<T>) -> bool {
         match (*self, *other) {
@@ -295,11 +293,11 @@ where
     }
 }
 
-impl<T> Eq for TwistedHPoint<T> where T: Field + ExtensionField {}
+impl<T> Eq for TwistedHPoint<T> where T: ExtensionField {}
 
 impl<T, U> Mul<U> for TwistedHPoint<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
     U: BitRepr,
 {
     type Output = TwistedHPoint<T>;
@@ -310,7 +308,7 @@ where
 
 impl<T> Add for TwistedHPoint<T>
 where
-    T: Field + Eq + ExtensionField,
+    T: Eq + ExtensionField,
 {
     type Output = TwistedHPoint<T>;
     fn add(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
@@ -326,7 +324,7 @@ where
 
 impl<T> AddAssign for TwistedHPoint<T>
 where
-    T: Field + ExtensionField + Eq,
+    T: ExtensionField + Eq,
 {
     fn add_assign(&mut self, other: TwistedHPoint<T>) {
         *self = *self + other
@@ -335,7 +333,7 @@ where
 
 impl<T> Zero for TwistedHPoint<T>
 where
-    T: Field + Eq + ExtensionField,
+    T: Eq + ExtensionField,
 {
     fn zero() -> TwistedHPoint<T> {
         TwistedHPoint {
@@ -352,7 +350,7 @@ where
 
 impl<T> Neg for TwistedHPoint<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
 {
     type Output = TwistedHPoint<T>;
     fn neg(self) -> TwistedHPoint<T> {
@@ -371,7 +369,7 @@ where
 
 impl<T> Sub for TwistedHPoint<T>
 where
-    T: Field + Eq + ExtensionField,
+    T: Eq + ExtensionField,
 {
     type Output = TwistedHPoint<T>;
     fn sub(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
@@ -381,20 +379,20 @@ where
 
 impl<T> SubAssign for TwistedHPoint<T>
 where
-    T: Field + Eq + ExtensionField,
+    T: Eq + ExtensionField,
 {
     fn sub_assign(&mut self, other: TwistedHPoint<T>) {
         *self = *self - other
     }
 }
 
-impl<T: Field + Hashable + ExtensionField> Hashable for TwistedHPoint<T> {
+impl<T: Hashable + ExtensionField> Hashable for TwistedHPoint<T> {
     fn to_bytes(&self) -> Vec<u8> {
         self.normalize().as_ref().to_bytes()
     }
 }
 
-impl<T: Field + ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
+impl<T: ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
     // TwistedHPoint<T> is 2 Fp2s -- x and y
     const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
 
@@ -440,18 +438,17 @@ where
     }
 }
 
-impl <T: Field + ExtensionField> Double for TwistedHPoint<T> {
+impl<T: ExtensionField> Double for TwistedHPoint<T> {
     fn double(&self) -> Self {
         let (x, y, z) = double(self.x, self.y, self.z, T::xi_inv_times_9());
-        TwistedHPoint { x, y, z}
+        TwistedHPoint { x, y, z }
     }
 }
 
 impl<T> TwistedHPoint<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
 {
-
     ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
     pub fn times<A: BitRepr>(&self, multiple: &A) -> TwistedHPoint<T> {
         match self {
