@@ -41,6 +41,7 @@ if [ "${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}" != "master" ]; then
     cargo bench -- --save-baseline master-benchmark
     # Bench the current commit that was pushed
     git checkout -f "${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+    cargo build
     cargo bench -- --save-baseline current-benchmark
     # compare the before/after results; filter out anything less than 2% change
     critcmp master-benchmark current-benchmark -t 2
