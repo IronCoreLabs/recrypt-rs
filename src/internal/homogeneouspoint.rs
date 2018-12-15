@@ -454,7 +454,6 @@ where
     }
 }
 
-
 // Since the formulas are complete, there is no need for make a special for zero.
 fn add<T, U>(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T, three_b: U) -> (T, T, T)
 where
