@@ -90,7 +90,7 @@ where
 {
     type Output = HomogeneousPoint<T>;
     fn add(self, other: HomogeneousPoint<T>) -> HomogeneousPoint<T> {
-        let (x3, y3, z3) = add_core(self.x, self.y, self.z, other.x, other.y, other.z, 9);
+        let (x3, y3, z3) = add(self.x, self.y, self.z, other.x, other.y, other.z, 9);
         HomogeneousPoint {
             x: x3,
             y: y3,
@@ -184,32 +184,6 @@ where
 
 pub trait Double {
     fn double(&self) -> Self;
-}
-
-//   J. Renes, C. Castello, and L. Batina,
-//   "Complete addition formulas for prime order elliptic curves",
-//   https://eprint.iacr.org/2015/1060
-// (For y^2=x^3+b, doubling formulas, page 12.)
-// Mind that the main curve uses b = 3, but the twisted curve uses
-// b = 3/(u+3). The code below _assumes_ that the twisted curve is used
-// when the base field is FP2Elem (this is quite ugly).
-//
-// Since the formulas are complete, there is no need for make a special for zero.
-fn double<T, U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
-where
-    T: Field + Copy + Mul<U, Output = T>,
-    U: Copy,
-{
-    let y_squared = y.pow(2);
-    let z_squared = z.pow(2);
-    let three_b_times_z_squared = z_squared * three_b;
-    let eight_times_y_squared = y_squared * 8u64; // 8Y^2
-    let m1 = y_squared - (three_b_times_z_squared * 3u64); // Y^2 - 9bZ^2
-    let m2 = y_squared + three_b_times_z_squared; // Y^2 + 3bZ^2
-    let x3 = x * y * m1 * 2u64;
-    let y3 = m1 * m2 + three_b_times_z_squared * eight_times_y_squared;
-    let z3 = eight_times_y_squared * y * z;
-    (x3, y3, z3)
 }
 
 impl<T: Field> Double for HomogeneousPoint<T> {
@@ -313,7 +287,7 @@ where
     type Output = TwistedHPoint<T>;
     fn add(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
         let three_b = T::xi_inv_times_9();
-        let (x3, y3, z3) = add_core(self.x, self.y, self.z, other.x, other.y, other.z, three_b);
+        let (x3, y3, z3) = add(self.x, self.y, self.z, other.x, other.y, other.z, three_b);
         TwistedHPoint {
             x: x3,
             y: y3,
@@ -480,16 +454,9 @@ where
     }
 }
 
-//   J. Renes, C. Castello, and L. Batina,
-//   "Complete addition formulas for prime order elliptic curves",
-//   https://eprint.iacr.org/2015/1060
-// (For y^2=x^3+b, doubling formulas, page 12.)
-// Mind that the main curve uses b = 3, but the twisted curve uses
-// b = 3/(u+3). The code below _assumes_ that the twisted curve is used
-// when the base field is FP2Elem (this is quite ugly).
-//
+
 // Since the formulas are complete, there is no need for make a special for zero.
-fn add_core<T, U>(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T, three_b: U) -> (T, T, T)
+fn add<T, U>(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T, three_b: U) -> (T, T, T)
 where
     T: Field + Mul<U, Output = T>,
     U: Copy,
@@ -508,6 +475,32 @@ where
     let x3 = cxy * dmyz - hx;
     let y3 = dpyz * dmyz + hy * 3;
     let z3 = cyz * dpyz + x1x2 * cxy * 3;
+    (x3, y3, z3)
+}
+
+//   J. Renes, C. Castello, and L. Batina,
+//   "Complete addition formulas for prime order elliptic curves",
+//   https://eprint.iacr.org/2015/1060
+// (For y^2=x^3+b, doubling formulas, page 12.)
+// Mind that the main curve uses b = 3, but the twisted curve uses
+// b = 3/(u+3). The code below _assumes_ that the twisted curve is used
+// when the base field is FP2Elem (this is quite ugly).
+//
+//See double for details on the formula
+fn double<T, U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
+where
+    T: Field + Copy + Mul<U, Output = T>,
+    U: Copy,
+{
+    let y_squared = y.pow(2);
+    let z_squared = z.pow(2);
+    let three_b_times_z_squared = z_squared * three_b;
+    let eight_times_y_squared = y_squared * 8u64; // 8Y^2
+    let m1 = y_squared - (three_b_times_z_squared * 3u64); // Y^2 - 9bZ^2
+    let m2 = y_squared + three_b_times_z_squared; // Y^2 + 3bZ^2
+    let x3 = x * y * m1 * 2u64;
+    let y3 = m1 * m2 + three_b_times_z_squared * eight_times_y_squared;
+    let z3 = eight_times_y_squared * y * z;
     (x3, y3, z3)
 }
 
