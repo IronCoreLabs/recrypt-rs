@@ -1,5 +1,4 @@
 use gridiron::fp_256::Fp256;
-use internal::fp::fp256_unsafe_from;
 use internal::fp::fr_256::Fr256;
 use internal::fp2elem::Fp2Elem;
 use internal::fp6elem::Fp6Elem;
@@ -147,12 +146,14 @@ impl ExtensionField for Fp256 {
     //precalculate this since it's used in every double and add operation in the extension field.
     fn xi_inv_times_9() -> Fp2Elem<Self> {
         Fp2Elem {
-            elem1: fp256_unsafe_from(
-                "2b1cb3c42ffddbfe1987fa375074a870944ea90b89d01ce2a0e89a20829c2d1e",
-            ),
-            elem2: fp256_unsafe_from(
-                "e5ee696baa9f3ff5dd7fe127026e2d0316f8dae83455ef635a2de0ad6340f0d",
-            ),
+            elem1: Fp256::new([
+                0x29c2d1e, 0x41d13441, 0x2740738a, 0x2275485c, 0x74a8709, 0x30ff46ea, 0x7f76ff86,
+                0xe59e217, 0x2b,
+            ]),
+            elem2: Fp256::new([
+                0x56340f0d, 0x6b45bc15, 0xd157bd8, 0xb7c6d74, 0x26e2d03, 0x3affc24e, 0x2a7cffd7,
+                0x2f734b5d, 0xe,
+            ]),
         }
     }
 
