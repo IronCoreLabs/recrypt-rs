@@ -136,6 +136,7 @@ where
 }
 
 impl ExtensionField for Fp256 {
+    #[inline]
     fn xi() -> Fp2Elem<Self> {
         Fp2Elem {
             elem1: Self::one(),
@@ -144,6 +145,7 @@ impl ExtensionField for Fp256 {
     }
 
     //precalculate this since it's used in every double and add operation in the extension field.
+    #[inline]
     fn xi_inv_times_9() -> Fp2Elem<Self> {
         Fp2Elem {
             elem1: Fp256::new([
@@ -156,7 +158,7 @@ impl ExtensionField for Fp256 {
             ]),
         }
     }
-
+    #[inline]
     fn frobenius_factor_1() -> Fp2Elem<Self> {
         Fp2Elem {
             // 26098034838977895781559542626833399156321265654106457577426020397262786167059
@@ -172,6 +174,7 @@ impl ExtensionField for Fp256 {
             ]),
         }
     }
+    #[inline]
     fn frobenius_factor_2() -> Fp2Elem<Self> {
         Fp2Elem {
             // 19885131339612776214803633203834694332692106372356013117629940868870585019582
@@ -186,6 +189,7 @@ impl ExtensionField for Fp256 {
             ]),
         }
     }
+    #[inline]
     fn frobenius_factor_fp12() -> Fp2Elem<Self> {
         Fp2Elem {
             // 8669379979083712429711189836753509758585994370025260553045152614783263110636
@@ -200,6 +204,7 @@ impl ExtensionField for Fp256 {
             ]),
         }
     }
+    #[inline]
     fn v() -> Fp6Elem<Self> {
         Fp6Elem {
             elem1: Zero::zero(),
