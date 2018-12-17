@@ -455,6 +455,7 @@ where
 }
 
 // Since the formulas are complete, there is no need for make a special for zero.
+//See double for details on the formula
 fn add<T, U>(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T, three_b: U) -> (T, T, T)
 where
     T: Field + Mul<U, Output = T>,
@@ -484,8 +485,6 @@ where
 // Mind that the main curve uses b = 3, but the twisted curve uses
 // b = 3/(u+3). The code below _assumes_ that the twisted curve is used
 // when the base field is FP2Elem (this is quite ugly).
-//
-//See double for details on the formula
 fn double<T, U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
 where
     T: Field + Copy + Mul<U, Output = T>,
