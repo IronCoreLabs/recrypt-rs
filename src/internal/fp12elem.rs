@@ -142,7 +142,7 @@ where
 
 impl<T> Div<Fp12Elem<T>> for Fp12Elem<T>
 where
-    T: Field + Square + ExtensionField,
+    T: ExtensionField,
 {
     type Output = Fp12Elem<T>;
     fn div(self, other: Fp12Elem<T>) -> Self {
@@ -191,7 +191,7 @@ where
 
 impl<T> Inv for Fp12Elem<T>
 where
-    T: Field + Square + ExtensionField,
+    T: ExtensionField,
 {
     type Output = Fp12Elem<T>;
     fn inv(self) -> Fp12Elem<T> {
@@ -212,7 +212,7 @@ where
 
 impl<T> Pow<u64> for Fp12Elem<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
 {
     type Output = Fp12Elem<T>;
     fn pow(self, rhs: u64) -> Self {
@@ -234,11 +234,11 @@ where
     }
 }
 
-impl<T> Field for Fp12Elem<T> where T: Field + ExtensionField + Mul<u64, Output = T> {}
+impl<T> Field for Fp12Elem<T> where T: ExtensionField + Mul<u64, Output = T> {}
 
 impl<T> Fp12Elem<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
 {
     /// Frobenius endomorphism of the twisted curve.  This will be used in the pairing.
     /// Also the element to the p power.

@@ -1,9 +1,11 @@
 use gridiron::fp_256::Fp256;
-use internal::field::{ExtensionField, Field};
+use internal::field::ExtensionField;
 use internal::fp12elem::Fp12Elem;
 use internal::fp2elem::Fp2Elem;
 use internal::fp6elem::Fp6Elem;
+use internal::homogeneouspoint::Double;
 use internal::homogeneouspoint::HomogeneousPoint;
+use internal::homogeneouspoint::TwistedHPoint;
 use internal::Square;
 use num_traits::{Inv, One, Zero};
 
@@ -15,7 +17,7 @@ pub struct Pairing<T> {
 
 impl<T> Pairing<T>
 where
-    T: Field + ExtensionField + PairingConfig,
+    T: ExtensionField + PairingConfig,
 {
     pub fn new() -> Pairing<T> {
         // w^2 = v
@@ -35,44 +37,41 @@ where
     /// Hess, et al., from 2006. Our implementation is based on the paper "High-Speed Software
     /// Implementation of the Optimal Ate Pairing over Barreto-Naehrig Curves" by Beuchat et al,
     /// from 2010.
-    pub fn pair(
-        &self,
-        point_p: HomogeneousPoint<T>,
-        point_q: HomogeneousPoint<Fp2Elem<T>>,
-    ) -> Fp12Elem<T> {
+    pub fn pair(&self, point_p: HomogeneousPoint<T>, point_q: TwistedHPoint<T>) -> Fp12Elem<T> {
         let (px, py) = point_p
             .normalize()
             .unwrap_or_else(|| panic!("Pairing is undefined on the zero point."));
         let mut f1: Fp12Elem<T> = One::one();
         let mut f2: Fp2Elem<T> = One::one();
         let neg_q = -point_q;
-        let point_result: HomogeneousPoint<Fp2Elem<T>> = <T as PairingConfig>::naf_for_loop()
-            .iter()
-            .fold(point_q, |acc, naf_value| {
-                let mut point_r = acc;
-                let mut point_s = point_r.double();
-                let (ell1, ell2) = self.double_line_eval(px, py, point_r);
-                f1 = ell1 * f1.square();
-                f2 = ell2 * f2.square();
-                point_r = point_s;
-                if *naf_value == -1 {
-                    point_s = neg_q + point_r;
-                    let (ell1, ell2) = self.add_line_eval(px, py, neg_q, point_r);
-                    f1 = f1 * ell1;
-                    f2 = f2 * ell2;
+        let point_result: TwistedHPoint<T> =
+            <T as PairingConfig>::naf_for_loop()
+                .iter()
+                .fold(point_q, |acc, naf_value| {
+                    let mut point_r = acc;
+                    let mut point_s = point_r.double();
+                    let (ell1, ell2) = self.double_line_eval(px, py, point_r);
+                    f1 = ell1 * f1.square();
+                    f2 = ell2 * f2.square();
                     point_r = point_s;
-                    point_r
-                } else if *naf_value == 1 {
-                    point_s = point_q + point_r;
-                    let (ell1, ell2) = self.add_line_eval(px, py, point_q, point_r);
-                    f1 = f1 * ell1;
-                    f2 = f2 * ell2;
-                    point_r = point_s;
-                    point_r
-                } else {
-                    point_r
-                }
-            });
+                    if *naf_value == -1 {
+                        point_s = neg_q + point_r;
+                        let (ell1, ell2) = self.add_line_eval(px, py, neg_q, point_r);
+                        f1 = f1 * ell1;
+                        f2 = f2 * ell2;
+                        point_r = point_s;
+                        point_r
+                    } else if *naf_value == 1 {
+                        point_s = point_q + point_r;
+                        let (ell1, ell2) = self.add_line_eval(px, py, point_q, point_r);
+                        f1 = f1 * ell1;
+                        f2 = f2 * ell2;
+                        point_r = point_s;
+                        point_r
+                    } else {
+                        point_r
+                    }
+                });
         let point_q1 = self.frobenius(point_q);
         let point_q2 = self.frobenius(point_q1);
         let point_s = point_q1 + point_result;
@@ -103,17 +102,17 @@ where
         &self,
         px: T,
         py: T,
-        q: HomogeneousPoint<Fp2Elem<T>>,
-        r: HomogeneousPoint<Fp2Elem<T>>,
+        q: TwistedHPoint<T>,
+        r: TwistedHPoint<T>,
     ) -> (Fp12Elem<T>, Fp2Elem<T>) {
         match (q, r) {
             (
-                HomogeneousPoint {
+                TwistedHPoint {
                     x: qx,
                     y: qy,
                     z: qz,
                 },
-                HomogeneousPoint {
+                TwistedHPoint {
                     x: rx,
                     y: ry,
                     z: rz,
@@ -130,14 +129,9 @@ where
     /// Script l with multiplication in the denominator from Miller's Algorithm
     /// Used in step 4 of Algorithm 1 in High-Speed Software Implementation of
     /// the Optimal Ate Pairing over Barreto–Naehrig Curves
-    fn double_line_eval(
-        &self,
-        px: T,
-        py: T,
-        r: HomogeneousPoint<Fp2Elem<T>>,
-    ) -> (Fp12Elem<T>, Fp2Elem<T>) {
+    fn double_line_eval(&self, px: T, py: T, r: TwistedHPoint<T>) -> (Fp12Elem<T>, Fp2Elem<T>) {
         match r {
-            HomogeneousPoint { x, y, z } => {
+            TwistedHPoint { x, y, z } => {
                 let numerator = x.square() * 3;
                 let denominator = y * z * 2;
                 self.finalize_eval(r, px, py, numerator, denominator)
@@ -148,14 +142,14 @@ where
     /// last step for double_line_eval or add_line_eval
     fn finalize_eval(
         &self,
-        q: HomogeneousPoint<Fp2Elem<T>>,
+        q: TwistedHPoint<T>,
         px: T,
         py: T,
         numerator: Fp2Elem<T>,
         denominator: Fp2Elem<T>,
     ) -> (Fp12Elem<T>, Fp2Elem<T>) {
         match q {
-            HomogeneousPoint { x, y, z } => {
+            TwistedHPoint { x, y, z } => {
                 let new_numerator = Fp12Elem::create(
                     Zero::zero(),
                     x * numerator - y * denominator,
@@ -247,9 +241,9 @@ where
         }
     }
 
-    fn frobenius(&self, point: HomogeneousPoint<Fp2Elem<T>>) -> HomogeneousPoint<Fp2Elem<T>> {
+    fn frobenius(&self, point: TwistedHPoint<T>) -> TwistedHPoint<T> {
         match point {
-            HomogeneousPoint { x, y, z } => {
+            TwistedHPoint { x, y, z } => {
                 let new_x = (self.pairing_frobenius_factor_1 * x.frobenius())
                     .to_fp2()
                     .unwrap_or_else(|| {
@@ -260,7 +254,7 @@ where
                     .unwrap_or_else(|| {
                         panic!("frobenius not defined when the y of `point` can't convert to fp2.")
                     });
-                HomogeneousPoint {
+                TwistedHPoint {
                     x: new_x,
                     y: new_y,
                     z: z.frobenius(),
@@ -314,11 +308,12 @@ mod test {
     use super::*;
     use internal::curve::FP_256_CURVE_POINTS;
     use internal::fp::fp256_unsafe_from;
+    use internal::homogeneouspoint::Double;
     use num_traits::Pow;
     use proptest::prelude::*;
 
     lazy_static! {
-        static ref GOOD_HPOINT: HomogeneousPoint<Fp2Elem<Fp256>> = HomogeneousPoint {
+        static ref GOOD_TWISTED_HPOINT: TwistedHPoint<Fp256> = TwistedHPoint {
             x: Fp2Elem {
                 //39898887170429929807040143276261848585078991568615066857293752634765338134660
                 elem1:
@@ -381,7 +376,7 @@ mod test {
 
         let pairing: Pairing<Fp256> = Pairing::new();
 
-        let result = pairing.pair(FP_256_CURVE_POINTS.generator, GOOD_HPOINT.clone());
+        let result = pairing.pair(FP_256_CURVE_POINTS.generator, GOOD_TWISTED_HPOINT.clone());
 
         assert_eq!(expected_good_result, result);
     }
@@ -389,7 +384,7 @@ mod test {
     #[test]
     fn add_line_match_known_good_value_1() {
         // matches values verified by recrypt-scala
-        let expected_good_result = (
+        let (expected_good_result_num, expected_good_result_denom) = (
             Fp12Elem::create_from_t(
                 Fp256::zero(),
                 Fp256::zero(),
@@ -433,18 +428,22 @@ mod test {
                 ),
             },
         );
-        let result = Pairing::new().add_line_eval(
+        let (result_num, result_denom) = Pairing::new().add_line_eval(
             BASE_POINT_X.clone(),
             BASE_POINT_Y.clone(),
-            GOOD_HPOINT.clone(),
-            GOOD_HPOINT.double(),
+            GOOD_TWISTED_HPOINT.clone(),
+            GOOD_TWISTED_HPOINT.double(),
         );
+        //Normalize the values so that we don't have to care about _how_ we got to the result. Different * and double algorithms will
+        //give different values here, but when you normalize it should come out to the same.
+        let result = result_num * result_denom.inv();
+        let expected_good_result = expected_good_result_num * expected_good_result_denom.inv();
         assert_eq!(expected_good_result, result);
     }
 
     #[test]
     fn add_line_match_known_good_value_2() {
-        let expected_good_result = (
+        let (expected_good_result_num, expected_good_result_denom) = (
             // matches values verified by recrypt-scala
             Fp12Elem::create_from_t(
                 Fp256::zero(),
@@ -494,12 +493,16 @@ mod test {
             .double()
             .normalize()
             .expect("normalize failed");
-        let result = Pairing::new().add_line_eval(
+        let (result_num, result_denom) = Pairing::new().add_line_eval(
             point_x,
             point_y,
-            GOOD_HPOINT.double(),
-            GOOD_HPOINT.double().double(),
+            GOOD_TWISTED_HPOINT.double(),
+            GOOD_TWISTED_HPOINT.double().double(),
         );
+        //Normalize the values so that we don't have to care about _how_ we got to the result. Different * and double algorithms will
+        //give different values here, but when you normalize it should come out to the same.
+        let result = result_num * result_denom.inv();
+        let expected_good_result = expected_good_result_num * expected_good_result_denom.inv();
         assert_eq!(expected_good_result, result);
     }
 
@@ -554,14 +557,14 @@ mod test {
         let result = Pairing::new().double_line_eval(
             BASE_POINT_X.clone(),
             BASE_POINT_Y.clone(),
-            GOOD_HPOINT.clone(),
+            GOOD_TWISTED_HPOINT.clone(),
         );
         assert_eq!(expected_good_result, result);
     }
 
     #[test]
     fn frobenius_match_good_value() {
-        let generator = HomogeneousPoint {
+        let generator = TwistedHPoint {
             x: Fp2Elem {
                 //39898887170429929807040143276261848585078991568615066857293752634765338134660
                 elem1: fp256_unsafe_from(
@@ -594,7 +597,7 @@ mod test {
             },
         };
 
-        let expected_result = HomogeneousPoint {
+        let expected_result = TwistedHPoint {
             x: Fp2Elem {
                 //3493288303413595898714519891264492301560207456168827437424957567620529428904
                 elem1: fp256_unsafe_from(

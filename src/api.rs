@@ -8,10 +8,9 @@ pub use internal::ed25519::{
 };
 use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
-use internal::fp2elem::Fp2Elem;
 pub use internal::hashable::Hashable;
 use internal::hashable::Hashable32;
-use internal::homogeneouspoint::HomogeneousPoint;
+use internal::homogeneouspoint::TwistedHPoint;
 use internal::pairing;
 pub use internal::rand_bytes::*;
 use internal::schnorr::{SchnorrSign, SchnorrSigning};
@@ -455,7 +454,7 @@ impl PartialEq for EncryptedTempKey {
 #[derive(Clone, Copy)]
 pub struct HashedValue {
     bytes: [u8; HashedValue::ENCODED_SIZE_BYTES],
-    _internal_value: HomogeneousPoint<Fp2Elem<Fp256>>,
+    _internal_value: TwistedHPoint<Fp256>,
 }
 
 impl Hashable for HashedValue {
@@ -465,15 +464,13 @@ impl Hashable for HashedValue {
 }
 
 impl HashedValue {
-    const ENCODED_SIZE_BYTES: usize = HomogeneousPoint::<Fp2Elem<Fp256>>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = TwistedHPoint::<Fp256>::ENCODED_SIZE_BYTES;
 
     pub fn new(bytes: [u8; HashedValue::ENCODED_SIZE_BYTES]) -> Result<Self> {
         Ok(
-            HomogeneousPoint::<Fp2Elem<Fp256>>::decode(bytes.to_vec()).map(|hpoint| {
-                HashedValue {
-                    bytes,
-                    _internal_value: hpoint,
-                }
+            TwistedHPoint::<Fp256>::decode(bytes.to_vec()).map(|hpoint| HashedValue {
+                bytes,
+                _internal_value: hpoint,
             })?,
         )
     }
@@ -502,8 +499,8 @@ impl PartialEq for HashedValue {
     }
 }
 
-impl From<HomogeneousPoint<Fp2Elem<Fp256>>> for HashedValue {
-    fn from(hp: HomogeneousPoint<Fp2Elem<Fp256>>) -> Self {
+impl From<TwistedHPoint<Fp256>> for HashedValue {
+    fn from(hp: TwistedHPoint<Fp256>) -> Self {
         // convert hashed_k to fixed array.
         // Assume the point is valid (on the curve, etc) since we're coming from internal types
         let src = &hp.to_bytes()[..];
@@ -1246,7 +1243,7 @@ pub(crate) mod test {
         let hashedvalue = tk.hashed_temp_key;
         assert_eq!(
             tk._internal_key.payload.hashed_k,
-            HomogeneousPoint::<Fp2Elem<Fp256>>::decode(hashedvalue.bytes.to_vec()).unwrap()
+            TwistedHPoint::<Fp256>::decode(hashedvalue.bytes.to_vec()).unwrap()
         )
     }
 

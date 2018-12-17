@@ -7,9 +7,8 @@ use internal::field::ExtensionField;
 use internal::field::Field;
 use internal::fp::fr_256::Fr256;
 use internal::fp12elem::Fp12Elem;
-use internal::fp2elem::Fp2Elem;
 use internal::hashable::{Hashable, Hashable32};
-use internal::homogeneouspoint::{HomogeneousPoint, PointErr};
+use internal::homogeneouspoint::{HomogeneousPoint, PointErr, TwistedHPoint};
 use internal::pairing::Pairing;
 use internal::pairing::PairingConfig;
 use internal::sha256::Sha256Hashing;
@@ -345,7 +344,7 @@ pub fn array_split_64<T: Copy + Zero>(array: &[T; 64]) -> ([T; 32], [T; 32]) {
 /// Useful for calling `encrypt`
 pub fn gen_rth_root<T>(pairing: &Pairing<T>, fp12_elem: Fp12Elem<T>) -> Fp12Elem<T>
 where
-    T: Field + ExtensionField + Square + PairingConfig,
+    T: ExtensionField + PairingConfig,
 {
     pairing.final_exp(fp12_elem)
 }
@@ -421,7 +420,7 @@ pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     sign: &G,
 ) -> SignedValue<EncryptedValue<T>>
 where
-    T: Field + ExtensionField + PairingConfig + BitRepr + Hashable,
+    T: ExtensionField + PairingConfig + BitRepr + Hashable,
 {
     let ephem_pub_key = PublicKey {
         value: curve_points.generator * encrypting_key,
@@ -464,7 +463,7 @@ pub fn decrypt<T, H: Sha256Hashing, G: Ed25519Signing>(
     signing: &G,
 ) -> ErrorOr<Fp12Elem<T>>
 where
-    T: Field + ExtensionField + PairingConfig + BitRepr + Hashable + From<[u8; 64]> + Default,
+    T: ExtensionField + PairingConfig + BitRepr + Hashable + From<[u8; 64]> + Default,
 {
     verify_signed_value(signed_encrypted_value, signing).map_or(
         Result::Err(InternalError::InvalidEncryptedMessageSignature),
@@ -504,7 +503,7 @@ fn compute_and_compare_auth_hash<FP, H: Sha256Hashing>(
     hash: &H,
 ) -> ErrorOr<Fp12Elem<FP>>
 where
-    FP: Field + ExtensionField + PairingConfig + BitRepr + Hashable,
+    FP: ExtensionField + PairingConfig + BitRepr + Hashable,
 {
     let computed_auth_hash = AuthHash::create(hash, &(&public_key, &unverified_plaintext));
 
@@ -532,7 +531,7 @@ fn decrypt_encrypted_once<T>(
     curve_points: &CurvePoints<T>,
 ) -> Fp12Elem<T>
 where
-    T: Field + ExtensionField + PairingConfig + BitRepr,
+    T: ExtensionField + PairingConfig + BitRepr,
 {
     let g1 = curve_points.g1;
     let EncryptedOnceValue {
@@ -561,7 +560,7 @@ fn decrypt_reencrypted_value<FP, H>(
     sha256: &H,
 ) -> Fp12Elem<FP>
 where
-    FP: Field + Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
+    FP: Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
     H: Sha256Hashing,
 {
     let re_blocks = &reencrypted_value.encryption_blocks;
@@ -668,7 +667,7 @@ pub fn generate_reencryption_key<FP, H, S>(
     ed25519: &S,
 ) -> SignedValue<ReencryptionKey<FP>>
 where
-    FP: Field + ExtensionField + PairingConfig + BitRepr + Hashable + From<[u8; 64]> + Default,
+    FP: ExtensionField + PairingConfig + BitRepr + Hashable + From<[u8; 64]> + Default,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -725,9 +724,9 @@ fn hash2<FP, H>(
     k_value: KValue<FP>,
     curve_points: &CurvePoints<FP>,
     sha256: &H,
-) -> HomogeneousPoint<Fp2Elem<FP>>
+) -> TwistedHPoint<FP>
 where
-    FP: Field + Hashable + From<[u8; 64]> + BitRepr + Default,
+    FP: Hashable + From<[u8; 64]> + BitRepr + Default + ExtensionField,
     H: Sha256Hashing,
 {
     let hash_element = curve_points.hash_element;
@@ -752,26 +751,26 @@ where
 /// `hashed_k`      - a combination of the hash of K and the secret key of the delegator,
 ///                   used to recover `K` from `encrypted_k`
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct ReencryptionKey<FP: Field> {
+pub struct ReencryptionKey<FP: ExtensionField> {
     pub re_public_key: PublicKey<FP>,
     pub to_public_key: PublicKey<FP>,
     pub encrypted_k: Fp12Elem<FP>,
-    pub hashed_k: HomogeneousPoint<Fp2Elem<FP>>,
+    pub hashed_k: TwistedHPoint<FP>,
 }
 
-impl<FP: Field + Hashable> Hashable for ReencryptionKey<FP> {
+impl<FP: Hashable + ExtensionField> Hashable for ReencryptionKey<FP> {
     fn to_bytes(&self) -> ByteVector {
         (&self.re_public_key, &self.to_public_key, &self.encrypted_k).to_bytes()
     }
 }
 
-impl<FP: Field + BitRepr> ReencryptionKey<FP> {
+impl<FP: BitRepr + ExtensionField> ReencryptionKey<FP> {
     ///Augment this ReencryptionKey with a priv_key. This is useful if the ReencryptionKey was from an unaugmented
     ///private key.
     pub fn augment(
         &self,
         priv_key: &PrivateKey<FP>,
-        g1: &HomogeneousPoint<Fp2Elem<FP>>,
+        g1: &TwistedHPoint<FP>,
     ) -> ReencryptionKey<FP> {
         //Note that because priv_key is an Fp negating it would not work, we have to negate the point or the result of
         //the multiplication.
@@ -809,7 +808,7 @@ pub fn reencrypt<FP, S, H>(
     pairing: &Pairing<FP>,
 ) -> ErrorOr<SignedValue<EncryptedValue<FP>>>
 where
-    FP: Field + Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
+    FP: Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -876,7 +875,7 @@ fn reencrypt_encrypted_once<FP, H>(
     sha256: &H,
 ) -> ReencryptedValue<FP>
 where
-    FP: Field + Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
+    FP: Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
     H: Sha256Hashing,
 {
     // encrypt and product auth hashes for the rand_re_temp_key
@@ -929,7 +928,7 @@ fn reencrypt_reencrypted_value<FP, H>(
     sha256: &H,
 ) -> ReencryptedValue<FP>
 where
-    FP: Field + Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
+    FP: Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
     H: Sha256Hashing,
 {
     let re_blocks = reencrypted_value.encryption_blocks.clone();
@@ -1166,7 +1165,7 @@ mod test {
                 fp256_unsafe_from("6e6a0c315c47fa2990268bc2010eeda17b78cc32e7ab6f093bf1aa2234491d7f")
             );
 
-            let good_hashed_k = HomogeneousPoint {
+            let good_hashed_k = TwistedHPoint {
                 x: fp2elem::Fp2Elem {
                     //22422077836615563303859289302360681993513791649150629779433386726239734002618
                     elem1: fp256_unsafe_from("319272423a484aae2063912bbbf6a61f58ae4eaa9b0aca8dd493a050a6aef3ba"),

@@ -195,16 +195,7 @@ where
 
 impl<T> Inv for Fp6Elem<T>
 where
-    T: Pow<u64, Output = T>
-        + Add<Output = T>
-        + Inv<Output = T>
-        + Copy
-        + Field
-        + ExtensionField
-        + Neg<Output = T>
-        + Mul<Output = T>
-        + Mul<u64, Output = T>
-        + Square,
+    T: Copy + ExtensionField,
 {
     type Output = Fp6Elem<T>;
     fn inv(self) -> Fp6Elem<T> {
@@ -238,7 +229,7 @@ where
 
 impl<T> Div<Fp6Elem<T>> for Fp6Elem<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
 {
     type Output = Fp6Elem<T>;
     fn div(self, other: Fp6Elem<T>) -> Self {
@@ -248,7 +239,7 @@ where
 
 impl<T> Pow<u64> for Fp6Elem<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
 {
     type Output = Fp6Elem<T>;
     fn pow(self, rhs: u64) -> Self {
@@ -258,7 +249,7 @@ where
 
 impl<T> Square for Fp6Elem<T>
 where
-    T: Clone + Field + ExtensionField + Mul<u64, Output = T>,
+    T: Clone + ExtensionField,
 {
     fn square(&self) -> Self {
         let xi: Fp2Elem<T> = ExtensionField::xi();
@@ -278,11 +269,11 @@ where
     }
 }
 
-impl<T> Field for Fp6Elem<T> where T: Field + ExtensionField {}
+impl<T> Field for Fp6Elem<T> where T: ExtensionField {}
 
 impl<T> Fp6Elem<T>
 where
-    T: Field + ExtensionField,
+    T: ExtensionField,
 {
     pub fn frobenius(&self) -> Fp6Elem<T> {
         let frobenius_factor_1 = ExtensionField::frobenius_factor_1();

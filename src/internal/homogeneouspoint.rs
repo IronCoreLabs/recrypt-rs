@@ -90,49 +90,11 @@ where
 {
     type Output = HomogeneousPoint<T>;
     fn add(self, other: HomogeneousPoint<T>) -> HomogeneousPoint<T> {
-        match (self, other) {
-            (ref p1, o) if p1.is_zero() => o,
-            (o, ref p2) if p2.is_zero() => o,
-            (
-                HomogeneousPoint {
-                    x: x1,
-                    y: y1,
-                    z: z1,
-                },
-                HomogeneousPoint {
-                    x: x2,
-                    y: y2,
-                    z: z2,
-                },
-            ) => {
-                if x1 == x2 && y1 == -(y2) && z1 == z2 {
-                    Zero::zero()
-                } else if self == other {
-                    self.double()
-                } else {
-                    let y_times_z2 = y1 * z2;
-                    let x_times_z2 = x1 * z2;
-                    let x2_times_z = x2 * z1;
-                    let a = (y2 * z1) - y_times_z2;
-                    let b = x2_times_z - x_times_z2;
-                    let z_times_z2 = z1 * z2;
-                    let b_squared = b.square();
-                    let b_cubed = b_squared * b;
-                    let a_squared = a.square();
-                    let z_times_z2_times_a_squared = z_times_z2 * a_squared;
-                    let x_times_z2_plus_x2_times_z = x_times_z2 + x2_times_z;
-                    let x3 =
-                        b * (z_times_z2_times_a_squared - (b_squared * x_times_z2_plus_x2_times_z));
-                    let y3 = a * b_squared * (x_times_z2 + x_times_z2_plus_x2_times_z)
-                        - ((z_times_z2_times_a_squared * a) + (y_times_z2 * b_cubed));
-                    let z3 = z_times_z2 * b_cubed;
-                    HomogeneousPoint {
-                        x: x3,
-                        y: y3,
-                        z: z3,
-                    }
-                }
-            }
+        let (x3, y3, z3) = add(self.x, self.y, self.z, other.x, other.y, other.z, 9);
+        HomogeneousPoint {
+            x: x3,
+            y: y3,
+            z: z3,
         }
     }
 }
@@ -153,7 +115,7 @@ where
     fn zero() -> HomogeneousPoint<T> {
         HomogeneousPoint {
             x: Zero::zero(),
-            y: Zero::zero(),
+            y: One::one(),
             z: Zero::zero(),
         }
     }
@@ -207,40 +169,6 @@ impl<T: Field + Hashable> Hashable for HomogeneousPoint<T> {
     }
 }
 
-/// It is important to note that this is a BytesDecoder for HomogeneousPoint<Fp2Elem<T>>, NOT HomogeneousPoint<T>
-impl<T: Field + ExtensionField + BytesDecoder> BytesDecoder for HomogeneousPoint<Fp2Elem<T>> {
-    // HomogeneousPoint<Fp2Elem<T>> is 2 Fp2s -- x and y
-    const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
-
-    /// Decodes and validates that the resultant HomogeneousPoint is on the curve
-    fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
-        if bytes.len() == Self::ENCODED_SIZE_BYTES {
-            //   3 / (u + 3)
-            let twisted_curve_const_coeff: Fp2Elem<T> = ExtensionField::xi().inv() * 3;
-
-            let (x_bytes, y_bytes) = bytes.split_at(Self::ENCODED_SIZE_BYTES / 2);
-            let hpoint = HomogeneousPoint::new(
-                Fp2Elem::<T>::decode(x_bytes.to_vec())?,
-                Fp2Elem::<T>::decode(y_bytes.to_vec())?,
-            );
-
-            if hpoint.y.pow(2) == (hpoint.x.pow(3) + twisted_curve_const_coeff) {
-                Result::Ok(hpoint)
-            } else {
-                Result::Err(DecodeErr::BytesInvalid {
-                    message: "Point does not satisfy the curve equation".to_string(),
-                    bad_bytes: bytes.clone(),
-                })
-            }
-        } else {
-            Result::Err(DecodeErr::BytesNotCorrectLength {
-                required_length: Self::ENCODED_SIZE_BYTES,
-                bad_bytes: bytes,
-            })
-        }
-    }
-}
-
 impl<T> HomogeneousPoint<T>
 where
     T: One,
@@ -254,34 +182,21 @@ where
     }
 }
 
+pub trait Double {
+    fn double(&self) -> Self;
+}
+
+impl<T: Field> Double for HomogeneousPoint<T> {
+    fn double(&self) -> HomogeneousPoint<T> {
+        let (x, y, z) = double(self.x, self.y, self.z, 9u64);
+        HomogeneousPoint { x, y, z }
+    }
+}
+
 impl<T> HomogeneousPoint<T>
 where
     T: Field,
 {
-    pub fn double(&self) -> HomogeneousPoint<T> {
-        match *self {
-            ref p if p.is_zero() => Zero::zero(),
-            HomogeneousPoint { y, .. } if y == zero() => zero(),
-            HomogeneousPoint { x, y, z } => {
-                let x_cubed = x.pow(3);
-                let y_squared = y.pow(2);
-                let z_squared = z.pow(2);
-                let y_squared_times_z = y_squared * z;
-                let eight_times_y_squared_times_z = y_squared_times_z * 8;
-                let nine_times_x_cubed = x_cubed * 9;
-                let x2 = x * 2 * y * z * (nine_times_x_cubed - eight_times_y_squared_times_z);
-                let y2 = nine_times_x_cubed * (y_squared_times_z * 4 - x_cubed * 3)
-                    - eight_times_y_squared_times_z * y_squared_times_z;
-                let z2: T = eight_times_y_squared_times_z * y * z_squared;
-                HomogeneousPoint {
-                    x: x2,
-                    y: y2,
-                    z: z2,
-                }
-            }
-        }
-    }
-
     ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
     pub fn times<A: BitRepr>(&self, multiple: &A) -> HomogeneousPoint<T> {
         match self {
@@ -316,17 +231,290 @@ where
     }
 }
 
+///HomogeneousPoint on the twisted curve which is either Zero or an x,y coordinate which has a z it carries
+///along. In order to get the real x,y you must call `normalize` which divides out by the z.
+///
+///Note that this assumes all points are Fp2Elem
+#[derive(Clone, Debug, Copy)]
+#[repr(C)]
+pub struct TwistedHPoint<T> {
+    pub x: Fp2Elem<T>,
+    pub y: Fp2Elem<T>,
+    pub z: Fp2Elem<T>,
+}
+
+impl<T> PartialEq for TwistedHPoint<T>
+where
+    T: ExtensionField,
+{
+    fn eq(&self, other: &TwistedHPoint<T>) -> bool {
+        match (*self, *other) {
+            (ref p1, ref p2) if p1.is_zero() && p2.is_zero() => true,
+            (ref p1, ref p2) if p1.is_zero() || p2.is_zero() => false,
+            (
+                TwistedHPoint {
+                    x: x1,
+                    y: y1,
+                    z: z1,
+                },
+                TwistedHPoint {
+                    x: x2,
+                    y: y2,
+                    z: z2,
+                },
+            ) => x1 * z2 == x2 * z1 && y1 * z2 == y2 * z1,
+        }
+    }
+}
+
+impl<T> Eq for TwistedHPoint<T> where T: ExtensionField {}
+
+impl<T, U> Mul<U> for TwistedHPoint<T>
+where
+    T: ExtensionField,
+    U: BitRepr,
+{
+    type Output = TwistedHPoint<T>;
+    fn mul(self, rhs: U) -> TwistedHPoint<T> {
+        self.times(&rhs)
+    }
+}
+
+impl<T> Add for TwistedHPoint<T>
+where
+    T: Eq + ExtensionField,
+{
+    type Output = TwistedHPoint<T>;
+    fn add(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
+        let three_b = T::xi_inv_times_9();
+        let (x3, y3, z3) = add(self.x, self.y, self.z, other.x, other.y, other.z, three_b);
+        TwistedHPoint {
+            x: x3,
+            y: y3,
+            z: z3,
+        }
+    }
+}
+
+impl<T> AddAssign for TwistedHPoint<T>
+where
+    T: ExtensionField + Eq,
+{
+    fn add_assign(&mut self, other: TwistedHPoint<T>) {
+        *self = *self + other
+    }
+}
+
+impl<T> Zero for TwistedHPoint<T>
+where
+    T: Eq + ExtensionField,
+{
+    fn zero() -> TwistedHPoint<T> {
+        TwistedHPoint {
+            x: Zero::zero(),
+            y: One::one(),
+            z: Zero::zero(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.z == Zero::zero()
+    }
+}
+
+impl<T> Neg for TwistedHPoint<T>
+where
+    T: ExtensionField,
+{
+    type Output = TwistedHPoint<T>;
+    fn neg(self) -> TwistedHPoint<T> {
+        if self.is_zero() {
+            Zero::zero()
+        } else {
+            let neg_y: Fp2Elem<T> = -self.y;
+            TwistedHPoint::<T> {
+                x: self.x,
+                y: neg_y,
+                z: self.z,
+            }
+        }
+    }
+}
+
+impl<T> Sub for TwistedHPoint<T>
+where
+    T: Eq + ExtensionField,
+{
+    type Output = TwistedHPoint<T>;
+    fn sub(self, other: TwistedHPoint<T>) -> TwistedHPoint<T> {
+        self + -other
+    }
+}
+
+impl<T> SubAssign for TwistedHPoint<T>
+where
+    T: Eq + ExtensionField,
+{
+    fn sub_assign(&mut self, other: TwistedHPoint<T>) {
+        *self = *self - other
+    }
+}
+
+impl<T: Hashable + ExtensionField> Hashable for TwistedHPoint<T> {
+    fn to_bytes(&self) -> Vec<u8> {
+        self.normalize().as_ref().to_bytes()
+    }
+}
+
+impl<T: ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
+    // TwistedHPoint<T> is 2 Fp2s -- x and y
+    const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
+
+    /// Decodes and validates that the resultant TwistedHPoint is on the curve
+    fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
+        if bytes.len() == Self::ENCODED_SIZE_BYTES {
+            //   3 / (u + 3)
+            let twisted_curve_const_coeff: Fp2Elem<T> = ExtensionField::xi().inv() * 3;
+
+            let (x_bytes, y_bytes) = bytes.split_at(Self::ENCODED_SIZE_BYTES / 2);
+            let hpoint = TwistedHPoint::new(
+                Fp2Elem::<T>::decode(x_bytes.to_vec())?,
+                Fp2Elem::<T>::decode(y_bytes.to_vec())?,
+            );
+
+            if hpoint.y.pow(2) == (hpoint.x.pow(3) + twisted_curve_const_coeff) {
+                Result::Ok(hpoint)
+            } else {
+                Result::Err(DecodeErr::BytesInvalid {
+                    message: "Point does not satisfy the curve equation".to_string(),
+                    bad_bytes: bytes.clone(),
+                })
+            }
+        } else {
+            Result::Err(DecodeErr::BytesNotCorrectLength {
+                required_length: Self::ENCODED_SIZE_BYTES,
+                bad_bytes: bytes,
+            })
+        }
+    }
+}
+
+impl<T> TwistedHPoint<T>
+where
+    T: Field,
+{
+    pub fn new(x: Fp2Elem<T>, y: Fp2Elem<T>) -> Self {
+        TwistedHPoint {
+            x,
+            y,
+            z: One::one(),
+        }
+    }
+}
+
+impl<T: ExtensionField> Double for TwistedHPoint<T> {
+    fn double(&self) -> Self {
+        let (x, y, z) = double(self.x, self.y, self.z, T::xi_inv_times_9());
+        TwistedHPoint { x, y, z }
+    }
+}
+
+impl<T> TwistedHPoint<T>
+where
+    T: ExtensionField,
+{
+    ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
+    pub fn times<A: BitRepr>(&self, multiple: &A) -> TwistedHPoint<T> {
+        match self {
+            ref p if p.is_zero() => Zero::zero(),
+            TwistedHPoint { y, .. } => {
+                if *y == zero() {
+                    *self
+                } else {
+                    let mut naf = multiple.to_bits();
+                    naf.reverse();
+                    naf.iter().fold(zero(), |res, &cur| {
+                        let doubled = res.double();
+                        let result = if cur == 1 { doubled + *self } else { doubled };
+                        result
+                    })
+                }
+            }
+        }
+    }
+
+    ///Divide out by the z we've been carrying around.
+    pub fn normalize(&self) -> Option<(Fp2Elem<T>, Fp2Elem<T>)> {
+        if self.is_zero() {
+            Option::None
+        } else {
+            let z_inv: Fp2Elem<T> = self.z.inv();
+            Some((self.x * z_inv, self.y * z_inv))
+        }
+    }
+}
+
+// Since the formulas are complete, there is no need for make a special for zero.
+//See double for details on the formula
+fn add<T, U>(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T, three_b: U) -> (T, T, T)
+where
+    T: Field + Mul<U, Output = T>,
+    U: Copy,
+{
+    let x1x2 = x1 * x2;
+    let y1y2 = y1 * y2;
+    let z1z2 = z1 * z2;
+    let cxy = (x1 + y1) * (x2 + y2) - x1x2 - y1y2;
+    let cxz = (x1 + z1) * (x2 + z2) - x1x2 - z1z2;
+    let cyz = (y1 + z1) * (y2 + z2) - y1y2 - z1z2;
+    let tbzz = z1z2 * three_b;
+    let hx = cyz * cxz * three_b;
+    let hy = x1x2 * cxz * three_b;
+    let dmyz = y1y2 - tbzz;
+    let dpyz = y1y2 + tbzz;
+    let x3 = cxy * dmyz - hx;
+    let y3 = dpyz * dmyz + hy * 3;
+    let z3 = cyz * dpyz + x1x2 * cxy * 3;
+    (x3, y3, z3)
+}
+
+//   J. Renes, C. Castello, and L. Batina,
+//   "Complete addition formulas for prime order elliptic curves",
+//   https://eprint.iacr.org/2015/1060
+// (For y^2=x^3+b, doubling formulas, page 12.)
+// Mind that the main curve uses b = 3, but the twisted curve uses
+// b = 3/(u+3). The code below _assumes_ that the twisted curve is used
+// when the base field is FP2Elem (this is quite ugly).
+fn double<T, U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
+where
+    T: Field + Copy + Mul<U, Output = T>,
+    U: Copy,
+{
+    let y_squared = y.pow(2);
+    let z_squared = z.pow(2);
+    let three_b_times_z_squared = z_squared * three_b;
+    let eight_times_y_squared = y_squared * 8u64; // 8Y^2
+    let m1 = y_squared - (three_b_times_z_squared * 3u64); // Y^2 - 9bZ^2
+    let m2 = y_squared + three_b_times_z_squared; // Y^2 + 3bZ^2
+    let x3 = x * y * m1 * 2u64;
+    let y3 = m1 * m2 + three_b_times_z_squared * eight_times_y_squared;
+    let z3 = eight_times_y_squared * y * z;
+    (x3, y3, z3)
+}
+
 #[cfg(test)]
 pub mod test {
     use super::*;
     use gridiron::fp_256::Fp256;
     use hex;
-    use internal::curve;
     use internal::curve::FP_256_CURVE_POINTS;
     use internal::fp::fp256_unsafe_from;
     use internal::test::arb_fp256;
     use num_traits::One;
     use proptest::prelude::*;
+    fn order() -> Fp256 {
+        fp256_unsafe_from("8fb501e34aa387f9aa6fecb86184dc212e8d8e12f82b39241a2ef45b57ac7261")
+    }
 
     #[test]
     fn eq_will_divide_by_z() {
@@ -341,6 +529,21 @@ pub mod test {
             z: Fp256::from(1u32),
         };
         assert_eq!(point, point2);
+    }
+    #[test]
+    fn generator_times_order_is_reasonable() {
+        let point = FP_256_CURVE_POINTS.generator;
+        assert_eq!(point * order(), zero());
+        assert!((point * order()).is_zero());
+        assert_eq!(point, point * order() + point);
+    }
+
+    #[test]
+    fn g1_times_order_is_reasonable() {
+        let point = FP_256_CURVE_POINTS.g1;
+        assert_eq!(point * order(), zero());
+        assert!((point * order()).is_zero());
+        assert_eq!(point, point * order() + point);
     }
 
     #[test]
@@ -381,10 +584,26 @@ pub mod test {
     fn roundtrip_known_bytes() {
         let hashed_value_bytes = hex::decode("4a40fc771f0c5625d2ef6783013c52eece1697e71c6f82c3aa58396485c2a6c1713527192c3a7ed9103aca79a39f08a154723602bb768655fdd499f8062b461a5752395183b7743fb6ed688a856ef42aae259df29f52678ef0fccb91adb5374d10820c4e85917c4a1906cb06f537158c0556ecfaa55c874f388823ab9270a536").unwrap();
 
-        let hpoint =
-            HomogeneousPoint::<Fp2Elem<Fp256>>::decode(hashed_value_bytes.clone()).unwrap();
+        let hpoint = TwistedHPoint::<Fp256>::decode(hashed_value_bytes.clone()).unwrap();
 
         assert_eq!(hashed_value_bytes, hpoint.to_bytes())
+    }
+
+    #[test]
+    fn double_zero_is_zero() {
+        let zero_fp256 = HomogeneousPoint::<Fp256>::zero();
+        let double = zero_fp256.double();
+        assert_eq!(zero_fp256, double);
+
+        let zero_fp2: HomogeneousPoint<Fp2Elem<Fp256>> = zero();
+        assert_eq!(zero_fp2, zero_fp2.double());
+    }
+
+    #[test]
+    fn double_same_as_add() {
+        let result = FP_256_CURVE_POINTS.g1 + FP_256_CURVE_POINTS.g1;
+        let double_result = FP_256_CURVE_POINTS.g1.double();
+        assert_eq!(result, double_result);
     }
 
     proptest! {
@@ -393,7 +612,7 @@ pub mod test {
             prop_assert!(a * Fp256::one() == a);
             prop_assert!(a + Zero::zero() == a);
             prop_assert!(a - a == Zero::zero());
-            prop_assert!(<HomogeneousPoint<Fp256> as Zero>::zero() + a == a);
+            prop_assert!(HomogeneousPoint::<Fp256>::zero() + a == a);
         }
 
         #[test]
@@ -432,19 +651,85 @@ pub mod test {
         }
 
         #[test]
-        fn roundtrip_bytes(arb_hpoint in arb_homogeneous_fp2()) {
-            let hashed_value_bytes = arb_hpoint.to_bytes();
-            let hpoint = HomogeneousPoint::<Fp2Elem<Fp256>>::decode(hashed_value_bytes).unwrap();
+        fn twisted_identity(a in arb_homogeneous_fp2()) {
+            prop_assert!(a * Fp256::one() == a);
+            prop_assert!(a + Zero::zero() == a);
+            prop_assert!(a - a == Zero::zero());
+            prop_assert!(<TwistedHPoint<Fp256> as Zero>::zero() + a == a);
+        }
 
-            assert_eq!(arb_hpoint, hpoint)
+        #[test]
+        fn twisted_commutative(a in arb_homogeneous_fp2(), b in arb_homogeneous_fp2()) {
+            prop_assert!(a + b == b + a);
+        }
+
+        #[test]
+        fn twisted_associative(a in arb_homogeneous_fp2(), b in arb_homogeneous_fp2(), c in arb_homogeneous_fp2()) {
+            prop_assert!((a + b) + c == a + (b + c));
+        }
+
+        #[test]
+        fn twisted_distributive(a in arb_fp256(), b in arb_homogeneous_fp2(), c in arb_homogeneous_fp2()) {
+            prop_assert!((b + c) * a == b * a + c * a);
+        }
+
+        #[test]
+        fn twisted_add_equals_mult(a in arb_homogeneous_fp2()) {
+            let added = a + a;
+            prop_assert_eq!(added.normalize(),  (a * Fp256::from(2u64)).normalize());
+            prop_assert!(a + a == a * Fp256::from(2u64));
+            prop_assert!(a + a + a == a * Fp256::from(3u64));
+        }
+
+        #[test]
+        fn twisted_normalize_return_none_if_zero(a in arb_homogeneous_fp2()) {
+            prop_assert_eq!(a.is_zero(), a.normalize() == None);
+        }
+
+        #[test]
+        fn twisted_z_zero_means_none_normalize(a in arb_homogeneous_fp2()) {
+            let b = match a {
+                TwistedHPoint {x, y, z: _ } =>
+                   TwistedHPoint { x: x, y: y, z: zero()},
+            };
+            prop_assert_eq!(None, b.normalize());
+        }
+
+
+        #[test]
+        fn roundtrip_bytes(arb_tw_hpoint in arb_homogeneous_fp2()) {
+            prop_assume!(arb_tw_hpoint != zero());
+            let hashed_value_bytes = arb_tw_hpoint.to_bytes();
+            let hpoint = TwistedHPoint::<Fp256>::decode(hashed_value_bytes).unwrap();
+            assert_eq!(arb_tw_hpoint, hpoint)
+        }
+
+        #[test]
+        fn double_is_mul_2_fp256(arb_hpoint in arb_homogeneous()) {
+            prop_assert_eq!(arb_hpoint.double(), arb_hpoint * Fp256::from(2u8));
+        }
+
+        #[test]
+        fn double_is_mul_2_fp2(arb_hpoint_fp2 in arb_homogeneous_fp2()) {
+            prop_assert_eq!(arb_hpoint_fp2.double(), arb_hpoint_fp2 * Fp256::from(2u8));
+         prop_assert_eq!(arb_hpoint_fp2.double(), arb_hpoint_fp2 + arb_hpoint_fp2);
+        }
+
+        #[test]
+        fn double_twice_is_mul_4_fp2(arb_hpoint_fp2 in arb_homogeneous_fp2()) {
+            prop_assert_eq!(arb_hpoint_fp2.double().double(), arb_hpoint_fp2 * Fp256::from(4u8));
         }
     }
 
     prop_compose! {
-        fn arb_homogeneous_fp2()(
-        fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> HomogeneousPoint<Fp2Elem<Fp256>> {
-            let curve_points = &*curve::FP_256_CURVE_POINTS;
-            curve_points.g1 * fp256
+        [pub] fn arb_homogeneous_fp2()(seed in any::<u64>()) -> TwistedHPoint<Fp256> {
+            if seed == 0 {
+                Zero::zero()
+            } else if seed == 1 {
+                FP_256_CURVE_POINTS.g1
+            } else {
+                FP_256_CURVE_POINTS.g1 * Fp256::from(seed)
+            }
         }
     }
 

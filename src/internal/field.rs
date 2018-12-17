@@ -106,13 +106,17 @@ impl Field for Fr256 {}
 
 /// Contains the values needed to configure a new Fp type to be used as an extension field
 /// (FP2Elem, FP6Elem, FP12Elem)
-pub trait ExtensionField
+/// All `ExtensionField`s are `Field`s
+pub trait ExtensionField: Field
 where
     Self: Sized,
 {
     /// Xi is u + 3 which is v^3.
     /// v^p == Xi^((p-1)/3) * v
     fn xi() -> Fp2Elem<Self>;
+
+    ///Precomputed xi.inv() * 9
+    fn xi_inv_times_9() -> Fp2Elem<Self>;
 
     /// Used in frobenius, this is Xi^((p-1)/3)
     /// Fp6Elem[A](Fp2Elem.Zero, Fp2Elem.One, Fp2Elem.Zero).frobenius
@@ -132,12 +136,31 @@ where
 }
 
 impl ExtensionField for Fp256 {
+    #[inline]
     fn xi() -> Fp2Elem<Self> {
         Fp2Elem {
             elem1: Self::one(),
             elem2: Self::from(3u8),
         }
     }
+
+    //precalculate this since it's used in every double and add operation in the extension field.
+    #[inline]
+    fn xi_inv_times_9() -> Fp2Elem<Self> {
+        Fp2Elem {
+            //19500164908693981119838931622707971722847607432286901071563143508059255221534.str
+            elem1: Fp256::new([
+                0x29c2d1e, 0x41d13441, 0x2740738a, 0x2275485c, 0x74a8709, 0x30ff46ea, 0x7f76ff86,
+                0xe59e217, 0x2b,
+            ]),
+            //6500054969564660373279643874235990574282535810762300357187714502686418407181
+            elem2: Fp256::new([
+                0x56340f0d, 0x6b45bc15, 0xd157bd8, 0xb7c6d74, 0x26e2d03, 0x3affc24e, 0x2a7cffd7,
+                0x2f734b5d, 0xe,
+            ]),
+        }
+    }
+    #[inline]
     fn frobenius_factor_1() -> Fp2Elem<Self> {
         Fp2Elem {
             // 26098034838977895781559542626833399156321265654106457577426020397262786167059
@@ -153,6 +176,7 @@ impl ExtensionField for Fp256 {
             ]),
         }
     }
+    #[inline]
     fn frobenius_factor_2() -> Fp2Elem<Self> {
         Fp2Elem {
             // 19885131339612776214803633203834694332692106372356013117629940868870585019582
@@ -167,6 +191,7 @@ impl ExtensionField for Fp256 {
             ]),
         }
     }
+    #[inline]
     fn frobenius_factor_fp12() -> Fp2Elem<Self> {
         Fp2Elem {
             // 8669379979083712429711189836753509758585994370025260553045152614783263110636
@@ -181,6 +206,7 @@ impl ExtensionField for Fp256 {
             ]),
         }
     }
+    #[inline]
     fn v() -> Fp6Elem<Self> {
         Fp6Elem {
             elem1: Zero::zero(),
