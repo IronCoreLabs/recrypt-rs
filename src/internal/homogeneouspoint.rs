@@ -1,10 +1,10 @@
-use internal::bit_repr::BitRepr;
-use internal::bytedecoder::{BytesDecoder, DecodeErr};
-use internal::field::ExtensionField;
-use internal::field::Field;
-use internal::fp2elem::Fp2Elem;
-use internal::hashable::Hashable;
-use internal::ByteVector;
+use crate::internal::bit_repr::BitRepr;
+use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
+use crate::internal::field::ExtensionField;
+use crate::internal::field::Field;
+use crate::internal::fp2elem::Fp2Elem;
+use crate::internal::hashable::Hashable;
+use crate::internal::ByteVector;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
@@ -507,9 +507,9 @@ pub mod test {
     use super::*;
     use gridiron::fp_256::Fp256;
     use hex;
-    use internal::curve::FP_256_CURVE_POINTS;
-    use internal::fp::fp256_unsafe_from;
-    use internal::test::arb_fp256;
+    use crate::internal::curve::FP_256_CURVE_POINTS;
+    use crate::internal::fp::fp256_unsafe_from;
+    use crate::internal::test::arb_fp256;
     use num_traits::One;
     use proptest::prelude::*;
     fn order() -> Fp256 {

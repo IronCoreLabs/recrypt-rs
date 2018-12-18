@@ -1,13 +1,13 @@
 use gridiron::fp_256::Fp256;
-use internal::array_concat_32;
-use internal::bit_repr::BitRepr;
-use internal::curve::FP_256_CURVE_POINTS;
-use internal::fp::fr_256::Fr256;
-use internal::hashable::Hashable;
-use internal::homogeneouspoint::HomogeneousPoint;
-use internal::sha256::Sha256;
-use internal::sha256::Sha256Hashing;
-use internal::{field, PrivateKey, PublicKey};
+use crate::internal::array_concat_32;
+use crate::internal::bit_repr::BitRepr;
+use crate::internal::curve::FP_256_CURVE_POINTS;
+use crate::internal::fp::fr_256::Fr256;
+use crate::internal::hashable::Hashable;
+use crate::internal::homogeneouspoint::HomogeneousPoint;
+use crate::internal::sha256::Sha256;
+use crate::internal::sha256::Sha256Hashing;
+use crate::internal::{field, PrivateKey, PublicKey};
 use std::marker::PhantomData;
 
 ///- r is the x coordinate for a point on the elliptic curve.
@@ -144,10 +144,10 @@ pub trait SchnorrSigning<T: field::Field, U> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use internal::fp::fp256_unsafe_from;
-    use internal::fp::fr_256::Fr256;
-    use internal::test::arb_priv_key;
-    use internal::PublicKey;
+    use crate::internal::fp::fp256_unsafe_from;
+    use crate::internal::fp::fr_256::Fr256;
+    use crate::internal::test::arb_priv_key;
+    use crate::internal::PublicKey;
     use num_traits::{One, Pow, Zero};
     use proptest::arbitrary::any;
     use proptest::prelude::*;

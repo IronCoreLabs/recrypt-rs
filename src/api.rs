@@ -1,22 +1,22 @@
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
-use internal;
-use internal::bytedecoder::{BytesDecoder, DecodeErr};
-use internal::curve;
-pub use internal::ed25519::{
+use crate::internal;
+use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
+use crate::internal::curve;
+pub use crate::internal::ed25519::{
     Ed25519, Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair,
 };
-use internal::fp::fr_256::Fr256;
-use internal::fp12elem::Fp12Elem;
-pub use internal::hashable::Hashable;
-use internal::hashable::Hashable32;
-use internal::homogeneouspoint::TwistedHPoint;
-use internal::pairing;
-pub use internal::rand_bytes::*;
-use internal::schnorr::{SchnorrSign, SchnorrSigning};
-pub use internal::sha256::{Sha256, Sha256Hashing};
-pub use internal::ByteVector;
-use nonemptyvec::NonEmptyVec;
+use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp12elem::Fp12Elem;
+pub use crate::internal::hashable::Hashable;
+use crate::internal::hashable::Hashable32;
+use crate::internal::homogeneouspoint::TwistedHPoint;
+use crate::internal::pairing;
+pub use crate::internal::rand_bytes::*;
+use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
+pub use crate::internal::sha256::{Sha256, Sha256Hashing};
+pub use crate::internal::ByteVector;
+use crate::nonemptyvec::NonEmptyVec;
 use rand;
 use std;
 use std::fmt;
@@ -285,7 +285,7 @@ impl EncryptedValue {
     fn try_from(
         signed_value: internal::SignedValue<internal::EncryptedValue<Fp256>>,
     ) -> Result<EncryptedValue> {
-        use api::EncryptedValue as EncryptedValueP;
+        use crate::api::EncryptedValue as EncryptedValueP;
 
         match signed_value.payload {
             internal::EncryptedValue::EncryptedOnce(internal::EncryptedOnceValue {
@@ -1074,8 +1074,8 @@ impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr256> {
 pub(crate) mod test {
     use super::*;
     use hex;
-    use internal::ed25519;
-    use internal::fp::fp256_unsafe_from;
+    use crate::internal::ed25519;
+    use crate::internal::fp::fp256_unsafe_from;
     use rand_chacha;
 
     //Writing a BS from conversion to make tests which contain `hex` constants easier to write.

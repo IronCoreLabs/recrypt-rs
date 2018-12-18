@@ -1,10 +1,10 @@
 use core::fmt;
-use internal::bytedecoder::{BytesDecoder, DecodeErr};
-use internal::field::{ExtensionField, Field};
-use internal::fp2elem::Fp2Elem;
-use internal::hashable::Hashable;
-use internal::ByteVector;
-use internal::{pow_for_square, sum_n, Square};
+use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
+use crate::internal::field::{ExtensionField, Field};
+use crate::internal::fp2elem::Fp2Elem;
+use crate::internal::hashable::Hashable;
+use crate::internal::ByteVector;
+use crate::internal::{pow_for_square, sum_n, Square};
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -374,7 +374,7 @@ where
 pub mod test {
     use super::*;
     use gridiron::fp_256::Fp256;
-    use internal::fp2elem::test::arb_fp2;
+    use crate::internal::fp2elem::test::arb_fp2;
     use proptest::prelude::*;
 
     pub fn get_fp6s(

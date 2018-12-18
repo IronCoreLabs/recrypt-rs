@@ -1,7 +1,7 @@
 use arrayvec;
 use arrayvec::ArrayVec;
 use gridiron::fp_256::Fp256;
-use internal::ByteVector;
+use crate::internal::ByteVector;
 use std::convert::From;
 use std::result::Result;
 

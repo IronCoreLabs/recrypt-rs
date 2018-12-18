@@ -1,5 +1,5 @@
 use gridiron::fp_256::Fp256;
-use internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_256::Fr256;
 
 /// A bit representation of a numeric value
 pub trait BitRepr {

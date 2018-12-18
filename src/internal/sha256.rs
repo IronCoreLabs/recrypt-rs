@@ -1,4 +1,4 @@
-use internal::hashable::Hashable;
+use crate::internal::hashable::Hashable;
 use sha2;
 use sha2::Digest;
 
@@ -25,7 +25,7 @@ impl Sha256Hashing for Sha256 {
 #[cfg(test)]
 mod test {
     use hex;
-    use internal::sha256::*;
+    use crate::internal::sha256::*;
 
     #[test]
     fn sha256_match_known_value() {

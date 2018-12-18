@@ -1,8 +1,8 @@
 use gridiron::fp_256::Fp256;
-use internal::fp::fr_256::Fr256;
-use internal::fp2elem::Fp2Elem;
-use internal::fp6elem::Fp6Elem;
-use internal::Square;
+use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp2elem::Fp2Elem;
+use crate::internal::fp6elem::Fp6Elem;
+use crate::internal::Square;
 use num_traits::{Inv, Pow};
 use num_traits::{One, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
