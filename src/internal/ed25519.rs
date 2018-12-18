@@ -1,10 +1,11 @@
 use crate::api::ApiErr;
-use clear_on_drop::clear::Clear;
-use ed25519_dalek;
-use ed25519_dalek::PublicKey;
 use crate::internal::array_split_64;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
+use clear_on_drop::clear::Clear;
+use ed25519_dalek;
+use ed25519_dalek::PublicKey;
+use quick_error::quick_error;
 use rand;
 use sha2::Sha512;
 use std;
@@ -189,8 +190,8 @@ pub trait Ed25519Signing {
 #[cfg(test)]
 pub(crate) mod test {
     use super::*;
-    use ed25519_dalek::SecretKey;
     use crate::internal::array_concat_32;
+    use ed25519_dalek::SecretKey;
 
     pub fn good_signing_keypair() -> SigningKeypair {
         SigningKeypair::new_unchecked([

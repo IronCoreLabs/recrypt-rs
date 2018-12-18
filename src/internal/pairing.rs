@@ -1,4 +1,3 @@
-use gridiron::fp_256::Fp256;
 use crate::internal::field::ExtensionField;
 use crate::internal::fp12elem::Fp12Elem;
 use crate::internal::fp2elem::Fp2Elem;
@@ -7,6 +6,7 @@ use crate::internal::homogeneouspoint::Double;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::Square;
+use gridiron::fp_256::Fp256;
 use num_traits::{Inv, One, Zero};
 
 #[derive(Debug)]
@@ -309,6 +309,7 @@ mod test {
     use crate::internal::curve::FP_256_CURVE_POINTS;
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::homogeneouspoint::Double;
+    use lazy_static::lazy_static;
     use num_traits::Pow;
     use proptest::prelude::*;
 

@@ -1,3 +1,5 @@
+use quick_error::quick_error;
+
 /// A simple-minded NonEmptyVec implementation
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NonEmptyVec<T> {

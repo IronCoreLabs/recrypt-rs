@@ -1,5 +1,3 @@
-use clear_on_drop::clear::Clear;
-use gridiron::fp_256::Fp256;
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
@@ -17,6 +15,9 @@ use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
+use clear_on_drop::clear::Clear;
+use gridiron::fp_256::Fp256;
+use quick_error::quick_error;
 use rand;
 use std;
 use std::fmt;
@@ -1073,9 +1074,9 @@ impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr256> {
 #[cfg(test)]
 pub(crate) mod test {
     use super::*;
-    use hex;
     use crate::internal::ed25519;
     use crate::internal::fp::fp256_unsafe_from;
+    use hex;
     use rand_chacha;
 
     //Writing a BS from conversion to make tests which contain `hex` constants easier to write.

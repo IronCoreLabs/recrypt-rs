@@ -1,8 +1,8 @@
-use clear_on_drop::clear::Clear;
-use gridiron::fp_256::Fp256;
 use crate::internal::bit_repr::BitRepr;
 use crate::internal::curve::CurvePoints;
-use crate::internal::ed25519::{Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair};
+use crate::internal::ed25519::{
+    Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair,
+};
 use crate::internal::field::ExtensionField;
 use crate::internal::field::Field;
 use crate::internal::fp::fr_256::Fr256;
@@ -13,7 +13,10 @@ use crate::internal::pairing::Pairing;
 use crate::internal::pairing::PairingConfig;
 use crate::internal::sha256::Sha256Hashing;
 use crate::nonemptyvec::NonEmptyVec;
+use clear_on_drop::clear::Clear;
+use gridiron::fp_256::Fp256;
 use num_traits::{One, Zero};
+use quick_error::quick_error;
 use std::ops::{Add, Mul, Neg};
 #[macro_use]
 pub mod macros;

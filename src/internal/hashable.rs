@@ -1,8 +1,8 @@
-use gridiron::fp_256;
-use gridiron::fp_256::Fp256;
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
+use gridiron::fp_256;
+use gridiron::fp_256::Fp256;
 
 /// Typeclass for converting an implementing type to a stable byte representation
 /// which can be used for hashing (and thus the hash value will also remain consistent)

@@ -24,8 +24,8 @@ impl Sha256Hashing for Sha256 {
 
 #[cfg(test)]
 mod test {
-    use hex;
     use crate::internal::sha256::*;
+    use hex;
 
     #[test]
     fn sha256_match_known_value() {

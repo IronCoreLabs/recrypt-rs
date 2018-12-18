@@ -9,6 +9,7 @@ use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
 use num_traits::Pow;
+use quick_error::quick_error;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::option::Option;
 
@@ -505,11 +506,11 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use gridiron::fp_256::Fp256;
-    use hex;
     use crate::internal::curve::FP_256_CURVE_POINTS;
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::test::arb_fp256;
+    use gridiron::fp_256::Fp256;
+    use hex;
     use num_traits::One;
     use proptest::prelude::*;
     fn order() -> Fp256 {

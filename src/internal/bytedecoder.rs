@@ -1,7 +1,8 @@
+use crate::internal::ByteVector;
 use arrayvec;
 use arrayvec::ArrayVec;
 use gridiron::fp_256::Fp256;
-use crate::internal::ByteVector;
+use quick_error::quick_error;
 use std::convert::From;
 use std::result::Result;
 

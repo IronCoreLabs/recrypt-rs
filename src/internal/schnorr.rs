@@ -1,4 +1,3 @@
-use gridiron::fp_256::Fp256;
 use crate::internal::array_concat_32;
 use crate::internal::bit_repr::BitRepr;
 use crate::internal::curve::FP_256_CURVE_POINTS;
@@ -8,6 +7,7 @@ use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::sha256::Sha256;
 use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
+use gridiron::fp_256::Fp256;
 use std::marker::PhantomData;
 
 ///- r is the x coordinate for a point on the elliptic curve.
