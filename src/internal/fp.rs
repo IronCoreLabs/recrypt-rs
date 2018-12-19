@@ -1,5 +1,7 @@
+use crate::internal::rand_bytes::RandomBytesGen;
+use gridiron::fp31;
 use gridiron::fp_256;
-use internal::rand_bytes::RandomBytesGen;
+
 // r: 65000549695646603732796438742359905742570406053903786389881062969044166799969 (also "curve_order")
 fp31!(
     fr_256, // Name of mod

@@ -1,10 +1,10 @@
+use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
+use crate::internal::field::Field;
+use crate::internal::hashable::Hashable;
+use crate::internal::pow_for_square;
+use crate::internal::ByteVector;
+use crate::internal::Square;
 use core::fmt;
-use internal::bytedecoder::{BytesDecoder, DecodeErr};
-use internal::field::Field;
-use internal::hashable::Hashable;
-use internal::pow_for_square;
-use internal::ByteVector;
-use internal::Square;
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::result::Result;
@@ -254,8 +254,10 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
+    use crate::internal::test::arb_fp256;
     use gridiron::fp_256::Fp256;
-    use internal::test::arb_fp256;
+    use proptest::prop_compose;
+    use proptest::proptest;
 
     pub fn get_fp2s() -> [Fp2Elem<Fp256>; 6] {
         let fp2a = Fp2Elem {

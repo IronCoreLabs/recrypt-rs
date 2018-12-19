@@ -1,8 +1,9 @@
+use crate::internal::fp::fp256_unsafe_from;
+use crate::internal::fp2elem::Fp2Elem;
+use crate::internal::homogeneouspoint::HomogeneousPoint;
+use crate::internal::homogeneouspoint::TwistedHPoint;
 use gridiron::fp_256::Fp256;
-use internal::fp::fp256_unsafe_from;
-use internal::fp2elem::Fp2Elem;
-use internal::homogeneouspoint::HomogeneousPoint;
-use internal::homogeneouspoint::TwistedHPoint;
+use lazy_static::lazy_static;
 use num_traits::one;
 
 /// Points that are used in our core algorithm for for `FP`.

@@ -9,6 +9,7 @@ documentation = "https://docs.rs/recrypt"
 categories = ["cryptography", "algorithms"]
 keywords = ["cryptography", "proxy-re-encryption", "PRE", "ECC", "transform-encryption"]
 description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
+edition = "2018"
 
 [dependencies]
 rand = "~0.6"

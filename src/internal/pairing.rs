@@ -1,12 +1,12 @@
+use crate::internal::field::ExtensionField;
+use crate::internal::fp12elem::Fp12Elem;
+use crate::internal::fp2elem::Fp2Elem;
+use crate::internal::fp6elem::Fp6Elem;
+use crate::internal::homogeneouspoint::Double;
+use crate::internal::homogeneouspoint::HomogeneousPoint;
+use crate::internal::homogeneouspoint::TwistedHPoint;
+use crate::internal::Square;
 use gridiron::fp_256::Fp256;
-use internal::field::ExtensionField;
-use internal::fp12elem::Fp12Elem;
-use internal::fp2elem::Fp2Elem;
-use internal::fp6elem::Fp6Elem;
-use internal::homogeneouspoint::Double;
-use internal::homogeneouspoint::HomogeneousPoint;
-use internal::homogeneouspoint::TwistedHPoint;
-use internal::Square;
 use num_traits::{Inv, One, Zero};
 
 #[derive(Debug)]
@@ -306,9 +306,10 @@ impl PairingConfig for Fp256 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use internal::curve::FP_256_CURVE_POINTS;
-    use internal::fp::fp256_unsafe_from;
-    use internal::homogeneouspoint::Double;
+    use crate::internal::curve::FP_256_CURVE_POINTS;
+    use crate::internal::fp::fp256_unsafe_from;
+    use crate::internal::homogeneouspoint::Double;
+    use lazy_static::lazy_static;
     use num_traits::Pow;
     use proptest::prelude::*;
 

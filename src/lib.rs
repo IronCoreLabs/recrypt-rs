@@ -70,33 +70,12 @@
 //!
 //! assert_eq!(pt, decrypted_val);
 //! ```
-extern crate arrayvec;
-extern crate clear_on_drop;
-extern crate core;
-extern crate curve25519_dalek;
-extern crate ed25519_dalek;
-#[macro_use]
-extern crate gridiron;
-extern crate num_traits;
-extern crate rand;
-extern crate sha2;
 
 #[cfg(test)]
 #[macro_use]
-extern crate proptest;
+extern crate proptest; // shouldn't be needed in Rust 2018, but hoping proptest will better document how to import
 
-extern crate hex;
-
-#[cfg(test)]
-extern crate rand_chacha;
-
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
-extern crate quick_error;
-
-#[macro_use]
+#[macro_use] // this is still required in Rust 2018
 mod internal; // this needs to come before `api` as api relies on macros defined in `internal`
 pub mod api;
 pub mod nonemptyvec;

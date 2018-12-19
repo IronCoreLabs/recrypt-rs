@@ -1,19 +1,22 @@
+use crate::internal::bit_repr::BitRepr;
+use crate::internal::curve::CurvePoints;
+use crate::internal::ed25519::{
+    Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair,
+};
+use crate::internal::field::ExtensionField;
+use crate::internal::field::Field;
+use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp12elem::Fp12Elem;
+use crate::internal::hashable::{Hashable, Hashable32};
+use crate::internal::homogeneouspoint::{HomogeneousPoint, PointErr, TwistedHPoint};
+use crate::internal::pairing::Pairing;
+use crate::internal::pairing::PairingConfig;
+use crate::internal::sha256::Sha256Hashing;
+use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
-use internal::bit_repr::BitRepr;
-use internal::curve::CurvePoints;
-use internal::ed25519::{Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair};
-use internal::field::ExtensionField;
-use internal::field::Field;
-use internal::fp::fr_256::Fr256;
-use internal::fp12elem::Fp12Elem;
-use internal::hashable::{Hashable, Hashable32};
-use internal::homogeneouspoint::{HomogeneousPoint, PointErr, TwistedHPoint};
-use internal::pairing::Pairing;
-use internal::pairing::PairingConfig;
-use internal::sha256::Sha256Hashing;
-use nonemptyvec::NonEmptyVec;
 use num_traits::{One, Zero};
+use quick_error::quick_error;
 use std::ops::{Add, Mul, Neg};
 #[macro_use]
 pub mod macros;
@@ -33,7 +36,7 @@ pub mod rand_bytes;
 pub mod schnorr;
 pub mod sha256;
 
-use api;
+use crate::api;
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
@@ -970,13 +973,13 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use api::test::DummyRandomBytes;
-    use internal::ed25519::Ed25519;
-    use internal::fp::fp256_unsafe_from;
-    use internal::fp12elem::test::arb_fp12;
-    use internal::homogeneouspoint::test::arb_homogeneous;
-    use internal::sha256::Sha256;
-    use internal::sum_n;
+    use crate::api::test::DummyRandomBytes;
+    use crate::internal::ed25519::Ed25519;
+    use crate::internal::fp::fp256_unsafe_from;
+    use crate::internal::fp12elem::test::arb_fp12;
+    use crate::internal::homogeneouspoint::test::arb_homogeneous;
+    use crate::internal::sha256::Sha256;
+    use crate::internal::sum_n;
     use num_traits::Pow;
     use proptest::arbitrary::any;
     use proptest::prelude::*;
