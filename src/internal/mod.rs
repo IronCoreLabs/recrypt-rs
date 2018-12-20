@@ -289,6 +289,11 @@ impl Square for Fr256 {
         self.square()
     }
 }
+impl Square for gridiron::fp_480::Fp480 {
+    fn square(&self) -> Self {
+        self.square()
+    }
+}
 
 ///Sum t n times.
 fn sum_n<T: Add<Output = T> + Copy + Zero + PartialEq>(t: T, n: u64) -> T {

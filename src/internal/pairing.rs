@@ -7,6 +7,7 @@ use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::Square;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use num_traits::{Inv, One, Zero};
 
 #[derive(Debug)]
@@ -300,6 +301,17 @@ impl PairingConfig for Fp256 {
         ];
         r.reverse();
         r
+    }
+}
+
+
+impl PairingConfig for Fp480 {
+    fn bn_pow(fp12: Fp12Elem<Self>) -> Fp12Elem<Self> {
+        unimplemented!()
+    }
+
+    fn naf_for_loop() -> Vec<i8> {
+        unimplemented!()
     }
 }
 

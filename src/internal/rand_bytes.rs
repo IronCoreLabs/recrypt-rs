@@ -6,6 +6,7 @@ use std::default::Default;
 /// Generation of random bytes for cryptographic operations
 pub trait RandomBytesGen {
     fn random_bytes_32(&mut self) -> [u8; 32];
+    fn random_bytes_60(&mut self) -> [u8; 60];
 }
 
 pub struct RandomBytes<T: CryptoRng + RngCore> {
@@ -29,5 +30,9 @@ impl<CR: CryptoRng + RngCore> RandomBytesGen for RandomBytes<CR> {
         let mut bytes: [u8; 32] = [0u8; 32];
         self.rng.fill_bytes(&mut bytes);
         bytes
+    }
+
+    fn random_bytes_60(&mut self) -> [u8; 60] {
+        unimplemented!()
     }
 }

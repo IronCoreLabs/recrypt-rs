@@ -2,6 +2,7 @@ use crate::internal::ByteVector;
 use arrayvec;
 use arrayvec::ArrayVec;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use quick_error::quick_error;
 use std::convert::From;
 use std::result::Result;
@@ -33,6 +34,14 @@ impl BytesDecoder for Fp256 {
                 bad_bytes: bytes,
             })
         }
+    }
+}
+
+impl BytesDecoder for Fp480 {
+    const ENCODED_SIZE_BYTES: usize = 60;
+
+    fn decode(bytes: Vec<u8>) -> Result<Self, DecodeErr> {
+        unimplemented!()
     }
 }
 

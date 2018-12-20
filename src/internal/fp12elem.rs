@@ -7,6 +7,7 @@ use crate::internal::ByteVector;
 use crate::internal::{pow_for_square, sum_n, Square};
 use core::fmt;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -337,6 +338,16 @@ impl Fp12Elem<Fp256> {
         dest
     }
 }
+impl Fp12Elem<Fp480> {
+    pub fn to_bytes_fp480(&self) -> [u8; Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES] {
+        let hashable = &self.to_bytes()[..];
+        let mut dest = [0u8; Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES];
+        dest.copy_from_slice(hashable);
+        dest
+    }
+}
+
+
 
 impl<T> BytesDecoder for Fp12Elem<T>
 where

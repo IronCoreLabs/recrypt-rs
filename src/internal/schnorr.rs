@@ -2,12 +2,14 @@ use crate::internal::array_concat_32;
 use crate::internal::bit_repr::BitRepr;
 use crate::internal::curve::FP_256_CURVE_POINTS;
 use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_480::Fr480;
 use crate::internal::hashable::Hashable;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::sha256::Sha256;
 use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use std::marker::PhantomData;
 
 ///- r is the x coordinate for a point on the elliptic curve.
@@ -48,6 +50,13 @@ impl SchnorrSign<Fp256, Fr256, Sha256> {
         }
     }
 }
+
+impl SchnorrSign<Fp480, Fr480, Sha256> {
+    pub fn new_480() -> SchnorrSign<Fp480, Fr480, Sha256> {
+        unimplemented!()
+    }
+}
+
 
 fn compute_double_hash<A: Hashable, B: Hashable, H: Sha256Hashing>(
     sha256: &H,

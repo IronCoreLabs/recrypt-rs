@@ -3,6 +3,7 @@ use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::Square;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use num_traits::{Inv, Pow};
 use num_traits::{One, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -103,6 +104,7 @@ pub trait Field:
 
 impl Field for Fp256 {}
 impl Field for Fr256 {}
+impl Field for Fp480 {}
 
 /// Contains the values needed to configure a new Fp type to be used as an extension field
 /// (FP2Elem, FP6Elem, FP12Elem)
@@ -213,6 +215,33 @@ impl ExtensionField for Fp256 {
             elem2: One::one(),
             elem3: Zero::zero(),
         }
+    }
+}
+
+
+impl ExtensionField for Fp480 {
+    fn xi() -> Fp2Elem<Self> {
+        unimplemented!()
+    }
+
+    fn xi_inv_times_9() -> Fp2Elem<Self> {
+        unimplemented!()
+    }
+
+    fn frobenius_factor_1() -> Fp2Elem<Self> {
+        unimplemented!()
+    }
+
+    fn frobenius_factor_2() -> Fp2Elem<Self> {
+        unimplemented!()
+    }
+
+    fn frobenius_factor_fp12() -> Fp2Elem<Self> {
+        unimplemented!()
+    }
+
+    fn v() -> Fp6Elem<Self> {
+        unimplemented!()
     }
 }
 

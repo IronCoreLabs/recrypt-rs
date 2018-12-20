@@ -47,7 +47,48 @@ fp31!(
     //          (-m).inverse_mod(2^31)
     757616223
 );
-
+//TODO THIS ISN'T REALLY FR480 -- it's just a placeholder copy of Fp480 for now
+// p = 3121577065842246806003085452055281276803074876175537384188619957989004527066410274868798956582915008874704066849018213144375771284425395508176023
+//   =
+fp31!(
+    fr_480, // Name of mod
+    Fr480,  // Name of class
+    480,    // Number of bits for prime
+    16,     // Number of limbs (ceil(bits/31))
+    [
+        // prime number in limbs, least sig first
+        // get this from sage with p.digits(2^31)
+        1055483031, 1386897616, 898494285, 1391857335, 488544832, 1799384686, 193115992, 565079768,
+        190358044, 1260077487, 1583277252, 222489098, 760385720, 330553579, 429458313, 32766
+    ],
+    // barrett reduction for reducing values up to twice
+    // the number of prime bits (double limbs):
+    // floor(2^(31*numlimbs*2)/p).digits(2^31)
+    [
+        867470981, 808770461, 73326154, 873519719, 731426156, 154316581, 1066899290, 1406793571,
+        1662108208, 231227174, 1893732143, 1300610845, 325218135, 866248622, 1596183093,
+        1288991726, 65539
+    ],
+    // montgomery R = 2^(W*N) where W = word size and N = limbs
+    //            R = 2^(16*31) = 2^496
+    // montgomery R^-1 mod p
+    // 540164672828597150601552066704871144340865164390233716165828766698348036766646674962138582407269471436938515957052715279568068096452253665449178
+    [
+        172371756, 1046460578, 1674812214, 732914258, 1831602581, 1542423573, 2092897579,
+        735180796, 1991677061, 919723849, 802444109, 1677449578, 1892606677, 1820724059,
+        1324905779, 16249
+    ],
+    // montgomery R^2 mod p
+    // 457845372202231092221045514406304715517609899600516288088351276206864288839367561156406646278891945147846188034105187428603489846554823930520200
+    [
+        197589901, 1933752831, 580428568, 527417626, 249573438, 264164054, 609560334, 32358085,
+        944568904, 1556682934, 1807973447, 1881920392, 10254137, 588677610, 1214264513, 6960
+    ],
+    // -p[0]^-1
+    // in sage: m = p.digits(2^31)[0]
+    //          (-m).inverse_mod(2^31)
+    1345299673
+);
 impl fr_256::Fr256 {
     ///Generate an Fr256 with no bias from `RandomBytesGen`.
     pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &mut R) -> fr_256::Fr256 {
@@ -63,7 +104,21 @@ impl fr_256::Fr256 {
         fr
     }
 }
-
+impl fr_480::Fr480 {
+    ///Generate an Fr480 with no bias from `RandomBytesGen`.
+    pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &mut R) -> fr_480::Fr480 {
+        let mut fr: fr_480::Fr480;
+        //We want to generate a value that is in Fr, but we don't want to allow values that
+        //are greater than Fr because it can give a bias to schnorr signing. If we generate a value
+        //which is >= the Fr480 PRIME, throw it away and try again.
+        while {
+            let bytes: [u8; 60] = random_bytes.random_bytes_60();
+            fr = fr_480::Fr480::from(bytes);
+            fr.to_bytes_array().to_vec() != bytes.to_vec()  //TODO to_vec for now since it has PartialEq for 60 bytes
+        } {}
+        fr
+    }
+}
 impl From<[u8; 64]> for fr_256::Fr256 {
     fn from(src: [u8; 64]) -> Self {
         // our input is the exact length we need for our
@@ -74,7 +129,16 @@ impl From<[u8; 64]> for fr_256::Fr256 {
         fr_256::Fr256::new(fr_256::Fr256::reduce_barrett(&limbs))
     }
 }
-
+impl From<[u8; 64]> for fr_480::Fr480 {
+    fn from(src: [u8; 64]) -> Self {
+        // our input is the exact length we need for our
+        // optimized barrett reduction
+        let mut limbs = [0u32; 32];
+        let limbs_17 = ::gridiron::from_sixty_four_bytes(src);
+        limbs.copy_from_slice(&limbs_17);
+        fr_480::Fr480::new(fr_480::Fr480::reduce_barrett(&limbs))
+    }
+}
 impl From<fp_256::Fp256> for fr_256::Fr256 {
     fn from(src: fp_256::Fp256) -> Self {
         From::from(src.to_bytes_array())
