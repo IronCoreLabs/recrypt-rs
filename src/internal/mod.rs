@@ -62,37 +62,29 @@ pub struct PublicKey<T: Field> {
     pub value: HomogeneousPoint<T>,
 }
 
-impl<T: Field + Hashable32> PublicKey<T> {
-    pub fn to_byte_vectors_32(&self) -> Option<([u8; 32], [u8; 32])> {
-        self.value
-            .normalize()
-            .map(|(x, y)| (x.to_bytes_32(), y.to_bytes_32()))
-    }
-
-
-
+impl<T: Field + From<u32> + Hashable> PublicKey<T> {
     pub fn new(point: HomogeneousPoint<T>) -> PublicKey<T> {
         PublicKey { value: point }
     }
-}
 
-impl PublicKey<Fp480> {
-
-    pub fn new_480(point: HomogeneousPoint<Fp480>) -> PublicKey<Fp480> {
-        PublicKey { value: point }
-    }
-
-    pub fn to_byte_vectors_60(&self) -> Option<([u8; 60], [u8; 60])> {
-    unimplemented!()
-    }
-    pub fn from_x_y_fp480(x: Fp480, y: Fp480) -> ErrorOr<PublicKey<Fp480>> {
+    pub fn from_x_y(x: T, y: T) -> ErrorOr<PublicKey<T>> {
         Ok(HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?)
     }
 }
 
 impl PublicKey<Fp256> {
-    pub fn from_x_y_fp256(x: Fp256, y: Fp256) -> ErrorOr<PublicKey<Fp256>> {
-        Ok(HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?)
+    pub fn to_byte_vectors_32(&self) -> Option<([u8; 32], [u8; 32])> {
+        self.value
+            .normalize()
+            .map(|(x, y)| (x.to_bytes_32(), y.to_bytes_32()))
+    }
+}
+
+impl PublicKey<Fp480> {
+    pub fn to_byte_vectors_60(&self) -> Option<([u8; 60], [u8; 60])> {
+        self.value
+            .normalize()
+            .map(|(x, y)| (x.to_bytes_60(), y.to_bytes_60()))
     }
 }
 

@@ -2,6 +2,7 @@ use crate::internal::fp::fr_256::Fr256;
 use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use gridiron::fp_256;
+use gridiron::fp_480;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use crate::internal::fp::fr_480::Fr480;
@@ -131,6 +132,14 @@ impl Hashable32 for Fr256 {
         self.to_bytes_array()
     }
 }
+impl Hashable60 for Fp480 {
+    fn to_bytes_60(&self) -> [u8; fp_480::PRIMEBYTES] {
+        unimplemented!()
+    }
+
+
+}
+
 impl Hashable for Fp480 {
     fn to_bytes(&self) -> Vec<u8> {
         unimplemented!()

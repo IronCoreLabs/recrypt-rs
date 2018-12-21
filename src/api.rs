@@ -973,7 +973,7 @@ impl PublicKey {
     ) -> Result<PublicKey> {
         let x = Fp256::from(x_bytes);
         let y = Fp256::from(y_bytes);
-        let i_pk = internal::PublicKey::from_x_y_fp256(x, y)?;
+        let i_pk = internal::PublicKey::from_x_y(x, y)?;
         PublicKey::try_from(&i_pk)
     }
 

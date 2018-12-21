@@ -997,7 +997,7 @@ impl PublicKey {
     ) -> Result<PublicKey> {
         let x = Fp480::from(x_bytes);
         let y = Fp480::from(y_bytes);
-        let i_pk = internal::PublicKey::from_x_y_fp480(x, y)?;
+        let i_pk = internal::PublicKey::from_x_y(x, y)?;
         PublicKey::try_from(&i_pk)
     }
 
@@ -1027,7 +1027,7 @@ impl PublicKey {
     ///this keypair. Otherwise the transformed data will not be able to be correctly decrypted.
     pub fn augment(&self, other: &PublicKey) -> Result<PublicKey> {
         let new_point = self._internal_key.value + other._internal_key.value;
-        PublicKey::try_from(&internal::PublicKey::new_480(new_point))
+        PublicKey::try_from(&internal::PublicKey::new(new_point))
     }
 }
 
