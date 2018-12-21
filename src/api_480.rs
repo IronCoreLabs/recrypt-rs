@@ -7,7 +7,8 @@ pub use crate::internal::ed25519::{
 use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp12elem::Fp12Elem;
 pub use crate::internal::hashable::Hashable;
-use crate::internal::hashable::Hashable32;
+//use crate::internal::hashable::Hashable32;
+use crate::internal::hashable::Hashable60;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::pairing;
 pub use crate::internal::rand_bytes::*;
@@ -746,7 +747,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
     }
 
     fn random_private_key(&mut self) -> PrivateKey {
-        let rand_bytes = self.random_bytes.random_bytes_32();
+        let rand_bytes = self.random_bytes.random_bytes_60();
         PrivateKey::new(rand_bytes)
     }
 
@@ -922,27 +923,50 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp480> {
     internal::gen_rth_root(
         &pairing::Pairing::new(),
         Fp12Elem::create_from_t(
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
-            Fp480::from(random_bytes.random_bytes_32()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
         ),
     )
 }
 
+#[derive(Clone, Copy)]
+struct SixtyBytes([u8; Fp480::ENCODED_SIZE_BYTES]);
+
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct PublicKey {
-    x: [u8; 32],
-    y: [u8; 32],
+    x: SixtyBytes,
+    y: SixtyBytes,
     _internal_key: internal::PublicKey<Fp480>,
+}
+
+impl PartialEq for SixtyBytes {
+    fn eq(&self, other: &SixtyBytes) -> bool {
+        unimplemented!()
+    }
+}
+
+impl Eq for SixtyBytes {}
+
+impl fmt::Debug for SixtyBytes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        unimplemented!()
+    }
+}
+
+impl Default for SixtyBytes {
+    fn default() -> Self {
+        unimplemented!()
+    }
 }
 
 impl Hashable for PublicKey {
@@ -956,10 +980,10 @@ impl PublicKey {
 
     fn try_from(internal_key: &internal::PublicKey<Fp480>) -> Result<PublicKey> {
         Ok(internal_key
-            .to_byte_vectors_32()
+            .to_byte_vectors_60()
             .map(|(x, y)| PublicKey {
-                x,
-                y,
+                x: SixtyBytes(x),
+                y: SixtyBytes(y),
                 _internal_key: *internal_key,
             })
             .ok_or_else(|| internal::homogeneouspoint::PointErr::ZeroPoint)?)
@@ -973,7 +997,7 @@ impl PublicKey {
     ) -> Result<PublicKey> {
         let x = Fp480::from(x_bytes);
         let y = Fp480::from(y_bytes);
-        let i_pk = internal::PublicKey::from_x_y_fp256(x, y)?;
+        let i_pk = internal::PublicKey::from_x_y_fp480(x, y)?;
         PublicKey::try_from(&i_pk)
     }
 
@@ -993,8 +1017,8 @@ impl PublicKey {
             ))
         }
     }
-    pub fn bytes_x_y(&self) -> (&[u8; 32], &[u8; 32]) {
-        (&self.x, &self.y)
+    pub fn bytes_x_y(&self) -> (&[u8; Fp480::ENCODED_SIZE_BYTES], &[u8; Fp480::ENCODED_SIZE_BYTES]) {
+        (&self.x.0, &self.y.0)
     }
 
     ///Augment the PublicKey so that messages encrypted to that key cannot be decrypted by this PublicKey's PrivateKey.
@@ -1003,13 +1027,13 @@ impl PublicKey {
     ///this keypair. Otherwise the transformed data will not be able to be correctly decrypted.
     pub fn augment(&self, other: &PublicKey) -> Result<PublicKey> {
         let new_point = self._internal_key.value + other._internal_key.value;
-        PublicKey::try_from(&internal::PublicKey::new(new_point))
+        PublicKey::try_from(&internal::PublicKey::new_480(new_point))
     }
 }
 
 #[derive(Eq, PartialEq, Default, Debug)]
 pub struct PrivateKey {
-    bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES],
+    bytes: SixtyBytes,
     _internal_key: internal::PrivateKey<Fp480>,
 }
 
@@ -1017,32 +1041,38 @@ impl PrivateKey {
     const ENCODED_SIZE_BYTES: usize = Fp480::ENCODED_SIZE_BYTES;
 
     pub fn bytes(&self) -> &[u8; PrivateKey::ENCODED_SIZE_BYTES] {
-        &self.bytes
+        &self.bytes.0
     }
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
-        let internal_key = internal::PrivateKey::from_fp256(Fp480::from(bytes));
+        let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes));
         PrivateKey {
-            bytes: internal_key.value.to_bytes_32(),
+            bytes: SixtyBytes(bytes),  //TODO using non validated input
             _internal_key: internal_key,
         }
     }
 
     new_from_slice!(PrivateKey);
 }
+impl Hashable60 for PrivateKey {
+    fn to_bytes_60(&self) -> [u8; 60] {
+        unimplemented!()
+    }
+}
 
-impl Hashable32 for PrivateKey {
-    fn to_bytes_32(&self) -> [u8; 32] {
-        self.bytes
+impl Hashable for PrivateKey {
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!()
     }
 }
 
 impl From<internal::PrivateKey<Fp480>> for PrivateKey {
     fn from(internal_pk: internal::PrivateKey<Fp480>) -> Self {
-        PrivateKey {
-            bytes: internal_pk.value.to_bytes_32(),
-            _internal_key: internal_pk,
-        }
+        unimplemented!()
+//        PrivateKey {
+//            bytes: internal_pk.value.to_bytes_32(),
+//            _internal_key: internal_pk,
+//        }
     }
 }
 
@@ -1057,17 +1087,19 @@ new_bytes_type!(SchnorrSignature, 64);
 
 impl From<internal::schnorr::SchnorrSignature<Fr480>> for SchnorrSignature {
     fn from(internal: internal::schnorr::SchnorrSignature<Fr480>) -> Self {
-        SchnorrSignature::new(internal::array_concat_32(
-            &internal.r().to_bytes_32(),
-            &internal.s().to_bytes_32(),
-        ))
+//        SchnorrSignature::new(internal::array_concat_32(
+//            &internal.r().to_bytes_32(),
+//            &internal.s().to_bytes_32(),
+//        ))
+        unimplemented!()
     }
 }
 
 impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr480> {
     fn from(sig: SchnorrSignature) -> Self {
-        let (r_bytes, s_bytes) = internal::array_split_64(&sig.bytes);
-        internal::schnorr::SchnorrSignature::new(Fr480::from(r_bytes), Fr480::from(s_bytes))
+//        let (r_bytes, s_bytes) = internal::array_split_64(&sig.bytes);
+//        internal::schnorr::SchnorrSignature::new(Fr480::from(r_bytes), Fr480::from(s_bytes))
+        unimplemented!()
     }
 }
 

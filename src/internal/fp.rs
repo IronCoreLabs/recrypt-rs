@@ -1,6 +1,7 @@
 use crate::internal::rand_bytes::RandomBytesGen;
 use gridiron::fp31;
 use gridiron::fp_256;
+use gridiron::fp_480;
 
 // r: 65000549695646603732796438742359905742570406053903786389881062969044166799969 (also "curve_order")
 fp31!(
@@ -141,6 +142,12 @@ impl From<[u8; 64]> for fr_480::Fr480 {
 }
 impl From<fp_256::Fp256> for fr_256::Fr256 {
     fn from(src: fp_256::Fp256) -> Self {
+        From::from(src.to_bytes_array())
+    }
+}
+
+impl From<fp_480::Fp480> for fr_480::Fr480 {
+    fn from(src: fp_480::Fp480) -> Self {
         From::from(src.to_bytes_array())
     }
 }

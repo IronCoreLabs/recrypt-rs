@@ -1,4 +1,5 @@
 use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::Square;
@@ -105,6 +106,7 @@ pub trait Field:
 impl Field for Fp256 {}
 impl Field for Fr256 {}
 impl Field for Fp480 {}
+impl Field for Fr480 {}
 
 /// Contains the values needed to configure a new Fp type to be used as an extension field
 /// (FP2Elem, FP6Elem, FP12Elem)

@@ -4,6 +4,7 @@ use crate::nonemptyvec::NonEmptyVec;
 use gridiron::fp_256;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
+use crate::internal::fp::fr_480::Fr480;
 
 /// Typeclass for converting an implementing type to a stable byte representation
 /// which can be used for hashing (and thus the hash value will also remain consistent)
@@ -136,6 +137,21 @@ impl Hashable for Fp480 {
     }
 }
 
+impl Hashable for Fr480 {
+    fn to_bytes(&self) -> Vec<u8> {
+        unimplemented!()
+    }
+}
+
+pub trait Hashable60 {
+    fn to_bytes_60(&self) -> [u8; 60];
+}
+///// All Hashable60s are Hashable
+//impl<T: Hashable60> Hashable for T {
+//    fn to_bytes(&self) -> Vec<u8> {
+//        self.to_bytes_60().to_vec()
+//    }
+//}
 #[cfg(test)]
 mod test {
     use super::*;

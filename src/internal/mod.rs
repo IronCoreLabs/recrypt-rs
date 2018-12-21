@@ -6,8 +6,9 @@ use crate::internal::ed25519::{
 use crate::internal::field::ExtensionField;
 use crate::internal::field::Field;
 use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp12elem::Fp12Elem;
-use crate::internal::hashable::{Hashable, Hashable32};
+use crate::internal::hashable::{Hashable, Hashable32, Hashable60};
 use crate::internal::homogeneouspoint::{HomogeneousPoint, PointErr, TwistedHPoint};
 use crate::internal::pairing::Pairing;
 use crate::internal::pairing::PairingConfig;
@@ -15,6 +16,7 @@ use crate::internal::sha256::Sha256Hashing;
 use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use num_traits::{One, Zero};
 use quick_error::quick_error;
 use std::ops::{Add, Mul, Neg};
@@ -37,6 +39,7 @@ pub mod schnorr;
 pub mod sha256;
 
 use crate::api;
+use crate::api_480;
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
@@ -66,8 +69,24 @@ impl<T: Field + Hashable32> PublicKey<T> {
             .map(|(x, y)| (x.to_bytes_32(), y.to_bytes_32()))
     }
 
+
+
     pub fn new(point: HomogeneousPoint<T>) -> PublicKey<T> {
         PublicKey { value: point }
+    }
+}
+
+impl PublicKey<Fp480> {
+
+    pub fn new_480(point: HomogeneousPoint<Fp480>) -> PublicKey<Fp480> {
+        PublicKey { value: point }
+    }
+
+    pub fn to_byte_vectors_60(&self) -> Option<([u8; 60], [u8; 60])> {
+    unimplemented!()
+    }
+    pub fn from_x_y_fp480(x: Fp480, y: Fp480) -> ErrorOr<PublicKey<Fp480>> {
+        Ok(HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?)
     }
 }
 
@@ -106,6 +125,28 @@ impl<'a> From<&'a api::PrivateKey> for PrivateKey<Fp256> {
 impl PrivateKey<Fp256> {
     pub fn from_fp256(fp256: Fp256) -> PrivateKey<Fp256> {
         PrivateKey { value: fp256 }
+    }
+}
+
+impl From<api_480::PrivateKey> for PrivateKey<Fp480> {
+    fn from(api_pk: api_480::PrivateKey) -> Self {
+        PrivateKey {
+            value: Fp480::from(api_pk.to_bytes_60()),
+        }
+    }
+}
+
+impl<'a> From<&'a api_480::PrivateKey> for PrivateKey<Fp480> {
+    fn from(api_pk: &'a api_480::PrivateKey) -> Self {
+        PrivateKey {
+            value: Fp480::from(api_pk.to_bytes_60()),
+        }
+    }
+}
+
+impl PrivateKey<Fp480> {
+    pub fn from_fp480(fp480: Fp480) -> PrivateKey<Fp480> {
+        PrivateKey { value: fp480 }
     }
 }
 
@@ -291,6 +332,12 @@ impl Square for Fr256 {
 }
 impl Square for gridiron::fp_480::Fp480 {
     fn square(&self) -> Self {
+        self.square()
+    }
+}
+
+impl Square for Fr480 {
+   fn square(&self) -> Self {
         self.square()
     }
 }
@@ -717,6 +764,11 @@ where
 
 impl From<api::Plaintext> for KValue<Fp256> {
     fn from(pt: api::Plaintext) -> Self {
+        KValue(*pt.internal_fp12())
+    }
+}
+impl From<api_480::Plaintext> for KValue<Fp480> {
+    fn from(pt: api_480::Plaintext) -> Self {
         KValue(*pt.internal_fp12())
     }
 }
