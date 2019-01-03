@@ -160,7 +160,17 @@ impl From<fp_480::Fp480> for fr_480::Fr480 {
 ///
 /// Arguments:
 /// `hex_str` - need to be 63 or 64 bytes. Do not include a leading '0x'
+///
+/// Example:
+///
+///
+/// use gridiron::fp_256;
+/// use recrypt::internal::fp::fp_unsafe_from;
+/// let fp_value = fp_256::Fp256::new([1883708157, 273156172, 2109116376, 1424078749, 1853636711, 680917384, 134358213, 1586179707, 57]);
+/// assert_eq!(fp_value, fp256_unsafe_from("39bd165cf62008931544afcc46e7c4067a9c36f3bf6da3f60824042670471afd"))
+///
 pub fn fp256_unsafe_from(hex_str: &str) -> fp_256::Fp256 {
+    // add in a leading zero as needed to be more compatible with sage
     let even_hex_str = if hex_str.len() % 2 != 0 {
         format!("0{}", hex_str)
     } else {
@@ -175,9 +185,49 @@ pub fn fp256_unsafe_from(hex_str: &str) -> fp_256::Fp256 {
         fp_256::Fp256::from(target)
     } else {
         panic!(
-            "Fp256 from failed! '{:?}' has size {} (bytes). Did you forget to pad your hex string to 63/64 bytes?",
+            "Fp256 from failed! '{:?}' has size {} (bytes). Did you forget to pad your hex string to 63/64 chars?",
             slice,
             slice.len()
         )
+    }
+}
+
+//TODO duplication
+pub fn fp480_unsafe_from(hex_str: &str) -> fp_480::Fp480 {
+    // add in a leading zero as needed to be more compatible with sage
+    let even_hex_str = if hex_str.len() % 2 != 0 {
+        format!("0{}", hex_str)
+    } else {
+        hex_str.to_string()
+    };
+
+    let slice = &hex::decode(&even_hex_str)
+        .expect(&format!("hex_str '{}' cannot be decoded", &even_hex_str));
+    if slice.len() == fp_480::PRIMEBYTES {
+        let mut target = [0u8; fp_480::PRIMEBYTES];
+        target.copy_from_slice(slice);
+        fp_480::Fp480::from(target)
+    } else {
+        panic!(
+            "Fp480 from failed! '{:?}' has size {} (bytes). Did you forget to pad your hex string to 129/130 chars?",
+            slice,
+            slice.len()
+        )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn fp480_unsafe_from_known_value() {
+        let truth = gridiron::fp_480::Fp480::new([
+            2098743022, 1514595207, 158172177, 2077087904, 1481974950, 1373179512, 48841159,
+            1821456760, 1081920276, 1225443286, 82365526, 424792007, 2137546047, 1459441907,
+            1632731523, 28927,
+        ]);
+        let fp480 = fp480_unsafe_from("e1ff8546060eb7ea879ff685d3f32a39f8e13a3315a48563eb407ccb14d92272f00ba5071e8ec873c585524a6f79bb14025b61046d2371c3fd1846ee");
+        assert_eq!(truth, fp480)
     }
 }
