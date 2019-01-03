@@ -329,7 +329,7 @@ impl Square for gridiron::fp_480::Fp480 {
 }
 
 impl Square for Fr480 {
-   fn square(&self) -> Self {
+    fn square(&self) -> Self {
         self.square()
     }
 }
@@ -1148,7 +1148,7 @@ mod test {
             let parsed_pub_key_x = fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5");
             //46643694276241842996939080253335644316475473619096522181405937227991761798154
             let parsed_pub_key_y = fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a");
-            let public_key = PublicKey::from_x_y_fp256(parsed_pub_key_x, parsed_pub_key_y).unwrap();
+            let public_key = PublicKey::from_x_y(parsed_pub_key_x, parsed_pub_key_y).unwrap();
 
             let salt = KValue(Fp12Elem::create_from_t(
                 //20621517740542501009268492188240231175004875885443969425948886451683622135253

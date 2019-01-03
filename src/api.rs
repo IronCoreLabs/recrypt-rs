@@ -1037,8 +1037,6 @@ impl Hashable32 for PrivateKey {
     }
 }
 
-
-
 impl From<internal::PrivateKey<Fp256>> for PrivateKey {
     fn from(internal_pk: internal::PrivateKey<Fp256>) -> Self {
         PrivateKey {
@@ -1109,6 +1107,10 @@ pub(crate) mod test {
     impl RandomBytesGen for DummyRandomBytes {
         fn random_bytes_32(&mut self) -> [u8; 32] {
             [std::u8::MAX; 32]
+        }
+
+        fn random_bytes_60(&mut self) -> [u8; 60] {
+            unimplemented!()
         }
     }
 
@@ -1192,7 +1194,7 @@ pub(crate) mod test {
         let parsed_pub_key_y =
             fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a");
         let public_key_expected = PublicKey::try_from(
-            &internal::PublicKey::from_x_y_fp256(parsed_pub_key_x, parsed_pub_key_y).unwrap(),
+            &internal::PublicKey::from_x_y(parsed_pub_key_x, parsed_pub_key_y).unwrap(),
         )
         .unwrap();
 
@@ -1207,7 +1209,7 @@ pub(crate) mod test {
     fn test_generate_key_pair_max_private_key() {
         let mut api = api_with(Some(DummyRandomBytes), DummyEd25519);
         let (_, pub_key) = api.generate_key_pair().unwrap();
-        let internal_pk = internal::PublicKey::from_x_y_fp256(
+        let internal_pk = internal::PublicKey::from_x_y(
             //58483620629232886210555514960799664032881966270053836377116209031946678864174
             fp256_unsafe_from("814c8e65863238dbd86f9fbdbe8f166e536140343b7f3c22e79c82b8af70892e"),
             //39604663823550822619127054070927331080305575010367415285113646212320556073913
@@ -1229,6 +1231,10 @@ pub(crate) mod test {
     impl RandomBytesGen for TestZeroBytes {
         fn random_bytes_32(&mut self) -> [u8; 32] {
             [0u8; 32]
+        }
+
+        fn random_bytes_60(&mut self) -> [u8; 60] {
+            unimplemented!()
         }
     }
 

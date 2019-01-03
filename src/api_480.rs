@@ -1017,7 +1017,12 @@ impl PublicKey {
             ))
         }
     }
-    pub fn bytes_x_y(&self) -> (&[u8; Fp480::ENCODED_SIZE_BYTES], &[u8; Fp480::ENCODED_SIZE_BYTES]) {
+    pub fn bytes_x_y(
+        &self,
+    ) -> (
+        &[u8; Fp480::ENCODED_SIZE_BYTES],
+        &[u8; Fp480::ENCODED_SIZE_BYTES],
+    ) {
         (&self.x.0, &self.y.0)
     }
 
@@ -1047,7 +1052,7 @@ impl PrivateKey {
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
         let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes));
         PrivateKey {
-            bytes: SixtyBytes(bytes),  //TODO using non validated input
+            bytes: SixtyBytes(bytes), //TODO using non validated input
             _internal_key: internal_key,
         }
     }
@@ -1069,10 +1074,10 @@ impl Hashable for PrivateKey {
 impl From<internal::PrivateKey<Fp480>> for PrivateKey {
     fn from(internal_pk: internal::PrivateKey<Fp480>) -> Self {
         unimplemented!()
-//        PrivateKey {
-//            bytes: internal_pk.value.to_bytes_32(),
-//            _internal_key: internal_pk,
-//        }
+        //        PrivateKey {
+        //            bytes: internal_pk.value.to_bytes_32(),
+        //            _internal_key: internal_pk,
+        //        }
     }
 }
 
@@ -1087,18 +1092,18 @@ new_bytes_type!(SchnorrSignature, 64);
 
 impl From<internal::schnorr::SchnorrSignature<Fr480>> for SchnorrSignature {
     fn from(internal: internal::schnorr::SchnorrSignature<Fr480>) -> Self {
-//        SchnorrSignature::new(internal::array_concat_32(
-//            &internal.r().to_bytes_32(),
-//            &internal.s().to_bytes_32(),
-//        ))
+        //        SchnorrSignature::new(internal::array_concat_32(
+        //            &internal.r().to_bytes_32(),
+        //            &internal.s().to_bytes_32(),
+        //        ))
         unimplemented!()
     }
 }
 
 impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr480> {
     fn from(sig: SchnorrSignature) -> Self {
-//        let (r_bytes, s_bytes) = internal::array_split_64(&sig.bytes);
-//        internal::schnorr::SchnorrSignature::new(Fr480::from(r_bytes), Fr480::from(s_bytes))
+        //        let (r_bytes, s_bytes) = internal::array_split_64(&sig.bytes);
+        //        internal::schnorr::SchnorrSignature::new(Fr480::from(r_bytes), Fr480::from(s_bytes))
         unimplemented!()
     }
 }
@@ -1140,6 +1145,10 @@ pub(crate) mod test {
         fn random_bytes_32(&mut self) -> [u8; 32] {
             [std::u8::MAX; 32]
         }
+
+        fn random_bytes_60(&mut self) -> [u8; 60] {
+            unimplemented!()
+        }
     }
 
     fn api_with<R: RandomBytesGen + Default, S: Ed25519Signing>(
@@ -1153,7 +1162,7 @@ pub(crate) mod test {
             ed25519,
             pairing: api.pairing,
             curve_points: api.curve_points,
-            schnorr_signing: internal::schnorr::SchnorrSign::<Fp480, Fr480, Sha256>::new_256(),
+            schnorr_signing: internal::schnorr::SchnorrSign::<Fp480, Fr480, Sha256>::new_480(),
         }
     }
 
@@ -1222,7 +1231,7 @@ pub(crate) mod test {
         let parsed_pub_key_y =
             fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a");
         let public_key_expected = PublicKey::try_from(
-            &internal::PublicKey::from_x_y_fp256(parsed_pub_key_x, parsed_pub_key_y).unwrap(),
+            &internal::PublicKey::from_x_y(parsed_pub_key_x, parsed_pub_key_y).unwrap(),
         )
         .unwrap();
 
@@ -1237,7 +1246,7 @@ pub(crate) mod test {
     fn test_generate_key_pair_max_private_key() {
         let mut api = api_with(Some(DummyRandomBytes), DummyEd25519);
         let (_, pub_key) = api.generate_key_pair().unwrap();
-        let internal_pk = internal::PublicKey::from_x_y_fp256(
+        let internal_pk = internal::PublicKey::from_x_y(
             //58483620629232886210555514960799664032881966270053836377116209031946678864174
             fp256_unsafe_from("814c8e65863238dbd86f9fbdbe8f166e536140343b7f3c22e79c82b8af70892e"),
             //39604663823550822619127054070927331080305575010367415285113646212320556073913
@@ -1259,6 +1268,10 @@ pub(crate) mod test {
     impl RandomBytesGen for TestZeroBytes {
         fn random_bytes_32(&mut self) -> [u8; 32] {
             [0u8; 32]
+        }
+
+        fn random_bytes_60(&mut self) -> [u8; 60] {
+            unimplemented!()
         }
     }
 

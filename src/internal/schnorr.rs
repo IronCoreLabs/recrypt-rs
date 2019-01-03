@@ -57,7 +57,6 @@ impl SchnorrSign<Fp480, Fr480, Sha256> {
     }
 }
 
-
 fn compute_double_hash<A: Hashable, B: Hashable, H: Sha256Hashing>(
     sha256: &H,
     a: &A,

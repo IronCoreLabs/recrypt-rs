@@ -304,7 +304,6 @@ impl PairingConfig for Fp256 {
     }
 }
 
-
 impl PairingConfig for Fp480 {
     fn bn_pow(fp12: Fp12Elem<Self>) -> Fp12Elem<Self> {
         unimplemented!()

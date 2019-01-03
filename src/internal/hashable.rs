@@ -1,11 +1,11 @@
 use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_480::Fr480;
 use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use gridiron::fp_256;
-use gridiron::fp_480;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480;
 use gridiron::fp_480::Fp480;
-use crate::internal::fp::fr_480::Fr480;
 
 /// Typeclass for converting an implementing type to a stable byte representation
 /// which can be used for hashing (and thus the hash value will also remain consistent)
@@ -136,8 +136,6 @@ impl Hashable60 for Fp480 {
     fn to_bytes_60(&self) -> [u8; fp_480::PRIMEBYTES] {
         unimplemented!()
     }
-
-
 }
 
 impl Hashable for Fp480 {

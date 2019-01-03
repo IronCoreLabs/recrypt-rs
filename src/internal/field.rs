@@ -220,7 +220,6 @@ impl ExtensionField for Fp256 {
     }
 }
 
-
 impl ExtensionField for Fp480 {
     fn xi() -> Fp2Elem<Self> {
         unimplemented!()

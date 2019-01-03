@@ -347,8 +347,6 @@ impl Fp12Elem<Fp480> {
     }
 }
 
-
-
 impl<T> BytesDecoder for Fp12Elem<T>
 where
     T: BytesDecoder + Sized + Copy,
