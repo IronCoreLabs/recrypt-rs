@@ -150,7 +150,6 @@ where
 }
 
 impl ExtensionField for Fp256 {
-    #[inline]
     //precalculate this since it's used in every double and add operation in the extension field.
     // Fp256::xi().inv() * 9
     #[inline]

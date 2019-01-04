@@ -282,13 +282,13 @@ impl PairingConfig for Fp256 {
         //This is a hardcode of the square and multiply for bnPow
         let mut x = fp12;
         let mut res = x;
-        (0..8).for_each(|_i| x = x.square());
+        (0..8).for_each(|_| x = x.square());
         res = res * x;
-        (0..7).for_each(|_i| x = x.square());
+        (0..7).for_each(|_| x = x.square());
         res = res * x;
-        (0..3).for_each(|_i| x = x.square());
+        (0..3).for_each(|_| x = x.square());
         res = res * x.conjugate();
-        (0..3).for_each(|_i| x = x.square());
+        (0..3).for_each(|_| x = x.square());
         res * x
     }
     //NAF of 6*BNParam + 2
@@ -306,18 +306,53 @@ impl PairingConfig for Fp256 {
 
 impl PairingConfig for Fp480 {
     fn bn_pow(fp12: Fp12Elem<Self>) -> Fp12Elem<Self> {
-        unimplemented!()
+        //This is a hardcode of the square and multiply for bnPow
+        let mut x = fp12;
+        let mut res = x;
+        (0..3).for_each(|_| x = x.square());
+        res = res * x;
+        (0..4).for_each(|_| x = x.square());
+        res = res * x;
+        (0..2).for_each(|_| x = x.square());
+        res = res * x;
+        (0..4).for_each(|_| x = x.square());
+        res = res * x;
+        (0..5).for_each(|_| x = x.square());
+        res = res * x;
+        (0..4).for_each(|_| x = x.square());
+        res = res * x.conjugate();
+        (0..2).for_each(|_| x = x.square());
+        res = res * x;
+        (0..3).for_each(|_| x = x.square());
+        res = res * x;
+        (0..2).for_each(|_| x = x.square());
+        res = res * x.conjugate();
+        (0..4).for_each(|_| x = x.square());
+        res = res * x.conjugate();
+        (0..5).for_each(|_| x = x.square());
+        res = res * x.conjugate();
+        (0..2).for_each(|_| x = x.square());
+        res * x
     }
 
     fn naf_for_loop() -> Vec<i8> {
-        unimplemented!()
+        let mut r = vec![
+            0, 0, 0, -1, 0, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0,
+            1, 0, 1, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, -1, 0,
+            0, -1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0,
+            0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, -1, 0,
+            1, 0, -1, 0, 0, 1, 0];//, 1, 0,
+//        ];
+        r.reverse();
+        r
+//        r.to_vec()
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::internal::curve::FP_256_CURVE_POINTS;
+    use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::homogeneouspoint::Double;
     use lazy_static::lazy_static;
@@ -646,6 +681,32 @@ mod test {
 
         assert_eq!(expected_result, result);
     }
+    //"follow the law pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
+    //"follow the law pair(a * P, a * Q) == pair(P, Q) ^ (a^2)"
+    #[test]
+    fn clint_fp480_law_bilinearity() {
+        let a: u64 = 5;
+        let pairing: Pairing<Fp480> = Pairing::new();
+        let p = FP_480_CURVE_POINTS.generator;
+        let a_sqr = Fp480::from(a.pow(2));
+        let a_sqr_u64: u64 = a.pow(2) as u64;
+        let a = Fp480::from(a);
+        let a_times_p = p * a;
+        let a_sqr_times_p = p * a_sqr;
+        let q = FP_480_CURVE_POINTS.g1;
+        let a_times_q = q * a;
+        let pair_a_times_p_and_a_times_q = pairing.pair(a_times_p, a_times_q);
+
+        // pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
+        assert_eq!(pairing.pair(p, a_times_q), pairing.pair(a_times_p, q));
+        assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q));
+
+        // pair(a * P, a * Q) == pair(P, Q) ^ (a^2)
+        assert_eq!(
+            pair_a_times_p_and_a_times_q,
+            pairing.pair(p, q).pow(a_sqr_u64)
+        );
+    }
 
     proptest! {
       //"follow the law pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
@@ -661,6 +722,30 @@ mod test {
         let a_times_p = p * a;
         let a_sqr_times_p = p * a_sqr;
         let q = FP_256_CURVE_POINTS.g1;
+        let a_times_q = q * a;
+        let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q);
+
+        // pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
+        prop_assert_eq!(pairing.pair(p, a_times_q), pairing.pair(a_times_p, q));
+        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q));
+
+        // pair(a * P, a * Q) == pair(P, Q) ^ (a^2)
+        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).pow(a_sqr_u64));
+      }
+
+      //"follow the law pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
+      //"follow the law pair(a * P, a * Q) == pair(P, Q) ^ (a^2)"
+      #[test]
+      fn fp480_law_bilinearity(a in any::<u32>().prop_filter("", |a| !(*a == 0))) {
+        let a: u64 = a as u64;
+        let pairing: Pairing<Fp480> = Pairing::new();
+        let p = FP_480_CURVE_POINTS.generator;
+        let a_sqr = Fp480::from(a.pow(2));
+        let a_sqr_u64: u64 = a.pow(2) as u64;
+        let a = Fp480::from(a);
+        let a_times_p = p * a;
+        let a_sqr_times_p = p * a_sqr;
+        let q = FP_480_CURVE_POINTS.g1;
         let a_times_q = q * a;
         let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q);
 

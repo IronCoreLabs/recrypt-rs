@@ -1,6 +1,6 @@
 use crate::internal::array_concat_32;
 use crate::internal::bit_repr::BitRepr;
-use crate::internal::curve::FP_256_CURVE_POINTS;
+use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::fp::fr_480::Fr480;
 use crate::internal::hashable::Hashable;
@@ -53,7 +53,11 @@ impl SchnorrSign<Fp256, Fr256, Sha256> {
 
 impl SchnorrSign<Fp480, Fr480, Sha256> {
     pub fn new_480() -> SchnorrSign<Fp480, Fr480, Sha256> {
-        unimplemented!()
+        SchnorrSign {
+            sha256: Sha256,
+            g: FP_480_CURVE_POINTS.generator,
+            phantom: PhantomData::<Fr480>,
+        }
     }
 }
 
