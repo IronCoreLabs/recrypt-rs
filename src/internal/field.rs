@@ -113,12 +113,16 @@ impl Field for Fr480 {}
 /// All `ExtensionField`s are `Field`s
 pub trait ExtensionField: Field
 where
-    Self: Sized,
+    Self: Sized + From<u8>,
 {
     /// Xi is u + 3 which is v^3.
     /// v^p == Xi^((p-1)/3) * v
-    fn xi() -> Fp2Elem<Self>;
-
+    fn xi() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: Self::one(),
+            elem2: Self::from(3u8),
+        }
+    }
     ///Precomputed xi.inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self>;
 
@@ -147,14 +151,8 @@ where
 
 impl ExtensionField for Fp256 {
     #[inline]
-    fn xi() -> Fp2Elem<Self> {
-        Fp2Elem {
-            elem1: Self::one(),
-            elem2: Self::from(3u8),
-        }
-    }
-
     //precalculate this since it's used in every double and add operation in the extension field.
+    // Fp256::xi().inv() * 9
     #[inline]
     fn xi_inv_times_9() -> Fp2Elem<Self> {
         Fp2Elem {
@@ -219,12 +217,21 @@ impl ExtensionField for Fp256 {
 }
 
 impl ExtensionField for Fp480 {
-    fn xi() -> Fp2Elem<Self> {
-        unimplemented!()
-    }
-
+    // precalculate this since it's used in every double and add operation in the extension field.
+    // Fp480::xi().inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self> {
-        unimplemented!()
+        Fp2Elem {
+            elem1: Fp480::new([
+                0x2c7937c6, 0x3f331d0b, 0x1cddc7ca, 0x327d046a, 0x2255fb13, 0x6935454, 0x36a73701,
+                0xa1abada, 0x103430a2, 0x16882d4e, 0x2b6116e, 0x6a60dfd0, 0x1a6591d0, 0x2c4f8de0,
+                0x6e144ddc, 0x2665,
+            ]),
+            elem2: Fp480::new([
+                0x397dbd45, 0x151109ae, 0x5ef497ee, 0x3b7f0178, 0x361ca906, 0x57867171, 0x678d1255,
+                0x35e3e48, 0x5abc1036, 0x782b9c4, 0x563cb07a, 0x4e204a9a, 0x5e21db45, 0xec52f4a,
+                0x4f5c19f4, 0xccc,
+            ]),
+        }
     }
     fn frobenius_factor_1() -> Fp2Elem<Self> {
         Fp2Elem {

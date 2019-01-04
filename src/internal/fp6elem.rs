@@ -373,8 +373,9 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use crate::internal::fp2elem::test::arb_fp2;
+    use crate::internal::fp2elem::test::{arb_fp2, arb_fp2_480};
     use gridiron::fp_256::Fp256;
+    use gridiron::fp_480::Fp480;
     use proptest::prelude::*;
 
     pub fn get_fp6s(
@@ -447,6 +448,16 @@ pub mod test {
 
     prop_compose! {
         [pub] fn arb_fp6()(e4 in arb_fp2(), e5 in arb_fp2(), e6 in arb_fp2()) -> Fp6Elem<Fp256> {
+            Fp6Elem {
+                elem1: e4,
+                elem2: e5,
+                elem3: e6
+            }
+       }
+    }
+
+    prop_compose! {
+        [pub] fn arb_fp6_480()(e4 in arb_fp2_480(), e5 in arb_fp2_480(), e6 in arb_fp2_480()) -> Fp6Elem<Fp480> {
             Fp6Elem {
                 elem1: e4,
                 elem2: e5,

@@ -5,9 +5,9 @@ use crate::internal::homogeneouspoint::TwistedHPoint;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use lazy_static::lazy_static;
-use num_traits::one;
-use num_traits::identities::Zero;
 use num_traits::identities::One;
+use num_traits::identities::Zero;
+use num_traits::one;
 
 /// Points that are used in our core algorithm for for `FP`.
 ///

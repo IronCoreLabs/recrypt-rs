@@ -255,7 +255,9 @@ where
 pub mod test {
     use super::*;
     use crate::internal::test::arb_fp256;
+    use crate::internal::test::arb_fp480;
     use gridiron::fp_256::Fp256;
+    use gridiron::fp_480::Fp480;
     use proptest::prop_compose;
     use proptest::proptest;
 
@@ -359,66 +361,143 @@ pub mod test {
        }
     }
 
+    prop_compose! {
+        [pub] fn arb_fp2_480()(e1 in arb_fp480(), e2 in arb_fp480()) -> Fp2Elem<Fp480> {
+            Fp2Elem {
+                elem1: e1,
+                elem2: e2
+            }
+        }
+    }
+
     proptest! {
         ///All of these are tests from field.rs
+
+        //
+        // Fp480 tests
+        //
+        #[test]
+        fn prop_fp480_semigroup(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+            prop_assert!(Field::prop_semigroup(a,b,c))
+        }
+        #[test]
+        fn prop_fp480_monoid_identity(a in arb_fp2()) {
+            prop_assert!(Field::prop_monoid_identity(a))
+        }
+        #[test]
+        fn prop_fp480_inv(a in arb_fp2(), b in arb_fp2()) {
+            prop_assert!(Field::prop_inv(a,b))
+        }
+        #[test]
+        fn prop_fp480_one_is_mul_identity(a in arb_fp2()) {
+            prop_assert!(Field::prop_one_is_mul_identity(a))
+        }
+        #[test]
+        fn prop_fp480_zero_is_add_identity(a in arb_fp2()) {
+            prop_assert!(Field::prop_zero_is_add_identity(a))
+        }
+        #[test]
+        fn prop_fp480_eq_reflexive(a in arb_fp2(), b in arb_fp2()) {
+            prop_assert!(Field::prop_eq_reflexive(a,b))
+        }
+        #[test]
+        fn prop_fp480_sub_same_as_neg_add(a in arb_fp2(), b in arb_fp2()) {
+            prop_assert!(Field::prop_sub_same_as_neg_add(a,b))
+        }
+        #[test]
+        fn prop_fp480_mul_distributive(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+            prop_assert!(Field::prop_mul_distributive(a,b,c))
+        }
+        #[test]
+        fn prop_fp480_mul_assoc(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+            prop_assert!(Field::prop_mul_assoc(a,b,c))
+        }
+        #[test]
+        fn prop_fp480_mul_commutative(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+            prop_assert!(Field::prop_mul_commutative(a,b,c))
+        }
+        #[test]
+        fn prop_fp480_add_assoc(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+            prop_assert!(Field::prop_add_assoc(a,b,c))
+        }
+        #[test]
+        fn prop_fp480_add_commutative(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+            prop_assert!(Field::prop_add_commutative(a,b,c))
+        }
+        #[test]
+        fn prop_fp480_pow_is_mul(a in arb_fp2()) {
+            prop_assert!(Field::prop_pow_is_mul(a))
+        }
+        #[test]
+        fn prop_fp480_square_same_as_mul_self(a in arb_fp2()) {
+            prop_assert!(Field::prop_square_same_as_mul_self(a))
+        }
+        #[test]
+        fn prop_fp480_square2_same_as_pow4(a in arb_fp2()) {
+            prop_assert!(Field::prop_square2_same_as_pow4(a))
+        }
+        //
+        // Fp256
+        //
+
         #[test]
         fn prop_semigroup(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
             prop_assert!(Field::prop_semigroup(a,b,c))
         }
         #[test]
-        fn prop_monoid_identity(a in arb_fp2()) {
+        fn prop_monoid_identity(a in arb_fp2_480()) {
             prop_assert!(Field::prop_monoid_identity(a))
         }
         #[test]
-        fn prop_inv(a in arb_fp2(), b in arb_fp2()) {
+        fn prop_inv(a in arb_fp2_480(), b in arb_fp2_480()) {
             prop_assert!(Field::prop_inv(a,b))
         }
         #[test]
-        fn prop_one_is_mul_identity(a in arb_fp2()) {
+        fn prop_one_is_mul_identity(a in arb_fp2_480()) {
             prop_assert!(Field::prop_one_is_mul_identity(a))
         }
         #[test]
-        fn prop_zero_is_add_identity(a in arb_fp2()) {
+        fn prop_zero_is_add_identity(a in arb_fp2_480()) {
             prop_assert!(Field::prop_zero_is_add_identity(a))
         }
         #[test]
-        fn prop_eq_reflexive(a in arb_fp2(), b in arb_fp2()) {
+        fn prop_eq_reflexive(a in arb_fp2_480(), b in arb_fp2_480()) {
             prop_assert!(Field::prop_eq_reflexive(a,b))
         }
         #[test]
-        fn prop_sub_same_as_neg_add(a in arb_fp2(), b in arb_fp2()) {
+        fn prop_sub_same_as_neg_add(a in arb_fp2_480(), b in arb_fp2_480()) {
             prop_assert!(Field::prop_sub_same_as_neg_add(a,b))
         }
         #[test]
-        fn prop_mul_distributive(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+        fn prop_mul_distributive(a in arb_fp2_480(), b in arb_fp2_480(), c in arb_fp2_480()) {
             prop_assert!(Field::prop_mul_distributive(a,b,c))
         }
         #[test]
-        fn prop_mul_assoc(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+        fn prop_mul_assoc(a in arb_fp2_480(), b in arb_fp2_480(), c in arb_fp2_480()) {
             prop_assert!(Field::prop_mul_assoc(a,b,c))
         }
         #[test]
-        fn prop_mul_commutative(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+        fn prop_mul_commutative(a in arb_fp2_480(), b in arb_fp2_480(), c in arb_fp2_480()) {
             prop_assert!(Field::prop_mul_commutative(a,b,c))
         }
         #[test]
-        fn prop_add_assoc(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+        fn prop_add_assoc(a in arb_fp2_480(), b in arb_fp2_480(), c in arb_fp2_480()) {
             prop_assert!(Field::prop_add_assoc(a,b,c))
         }
         #[test]
-        fn prop_add_commutative(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
+        fn prop_add_commutative(a in arb_fp2_480(), b in arb_fp2_480(), c in arb_fp2_480()) {
             prop_assert!(Field::prop_add_commutative(a,b,c))
         }
         #[test]
-        fn prop_pow_is_mul(a in arb_fp2()) {
+        fn prop_pow_is_mul(a in arb_fp2_480()) {
             prop_assert!(Field::prop_pow_is_mul(a))
         }
         #[test]
-        fn prop_square_same_as_mul_self(a in arb_fp2()) {
+        fn prop_square_same_as_mul_self(a in arb_fp2_480()) {
             prop_assert!(Field::prop_square_same_as_mul_self(a))
         }
         #[test]
-        fn prop_square2_same_as_pow4(a in arb_fp2()) {
+        fn prop_square2_same_as_pow4(a in arb_fp2_480()) {
             prop_assert!(Field::prop_square2_same_as_pow4(a))
         }
     }

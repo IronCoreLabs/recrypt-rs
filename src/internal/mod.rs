@@ -1043,6 +1043,18 @@ mod test {
             }
         }
     }
+    prop_compose! {
+        [pub] fn arb_fp480()(seed in any::<u64>()) -> Fp480 {
+            if seed == 0 {
+                Fp480::zero()
+            } else if seed == 1 {
+                Fp480::one()
+            } else {
+                Fp480::from(seed).pow(seed)
+            }
+
+        }
+    }
 
     struct Mocks;
 
@@ -1124,7 +1136,14 @@ mod test {
         let result2 = pow_for_square(v, 5);
         assert_eq!(result2, v.pow(5));
     }
-
+    #[test]
+    fn fp480_pow_for_square_works() {
+        let v = Fp480::from(10u8);
+        let result = pow_for_square(v, 2);
+        assert_eq!(result, v.pow(2));
+        let result2 = pow_for_square(v, 5);
+        assert_eq!(result2, v.pow(5));
+    }
     #[test]
         #[cfg_attr(rustfmt, rustfmt_skip)]
         fn create_transform_key_known_value() {
