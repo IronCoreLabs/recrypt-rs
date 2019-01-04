@@ -336,16 +336,16 @@ impl PairingConfig for Fp480 {
     }
 
     fn naf_for_loop() -> Vec<i8> {
+        // if comparing to recrypt-scala, the last two elements were removed manually instead of at runtime
         let mut r = vec![
             0, 0, 0, -1, 0, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0,
             1, 0, 1, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, -1, 0,
             0, -1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0,
             0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, -1, 0,
-            1, 0, -1, 0, 0, 1, 0];//, 1, 0,
-//        ];
+            1, 0, -1, 0, 0, 1, 0//, 1, 0,
+        ];
         r.reverse();
         r
-//        r.to_vec()
     }
 }
 
@@ -680,32 +680,6 @@ mod test {
         let result = Pairing::new().frobenius(generator);
 
         assert_eq!(expected_result, result);
-    }
-    //"follow the law pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
-    //"follow the law pair(a * P, a * Q) == pair(P, Q) ^ (a^2)"
-    #[test]
-    fn clint_fp480_law_bilinearity() {
-        let a: u64 = 5;
-        let pairing: Pairing<Fp480> = Pairing::new();
-        let p = FP_480_CURVE_POINTS.generator;
-        let a_sqr = Fp480::from(a.pow(2));
-        let a_sqr_u64: u64 = a.pow(2) as u64;
-        let a = Fp480::from(a);
-        let a_times_p = p * a;
-        let a_sqr_times_p = p * a_sqr;
-        let q = FP_480_CURVE_POINTS.g1;
-        let a_times_q = q * a;
-        let pair_a_times_p_and_a_times_q = pairing.pair(a_times_p, a_times_q);
-
-        // pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
-        assert_eq!(pairing.pair(p, a_times_q), pairing.pair(a_times_p, q));
-        assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q));
-
-        // pair(a * P, a * Q) == pair(P, Q) ^ (a^2)
-        assert_eq!(
-            pair_a_times_p_and_a_times_q,
-            pairing.pair(p, q).pow(a_sqr_u64)
-        );
     }
 
     proptest! {
