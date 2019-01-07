@@ -1,3 +1,4 @@
+use core::fmt::Debug;
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
@@ -21,6 +22,7 @@ pub trait Field:
     + Inv<Output = Self>
     + Pow<u64, Output = Self>
     + Sub<Output = Self>
+    + Debug
 {
     fn prop_semigroup(a: Self, b: Self, c: Self) -> bool {
         a + (b + c) == (a + b) + c

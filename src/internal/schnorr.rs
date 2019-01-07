@@ -7,6 +7,7 @@ use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::sha256::Sha256;
 use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
+use gridiron::digits::util::ConstantSwap;
 use gridiron::fp_256::Fp256;
 use std::marker::PhantomData;
 
@@ -59,8 +60,8 @@ fn compute_double_hash<A: Hashable, B: Hashable, H: Sha256Hashing>(
 
 impl<FP, FR, H> SchnorrSigning<FP, FR> for SchnorrSign<FP, FR, H>
 where
-    FP: field::Field + BitRepr + Hashable + From<[u8; 64]>,
-    FR: field::Field + BitRepr + From<FP> + From<[u8; 64]> + Hashable,
+    FP: field::Field + BitRepr + Hashable + From<[u8; 64]> + ConstantSwap,
+    FR: field::Field + BitRepr + From<FP> + From<[u8; 64]> + Hashable + ConstantSwap,
     H: Sha256Hashing,
 {
     fn sign<A: Hashable>(

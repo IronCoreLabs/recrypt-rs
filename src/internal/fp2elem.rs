@@ -5,6 +5,8 @@ use crate::internal::pow_for_square;
 use crate::internal::ByteVector;
 use crate::internal::Square;
 use core::fmt;
+use gridiron::digits::constant_bool::ConstantBool;
+use gridiron::digits::util::ConstantSwap;
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::result::Result;
@@ -35,6 +37,13 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "(a:{:x} + b:{:x}*u)", self.elem1, self.elem2)
+    }
+}
+
+impl<T: ConstantSwap> ConstantSwap for Fp2Elem<T> {
+    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<u32>) {
+        self.elem1.swap_if(&mut other.elem1, swap);
+        self.elem2.swap_if(&mut other.elem2, swap);
     }
 }
 
