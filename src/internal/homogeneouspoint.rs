@@ -369,13 +369,6 @@ impl<T: Hashable + ExtensionField> Hashable for TwistedHPoint<T> {
     }
 }
 
-impl TwistedHPoint<Fp256> {
-
-}
-
-impl TwistedHPoint<Fp480> {
-
-}
 impl <T: ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
     // TwistedHPoint is 2 Fp2s -- x and y
     const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
