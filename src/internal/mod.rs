@@ -379,6 +379,13 @@ pub fn array_concat_32<T: Copy + Zero>(one: &[T; 32], two: &[T; 32]) -> [T; 64] 
     result
 }
 
+pub fn array_concat_60<T: Copy + Zero>(one: &[T; 60], two: &[T; 60]) -> [T; 120] {
+    let mut result: [T; 120] = [T::zero(); 120];
+    result[0..60].copy_from_slice(&one[..]);
+    result[60..120].copy_from_slice(&two[..]);
+    result
+}
+
 pub fn array_split_64<T: Copy + Zero>(array: &[T; 64]) -> ([T; 32], [T; 32]) {
     let mut one = [T::zero(); 32];
     let mut two = [T::zero(); 32];
@@ -387,6 +394,14 @@ pub fn array_split_64<T: Copy + Zero>(array: &[T; 64]) -> ([T; 32], [T; 32]) {
     (one, two)
 }
 
+//TODO duplication
+pub fn array_split_120<T: Copy + Zero>(array: &[T; 120]) -> ([T; 60], [T; 60]) {
+    let mut one = [T::zero(); 60];
+    let mut two = [T::zero(); 60];
+    one.copy_from_slice(&array[0..60]);
+    two.copy_from_slice(&array[60..120]);
+    (one, two)
+}
 /// Generate one of the rth roots of unity (an element of G_T) given an FP12Elem.
 /// Useful for calling `encrypt`
 pub fn gen_rth_root<T>(pairing: &Pairing<T>, fp12_elem: Fp12Elem<T>) -> Fp12Elem<T>

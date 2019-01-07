@@ -139,7 +139,7 @@ impl From<[u8; 64]> for fr_480::Fr480 {
         // our input is the exact length we need for our
         // optimized barrett reduction
         let mut limbs = [0u32; 32];
-        let limbs_17 = ::gridiron::from_sixty_four_bytes(src);
+        let limbs_17 = ::gridiron::from_sixty_four_bytes(src); //TODO 17 bytes is still fine, right?
         limbs.copy_from_slice(&limbs_17);
         fr_480::Fr480::new(fr_480::Fr480::reduce_barrett(&limbs))
     }

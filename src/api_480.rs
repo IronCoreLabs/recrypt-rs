@@ -951,7 +951,7 @@ pub struct PublicKey {
 
 impl PartialEq for SixtyBytes {
     fn eq(&self, other: &SixtyBytes) -> bool {
-        unimplemented!()
+        self.0[..] == other.0[..]
     }
 }
 
@@ -959,13 +959,19 @@ impl Eq for SixtyBytes {}
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        unimplemented!()
+        write!(f, "{:?}", self.0.to_vec())
+    }
+}
+
+impl fmt::LowerHex for SixtyBytes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", hex::encode(self.0.to_vec()))
     }
 }
 
 impl Default for SixtyBytes {
     fn default() -> Self {
-        unimplemented!()
+        SixtyBytes([0u8; 60])
     }
 }
 
@@ -1061,23 +1067,22 @@ impl PrivateKey {
 }
 impl Hashable60 for PrivateKey {
     fn to_bytes_60(&self) -> [u8; 60] {
-        unimplemented!()
+        self.bytes.0
     }
 }
 
 impl Hashable for PrivateKey {
     fn to_bytes(&self) -> Vec<u8> {
-        unimplemented!()
+        self.to_bytes_60().to_vec()
     }
 }
 
 impl From<internal::PrivateKey<Fp480>> for PrivateKey {
     fn from(internal_pk: internal::PrivateKey<Fp480>) -> Self {
-        unimplemented!()
-        //        PrivateKey {
-        //            bytes: internal_pk.value.to_bytes_32(),
-        //            _internal_key: internal_pk,
-        //        }
+        PrivateKey {
+            bytes: SixtyBytes(internal_pk.value.to_bytes_60()),
+            _internal_key: internal_pk,
+        }
     }
 }
 
@@ -1088,23 +1093,21 @@ impl Drop for PrivateKey {
         self._internal_key.clear()
     }
 }
-new_bytes_type!(SchnorrSignature, 64);
+new_bytes_type!(SchnorrSignature, 120);
 
 impl From<internal::schnorr::SchnorrSignature<Fr480>> for SchnorrSignature {
     fn from(internal: internal::schnorr::SchnorrSignature<Fr480>) -> Self {
-        //        SchnorrSignature::new(internal::array_concat_32(
-        //            &internal.r().to_bytes_32(),
-        //            &internal.s().to_bytes_32(),
-        //        ))
-        unimplemented!()
+        SchnorrSignature::new(internal::array_concat_60(
+            &internal.r().to_bytes_60(),
+            &internal.s().to_bytes_60(),
+        ))
     }
 }
 
 impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr480> {
     fn from(sig: SchnorrSignature) -> Self {
-        //        let (r_bytes, s_bytes) = internal::array_split_64(&sig.bytes);
-        //        internal::schnorr::SchnorrSignature::new(Fr480::from(r_bytes), Fr480::from(s_bytes))
-        unimplemented!()
+        let (r_bytes, s_bytes) = internal::array_split_120(&sig.bytes);
+        internal::schnorr::SchnorrSignature::new(Fr480::from(r_bytes), Fr480::from(s_bytes))
     }
 }
 
@@ -1112,7 +1115,7 @@ impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr480> {
 pub(crate) mod test {
     use super::*;
     use crate::internal::ed25519;
-    use crate::internal::fp::fp256_unsafe_from;
+    use crate::internal::fp::fp480_unsafe_from;
     use hex;
     use rand_chacha;
 
@@ -1147,7 +1150,7 @@ pub(crate) mod test {
         }
 
         fn random_bytes_60(&mut self) -> [u8; 60] {
-            unimplemented!()
+            [std::u8::MAX; 60]
         }
     }
 
@@ -1216,46 +1219,18 @@ pub(crate) mod test {
         assert_eq!(Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES, result.bytes.len());
     }
 
-    //    #[test]
-    //    fn test_compute_public_key() {
-    //        let api = &mut Api::new();
-    //        //37777967648492203239675772600961898148040325589588086812374811831221462604944
-    //        let parsed_priv_key =
-    //            fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90");
-    //        let private_key = &PrivateKey::new(parsed_priv_key.to_bytes_32());
-    //
-    //        //56377452267431283559088187378398270325210563762492926393848580098576649271541
-    //        let parsed_pub_key_x =
-    //            fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5");
-    //        //46643694276241842996939080253335644316475473619096522181405937227991761798154
-    //        let parsed_pub_key_y =
-    //            fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a");
-    //        let public_key_expected = PublicKey::try_from(
-    //            &internal::PublicKey::from_x_y(parsed_pub_key_x, parsed_pub_key_y).unwrap(),
-    //        )
-    //        .unwrap();
-    //
-    //        let computed_pub_key = api
-    //            .compute_public_key(private_key)
-    //            .expect("compute_public_key FAILED");
-    //        assert_eq!(computed_pub_key, public_key_expected);
-    //        let _computed_pub_key2 = api.compute_public_key(private_key); //second invocation to prove move semantics
-    //    }
-
-    //    #[test]
-    //    fn test_generate_key_pair_max_private_key() {
-    //        let mut api = api_with(Some(DummyRandomBytes), DummyEd25519);
-    //        let (_, pub_key) = api.generate_key_pair().unwrap();
-    //        let internal_pk = internal::PublicKey::from_x_y(
-    //            //58483620629232886210555514960799664032881966270053836377116209031946678864174
-    //            fp256_unsafe_from("814c8e65863238dbd86f9fbdbe8f166e536140343b7f3c22e79c82b8af70892e"),
-    //            //39604663823550822619127054070927331080305575010367415285113646212320556073913
-    //            fp256_unsafe_from("578f72028091b2efa1c946c4caf9e883c9e8d3311e23050f560672795a7dc3b9"),
-    //        )
-    //        .unwrap();
-    //        let expected_pub_key = PublicKey::try_from(&internal_pk).unwrap();
-    //        assert_eq!(expected_pub_key, pub_key)
-    //    }
+    #[test]
+    fn test_generate_key_pair_max_private_key() {
+        let mut api = api_with(Some(DummyRandomBytes), DummyEd25519);
+        let (_, pub_key) = api.generate_key_pair().unwrap();
+        let internal_pk = internal::PublicKey::from_x_y(
+            fp480_unsafe_from("b4ba49325c3450b8fe080cf8617223b9c40fe9e45e522ccc198df68b68fb937ceb2eb976fb74e9b531853ac1a68c32c000b3696673b09553914d6d98"),
+            fp480_unsafe_from("7781287474854f030c553e5ade3511659ec9969743d28b91d1322a8b798297127b26f7ad3b3314cfa79b7b0bfedb050df5773b96e2a1fffceab2b3fd"),
+        )
+        .unwrap();
+        let expected_pub_key = PublicKey::try_from(&internal_pk).unwrap();
+        assert_eq!(expected_pub_key, pub_key)
+    }
 
     #[test]
     fn test_handle_zero_point() {
@@ -1267,11 +1242,11 @@ pub(crate) mod test {
     struct TestZeroBytes;
     impl RandomBytesGen for TestZeroBytes {
         fn random_bytes_32(&mut self) -> [u8; 32] {
-            [0u8; 32]
+            unimplemented!() // not needed for 480
         }
 
         fn random_bytes_60(&mut self) -> [u8; 60] {
-            unimplemented!()
+            [0u8; 60]
         }
     }
 
@@ -1318,25 +1293,6 @@ pub(crate) mod test {
         assert_eq!(ee2, tb.encrypted_random_transform_temp_key);
     }
 
-    //    #[test]
-    //    fn decrypt_known_value() -> Result<()> {
-    //        let expected_pt = Plaintext::new_from_slice(&hex::decode("3e0348980131e4db298445c3ef424ad60ebfa816069689be559f5ffeecf5e635201172f1bc931833b431a8d7a118e90d516de84e6e4de2f3105695b7699104ee18dd4598f93417ed736b40515a4817499a748be1bf126c132a8a4e8da83780a9054d6e1de22e21e446dbaa3a121d103fdf813a31afac09881beb0a3ae974ffdd537049eea02dade975525c720d152c87b4f0e76645c4cf46ee0e731378ad5c5d12630a32d0610c52c3c56fc0d7666ad6464adeca698a2ee4c44666c05d2e58154b961a595a445b156ce0bdd3e13ffa5b296e8c364aecec6208a0aa54cdea40455032a11458b08d143a51013dcdb8febd01bd93966bff2fc8bbd121efc19fedcb576d82e70838f8f987c5cb887a857d4a6d68c8bbf9196d72b98bea0a62d3fda109a46c28c6d87851223f38712226ba8a5c36197ee016baa27051c398a95c184820e6493c972f7e53936a2abd9c22483d3595fee87ad2a2771af0cc847548bc233f258d4bf77df8265b566ef54c288ad3a8034d18b3af4cb1d71b2da649200fa1")?)?;
-    //        let encrypted = EncryptedValue::EncryptedOnceValue{
-    //                ephemeral_public_key: PublicKey::new_from_slice((&hex::decode("7013008e19061384a3e6ba1f1a98834cb787b671a0fe181c3adeae15e24c0bba").unwrap(), &hex::decode("3165123233dc537c870673495c7db71239a51647d29113a0d3f5f99eea8de513").unwrap()))?,
-    //                encrypted_message: EncryptedMessage::new_from_slice(&hex::decode("2aab5397ef54cd3ea6f3ea3313df53059a47fb35786fb9374dda260af183d0150b062c9ee31feded7c2f966c5323d51954c382c583bb14123ad220c7d1457f7e849e95a28f434df3406561c303084644c6a950218996f871a45e0ebf842d65e828ce3bb04067bc7674edee95b0f697764d546ec760c416c390b869bc18c458c7867fee841d6c50f85a4db4591a4a95b7fbabc2add2f09e4a574d3c21f54b8846247ba2ec7373db45a86df589dd1b5cb5e9178aa14502877fb12d243626081ebd7eb4d501bb9da3d21ba1b4b779d4ffdd468f25e8c2f0cbecca3cd4e0c5960ab55471e42a6183714da09cfc0e70c8bd4ea720618a077c296b4744dfdf898bc95016f5d38e776d750b51da8fc98ef68894f7087730ad7e60d23062c8f216bfc4293c10d1d966203601db3db27eaa50afab06ab1eba9e9bb1f8b8ebc42cf01c73284f0861aab05d492c7d98137a1dcacdca45b277fcb51f665690e21a5549758b0c3654e38745c39c17b953ebfd66e685153a6b6aae1ac2a87f866896bda8d14012")?)?,
-    //                auth_hash: AuthHash::new_from_slice(&hex::decode("334bad3490633ebb346fb22a628356f19c299b2be90e5efe0ec344039662c307")?)?,
-    //                public_signing_key: PublicSigningKey::new_from_slice(&hex::decode("7ada8837de936ec230afd05b73a378987784534d731ba35f68ecb777846232ab")?)?,
-    //                signature: Ed25519Signature::new_from_slice(&hex::decode("312901e121e0637eb0814b1411ec6772147d5ab2063ae781ec2f227748059ac5d892a6eed7c66e1638649903fe3ecbb9c2b5674e87e9b9c39009a175f2177e0f")?)?,
-    //            };
-    //        let priv_key = PrivateKey::new_from_slice(&hex::decode(
-    //            "3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea",
-    //        )?)?;
-    //        let api = Api::new();
-    //        let pt = api.decrypt(encrypted, &priv_key)?;
-    //        assert_eq!(pt, expected_pt);
-    //        Ok(())
-    //    }
-
     #[test]
     fn encrypt_decrypt_roundtrip() -> Result<()> {
         use rand::SeedableRng;
@@ -1353,19 +1309,6 @@ pub(crate) mod test {
         assert_eq!(pt.bytes.to_vec(), decrypted_val.bytes.to_vec());
         Ok(())
     }
-
-    //    #[test]
-    //    fn derive_known_symmetric_key() {
-    //        let bytes = hex::decode("28c0f558c02d983d7c652f16acbe91a566ac420fe02e41cf6d4f09a107f75cf76b6776ebb53365100ebeb7fa332995ae7bdddf0779fe79e1f43d5c51a73ced0a8cf5789804a79960ccf1a64bd55a923f4786d31ec06bf33e739254016d077b838e739f85586087e52ab659471df3904035e5e1f7ad6ac7b9f9dba6daf39e3f882b583e309c03e35ae7dfd4ed063b6c226bb3338627772e4c9a556fee7f3f96030ae1e265654fc322015a1c2d50eb273cd8b0e1e0353e6b09749343b5fe72ae2f302bebc527aca6ec465a95c4b41efe174eb5165993a30a922434a6f45cbafda201d6540bf2202c65751c90e4cd87e1b690997d9cd23474ef9ace4def3f17cbdd648c8545eaceb3f28c166f720fd8dd87b47523c55a52e32f8c1595a586763276411e8bd4400fac41234277cc560e919f76b21d757cda7c253078927e75482ee2759b222bf4fb070ab3032c9556a069d754efc3c0e63533311b29334108a5121a7e4018782324bf2c1517b6fe4df7a1bbb34c985c6d0796ff1e18ed80fd78d402").unwrap();
-    //        let pt = Plaintext::from(Fp12Elem::decode(bytes).unwrap());
-    //        let src = &hex::decode("0e62a3e388cb0ca3279792353f7fcad75acf180d430a5c69e0a68be96520f454")
-    //            .unwrap()[..];
-    //        let mut dest: [u8; 32] = [0u8; 32];
-    //        dest.copy_from_slice(src);
-    //        let expected_result = DerivedSymmetricKey::new(dest);
-    //        let result = Api::new().derive_symmetric_key(&pt);
-    //        assert_eq!(expected_result, result)
-    //    }
 
     use std::default::Default;
     #[test]
@@ -1474,29 +1417,6 @@ pub(crate) mod test {
         assert_eq!(pt, decrypted_result)
     }
 
-    //    #[test]
-    //    fn generate_ed25519_key_pair() {
-    //        use rand::SeedableRng;
-    //        let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
-    //        let signing_keypair = api.generate_ed25519_key_pair();
-    //        let expected_signing_keypair = SigningKeypair::new_unchecked([
-    //            118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
-    //            25, 184, 160, 141, 237, 26, 168, 54, 239, 204, 139, 119, 13, 199, 32, 253, 186, 201,
-    //            177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150, 215, 30, 78, 212,
-    //            76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
-    //        ]);
-    //        let expected_pub = PublicSigningKey::new([
-    //            32, 253, 186, 201, 177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150,
-    //            215, 30, 78, 212, 76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
-    //        ]);
-    //        assert_eq!(signing_keypair, expected_signing_keypair);
-    //        assert_eq!(signing_keypair.public_key(), expected_pub);
-    //
-    //        //Assert that the generation doesn't just return the same value.
-    //        let keypair_two = api.generate_ed25519_key_pair();
-    //        assert_ne!(keypair_two, expected_signing_keypair);
-    //        assert_ne!(keypair_two.public_key(), expected_pub);
-    //    }
     #[test]
     //written against AuthHash, but valid for all types generated from that macro
     fn new_byte_type_from_slice() {
@@ -1523,7 +1443,7 @@ pub(crate) mod test {
         assert_eq!(hv_from_fixed.unwrap(), hv_from_slice.unwrap());
 
         assert_eq!(
-            ApiErr::InputWrongSize("HashedValue", 128),
+            ApiErr::InputWrongSize("HashedValue", 240),
             HashedValue::new_from_slice(&input[..30]).unwrap_err()
         )
     }
@@ -1539,7 +1459,7 @@ pub(crate) mod test {
         assert_eq!(pk_from_fixed.unwrap(), pk_from_slice.unwrap());
 
         assert_eq!(
-            ApiErr::InputWrongSize("PublicKey", 64),
+            ApiErr::InputWrongSize("PublicKey", 120),
             PublicKey::new_from_slice((&input.0[..30], &input.1[..32])).unwrap_err()
         )
     }

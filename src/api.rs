@@ -1110,7 +1110,7 @@ pub(crate) mod test {
         }
 
         fn random_bytes_60(&mut self) -> [u8; 60] {
-            unimplemented!()
+            unimplemented!() //not needed for Fp256
         }
     }
 
@@ -1234,7 +1234,7 @@ pub(crate) mod test {
         }
 
         fn random_bytes_60(&mut self) -> [u8; 60] {
-            unimplemented!()
+            unimplemented!() // not needed for Fp256
         }
     }
 

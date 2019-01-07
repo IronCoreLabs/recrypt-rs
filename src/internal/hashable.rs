@@ -134,31 +134,32 @@ impl Hashable32 for Fr256 {
 }
 impl Hashable60 for Fp480 {
     fn to_bytes_60(&self) -> [u8; fp_480::PRIMEBYTES] {
-        unimplemented!()
+        self.to_bytes_array()
     }
 }
 
 impl Hashable for Fp480 {
     fn to_bytes(&self) -> Vec<u8> {
-        unimplemented!()
+        self.to_bytes_60().to_vec()
     }
 }
 
 impl Hashable for Fr480 {
     fn to_bytes(&self) -> Vec<u8> {
-        unimplemented!()
+        self.to_bytes_60().to_vec()
     }
 }
 
-pub trait Hashable60 {
+impl Hashable60 for Fr480 {
+    fn to_bytes_60(&self) -> [u8; 60] {
+        self.to_bytes_array()
+    }
+}
+
+pub trait Hashable60: Hashable {
     fn to_bytes_60(&self) -> [u8; 60];
 }
-///// All Hashable60s are Hashable
-//impl<T: Hashable60> Hashable for T {
-//    fn to_bytes(&self) -> Vec<u8> {
-//        self.to_bytes_60().to_vec()
-//    }
-//}
+
 #[cfg(test)]
 mod test {
     use super::*;

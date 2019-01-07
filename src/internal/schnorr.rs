@@ -12,9 +12,9 @@ use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use std::marker::PhantomData;
 
-///- r is the x coordinate for a point on the elliptic curve.
-///- s is the signature.
-///These names are choosen because it's common terminology when working in `EC-Schnorr` algorithms.
+/// `r` - the x coordinate for a point on the elliptic curve.
+/// `s` - the signature.
+/// These names are chosen because it's common terminology when working in `EC-Schnorr` algorithms.
 #[derive(Debug, PartialEq, Eq)]
 pub struct SchnorrSignature<T> {
     r: T,
@@ -72,7 +72,7 @@ fn compute_double_hash<A: Hashable, B: Hashable, H: Sha256Hashing>(
 impl<FP, FR, H> SchnorrSigning<FP, FR> for SchnorrSign<FP, FR, H>
 where
     FP: field::Field + BitRepr + Hashable + From<[u8; 64]>,
-    FR: field::Field + BitRepr + From<FP> + From<[u8; 64]> + Hashable,
+    FR: field::Field + BitRepr + Hashable + From<[u8; 64]> + From<FP>,
     H: Sha256Hashing,
 {
     fn sign<A: Hashable>(

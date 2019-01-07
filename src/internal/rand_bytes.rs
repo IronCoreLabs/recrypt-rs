@@ -33,6 +33,8 @@ impl<CR: CryptoRng + RngCore> RandomBytesGen for RandomBytes<CR> {
     }
 
     fn random_bytes_60(&mut self) -> [u8; 60] {
-        unimplemented!()
+        let mut bytes: [u8; 60] = [0u8; 60];
+        self.rng.fill_bytes(&mut bytes);
+        bytes
     }
 }
