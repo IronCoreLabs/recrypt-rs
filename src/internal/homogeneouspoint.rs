@@ -369,53 +369,27 @@ impl<T: Hashable + ExtensionField> Hashable for TwistedHPoint<T> {
     }
 }
 
-impl BytesDecoder for TwistedHPoint<Fp256> {
-    // TwistedHPoint<Fp256> is 2 Fp2s -- x and y
-    const ENCODED_SIZE_BYTES: usize = Fp2Elem::<Fp256>::ENCODED_SIZE_BYTES * 2;
+impl TwistedHPoint<Fp256> {
 
-    /// Decodes and validates that the resultant TwistedHPoint is on the curve
-    fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
-        if bytes.len() == Self::ENCODED_SIZE_BYTES {
-            //   3 / (u + 3)
-            let twisted_curve_const_coeff: Fp2Elem<Fp256> = ExtensionField::xi().inv() * 3;
-
-            let (x_bytes, y_bytes) = bytes.split_at(Self::ENCODED_SIZE_BYTES / 2);
-            let hpoint = TwistedHPoint::new(
-                Fp2Elem::<Fp256>::decode(x_bytes.to_vec())?,
-                Fp2Elem::<Fp256>::decode(y_bytes.to_vec())?,
-            );
-
-            if hpoint.y.pow(2) == (hpoint.x.pow(3) + twisted_curve_const_coeff) {
-                Result::Ok(hpoint)
-            } else {
-                Result::Err(DecodeErr::BytesInvalid {
-                    message: "Point does not satisfy the curve equation".to_string(),
-                    bad_bytes: bytes.clone(),
-                })
-            }
-        } else {
-            Result::Err(DecodeErr::BytesNotCorrectLength {
-                required_length: Self::ENCODED_SIZE_BYTES,
-                bad_bytes: bytes,
-            })
-        }
-    }
 }
 
-impl BytesDecoder for TwistedHPoint<Fp480> {
-    // TwistedHPoint<Fp480> is 2 Fp2s -- x and y
-    const ENCODED_SIZE_BYTES: usize = Fp2Elem::<Fp480>::ENCODED_SIZE_BYTES * 2;
+impl TwistedHPoint<Fp480> {
+
+}
+impl <T: ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
+    // TwistedHPoint is 2 Fp2s -- x and y
+    const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
 
     /// Decodes and validates that the resultant TwistedHPoint is on the curve
     fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
         if bytes.len() == Self::ENCODED_SIZE_BYTES {
             //   3 / (u + 3)
-            let twisted_curve_const_coeff: Fp2Elem<Fp480> = ExtensionField::xi().inv() * 3;
+            let twisted_curve_const_coeff: Fp2Elem<T> = ExtensionField::xi().inv() * 3;
 
             let (x_bytes, y_bytes) = bytes.split_at(Self::ENCODED_SIZE_BYTES / 2);
             let hpoint = TwistedHPoint::new(
-                Fp2Elem::<Fp480>::decode(x_bytes.to_vec())?,
-                Fp2Elem::<Fp480>::decode(y_bytes.to_vec())?,
+                Fp2Elem::<T>::decode(x_bytes.to_vec())?,
+                Fp2Elem::<T>::decode(y_bytes.to_vec())?,
             );
 
             if hpoint.y.pow(2) == (hpoint.x.pow(3) + twisted_curve_const_coeff) {
