@@ -261,35 +261,6 @@ pub mod test {
     use proptest::prop_compose;
     use proptest::proptest;
 
-    pub fn get_fp2s() -> [Fp2Elem<Fp256>; 6] {
-        let fp2a = Fp2Elem {
-            elem1: Fp256::from(100u32),
-            elem2: Fp256::from(200u32),
-        };
-        let fp2b = Fp2Elem {
-            elem1: Fp256::from(300u32),
-            elem2: Fp256::from(400u32),
-        };
-        let fp2c = Fp2Elem {
-            elem1: Fp256::from(500u32),
-            elem2: Fp256::from(600u32),
-        };
-        let fp2d = Fp2Elem {
-            elem1: Fp256::from(700u32),
-            elem2: Fp256::from(800u32),
-        };
-        let fp2e = Fp2Elem {
-            elem1: Fp256::from(900u32),
-            elem2: Fp256::from(1000u32),
-        };
-        let fp2f = Fp2Elem {
-            elem1: Fp256::from(1100u32),
-            elem2: Fp256::from(1200u32),
-        };
-
-        [fp2a, fp2b, fp2c, fp2d, fp2e, fp2f]
-    }
-
     #[test]
     #[cfg_attr(rustfmt, rustfmt_skip)]
     fn hashable() {

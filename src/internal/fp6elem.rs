@@ -378,28 +378,6 @@ pub mod test {
     use gridiron::fp_480::Fp480;
     use proptest::prelude::*;
 
-    pub fn get_fp6s(
-        fp2a: &Fp2Elem<Fp256>,
-        fp2b: &Fp2Elem<Fp256>,
-        fp2c: &Fp2Elem<Fp256>,
-        fp2d: &Fp2Elem<Fp256>,
-        fp2e: &Fp2Elem<Fp256>,
-        fp2f: &Fp2Elem<Fp256>,
-    ) -> [Fp6Elem<Fp256>; 2] {
-        let fp6a = Fp6Elem {
-            elem1: *fp2a,
-            elem2: *fp2b,
-            elem3: *fp2c,
-        };
-        let fp6b = Fp6Elem {
-            elem1: *fp2d,
-            elem2: *fp2e,
-            elem3: *fp2f,
-        };
-
-        [fp6a, fp6b]
-    }
-
     #[test]
             #[cfg_attr(rustfmt, rustfmt_skip)]
             fn hashable() {

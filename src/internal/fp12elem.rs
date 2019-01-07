@@ -378,25 +378,10 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use crate::internal::fp2elem::test::get_fp2s;
-    use crate::internal::fp6elem::test::get_fp6s;
     use crate::internal::fp6elem::test::{arb_fp6, arb_fp6_480};
     use gridiron::fp_256::Fp256;
     use gridiron::fp_480::Fp480;
     use proptest::prelude::*;
-
-    #[test]
-    fn create_from_fp2s() {
-        let [fp2a, fp2b, fp2c, fp2d, fp2e, fp2f] = get_fp2s();
-
-        let [fp6a, fp6b] = get_fp6s(&fp2a, &fp2b, &fp2c, &fp2d, &fp2e, &fp2f);
-        let expected = Fp12Elem::create(fp2a, fp2b, fp2c, fp2d, fp2e, fp2f);
-        let result = Fp12Elem {
-            elem1: fp6a,
-            elem2: fp6b,
-        };
-        assert_eq!(expected, result);
-    }
 
     prop_compose! {
         [pub] fn arb_fp12()(e1 in arb_fp6(), e2 in arb_fp6()) -> Fp12Elem<Fp256> {
@@ -416,6 +401,11 @@ pub mod test {
     }
 
     proptest! {
+
+        #[test]
+        fn fp480_roundtrip_hashable_bytesdecoder(ref fp in arb_fp12_480()) {
+            prop_assert_eq!(*fp, Fp12Elem::decode(fp.to_bytes()).unwrap())
+        }
 
         #[test]
         fn bytes_hashable_decode_roundtrip(ref fp in arb_fp12()) {
