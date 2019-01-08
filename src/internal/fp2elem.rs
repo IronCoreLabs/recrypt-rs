@@ -6,7 +6,7 @@ use crate::internal::ByteVector;
 use crate::internal::Square;
 use core::fmt;
 use gridiron::digits::constant_bool::ConstantBool;
-use gridiron::digits::util::ConstantSwap;
+use gridiron::digits::constant_time_primitives::ConstantSwap;
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::result::Result;

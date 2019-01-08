@@ -15,7 +15,7 @@ use crate::internal::sha256::Sha256Hashing;
 use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
 use gridiron::digits::constant_bool::ConstantBool;
-use gridiron::digits::util::ConstantSwap;
+use gridiron::digits::constant_time_primitives::ConstantSwap;
 use gridiron::fp_256::Fp256;
 use num_traits::{One, Zero};
 use quick_error::quick_error;

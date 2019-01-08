@@ -1,8 +1,8 @@
-use core::fmt::Debug;
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::Square;
+use core::fmt::Debug;
 use gridiron::fp_256::Fp256;
 use num_traits::{Inv, Pow};
 use num_traits::{One, Zero};

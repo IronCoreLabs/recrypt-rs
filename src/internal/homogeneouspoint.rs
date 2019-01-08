@@ -6,14 +6,13 @@ use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
 use gridiron::digits::constant_bool::ConstantBool;
-use gridiron::digits::util::ConstantSwap;
-use gridiron::fp_256::Fp256;
-use std::ops::Not;
+use gridiron::digits::constant_time_primitives::ConstantSwap;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
 use num_traits::Pow;
 use quick_error::quick_error;
+use std::ops::Not;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::option::Option;
 
@@ -78,49 +77,28 @@ where
 
 impl<T> Eq for HomogeneousPoint<T> where T: Field {}
 
-// impl<T, U> Mul<U> for HomogeneousPoint<T>
-// where
-//     T: Field,
-//     U: BitRepr,
-// {
-//     type Output = HomogeneousPoint<T>;
-//     fn mul(self, rhs: U) -> HomogeneousPoint<T> {
-//         let mut naf = rhs.to_bits();
-//         naf.reverse();
-//         naf.iter().fold(zero(), |res, &cur| {
-//             let doubled = res.double();
-//             cur.
-//             if cur == 1 {
-//                 doubled + *self
-//             } else {
-//                 doubled
-//             }
-//         })
-//     }
-// }
-
-impl<U, T> Mul<U> for HomogeneousPoint<T>
+impl<T, U> Mul<U> for HomogeneousPoint<T>
 where
-    U: BitRepr,
     T: Field + ConstantSwap,
+    U: BitRepr,
 {
     type Output = HomogeneousPoint<T>;
+    //This is a translation of Costello "Montgomery curves and their arithmetic" 
+    //algorithm 8.
+    //https://eprint.iacr.org/2017/212.pdf
     fn mul(self, rhs: U) -> HomogeneousPoint<T> {
         let bits = rhs.to_bits();
-        let mut r0: HomogeneousPoint<T> = zero();
-        let mut r1 = self;
-        // println!("{:?}",bits.iter().rev().map(|&x| x.0).collect::<Vec<u32>>() );
-        bits.iter().rev().for_each(|&i| {
-            // println!("r0 Before {:?}", r0 );
-            // println!("r1 Before {:?}", r1 );
-            r0.swap_if(&mut r1, i.not());
-            r0 = r0 + r1;
-            r1 = r1.double();
-            r0.swap_if(&mut r1, i.not());
-            // println!("r0 After {:?}", r0 );
-            // println!("r1 After {:?}", r1 );
+        let mut x0: HomogeneousPoint<T> = zero();
+        let mut x1 = self;
+        let mut last_bit = ConstantBool::new_false();
+        bits.iter().rev().for_each(|&bit| {
+            x0.swap_if(&mut x1, bit ^ last_bit);
+            x1 = x1 + x0;
+            x0 = x0.double();
+            last_bit = bit;
         });
-        r0
+        x0.swap_if(&mut x1, bits[0]);
+        x0
     }
 }
 
@@ -308,22 +286,22 @@ where
     U: BitRepr,
 {
     type Output = TwistedHPoint<T>;
+    //This is a translation of Costello "Montgomery curves and their arithmetic" 
+    //algorithm 8.
+    //https://eprint.iacr.org/2017/212.pdf
     fn mul(self, rhs: U) -> TwistedHPoint<T> {
         let bits = rhs.to_bits();
-        let mut r0: TwistedHPoint<T> = zero();
-        let mut r1 = self;
-        // println!("{:?}",bits.iter().rev().map(|&x| x.0).collect::<Vec<u32>>() );
-        bits.iter().rev().for_each(|&i| {
-            // println!("r0 Before {:?}", r0 );
-            // println!("r1 Before {:?}", r1 );
-            r0.swap_if(&mut r1, i.not());
-            r0 = r0 + r1;
-            r1 = r1.double();
-            r0.swap_if(&mut r1, i.not());
-            // println!("r0 After {:?}", r0 );
-            // println!("r1 After {:?}", r1 );
+        let mut x0: TwistedHPoint<T> = zero();
+        let mut x1 = self;
+        let mut last_bit = ConstantBool::new_false();
+        bits.iter().rev().for_each(|&bit| {
+            x0.swap_if(&mut x1, bit ^ last_bit);
+            x1 = x1 + x0;
+            x0 = x0.double();
+            last_bit = bit;
         });
-        r0
+        x0.swap_if(&mut x1, bits[0]);
+        x0
     }
 }
 

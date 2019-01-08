@@ -7,7 +7,7 @@ use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::sha256::Sha256;
 use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
-use gridiron::digits::util::ConstantSwap;
+use gridiron::digits::constant_time_primitives::ConstantSwap;
 use gridiron::fp_256::Fp256;
 use std::marker::PhantomData;
 
