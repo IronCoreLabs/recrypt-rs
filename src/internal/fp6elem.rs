@@ -465,59 +465,8 @@ pub mod test {
 
             prop_assert_eq!(left, right);
         }
-
-        ///All of these are tests from field.rs
-        #[test]
-        fn prop_semigroup(a in arb_fp6(), b in arb_fp6(), c in arb_fp6()) {
-            prop_assert!(Field::prop_semigroup(a,b,c))
-        }
-        #[test]
-        fn prop_monoid_identity(a in arb_fp6()) {
-            prop_assert!(Field::prop_monoid_identity(a))
-        }
-        #[test]
-        fn prop_inv(a in arb_fp6(), b in arb_fp6()) {
-            prop_assert!(Field::prop_inv(a,b))
-        }
-        #[test]
-        fn prop_one_is_mul_identity(a in arb_fp6()) {
-            prop_assert!(Field::prop_one_is_mul_identity(a))
-        }
-        #[test]
-        fn prop_zero_is_add_identity(a in arb_fp6()) {
-            prop_assert!(Field::prop_zero_is_add_identity(a))
-        }
-        #[test]
-        fn prop_eq_reflexive(a in arb_fp6(), b in arb_fp6()) {
-            prop_assert!(Field::prop_eq_reflexive(a,b))
-        }
-        #[test]
-        fn prop_sub_same_as_neg_add(a in arb_fp6(), b in arb_fp6()) {
-            prop_assert!(Field::prop_sub_same_as_neg_add(a,b))
-        }
-        #[test]
-        fn prop_mul_distributive(a in arb_fp6(), b in arb_fp6(), c in arb_fp6()) {
-            prop_assert!(Field::prop_mul_distributive(a,b,c))
-        }
-        #[test]
-        fn prop_mul_assoc(a in arb_fp6(), b in arb_fp6(), c in arb_fp6()) {
-            prop_assert!(Field::prop_mul_assoc(a,b,c))
-        }
-        #[test]
-        fn prop_mul_commutative(a in arb_fp6(), b in arb_fp6(), c in arb_fp6()) {
-            prop_assert!(Field::prop_mul_commutative(a,b,c))
-        }
-        #[test]
-        fn prop_add_assoc(a in arb_fp6(), b in arb_fp6(), c in arb_fp6()) {
-            prop_assert!(Field::prop_add_assoc(a,b,c))
-        }
-        #[test]
-        fn prop_add_commutative(a in arb_fp6(), b in arb_fp6(), c in arb_fp6()) {
-            prop_assert!(Field::prop_add_commutative(a,b,c))
-        }
-        #[test]
-        fn prop_pow_is_mul(a in arb_fp6()) {
-            prop_assert!(Field::prop_pow_is_mul(a))
-        }
     }
+
+    field_proptest!(arb_fp6, fp256, fp6);
+    field_proptest!(arb_fp6_480, fp480, fp6);
 }

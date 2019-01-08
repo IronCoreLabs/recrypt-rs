@@ -84,3 +84,80 @@ macro_rules! new_bytes_type {
         _bytes_core!($t, $n);
     };
 }
+
+// macro to produce property-based tests for each FP type
+#[allow(unused_macros)]
+macro_rules! field_proptest {
+        ($arb_fp_type:ident, $base_fp_mod:ident, $fp_mod:ident) => {
+        #[allow(unused_imports)]
+        mod $base_fp_mod { mod $fp_mod {
+            use crate::internal::field::Field;
+            use crate::internal::fp2elem::test::*;
+            use crate::internal::fp12elem::test::*;
+            use crate::internal::fp6elem::test::*;
+
+            proptest! {
+                #[test]
+                fn prop_semigroup(a in $arb_fp_type(), b in $arb_fp_type(), c in $arb_fp_type()) {
+                prop_assert!(Field::prop_semigroup(a,b,c))
+            }
+                #[test]
+                fn prop_monoid_identity(a in $arb_fp_type()) {
+                prop_assert!(Field::prop_monoid_identity(a))
+            }
+                #[test]
+                fn prop_inv(a in $arb_fp_type(), b in $arb_fp_type()) {
+                prop_assert!(Field::prop_inv(a,b))
+            }
+                #[test]
+                fn prop_one_is_mul_identity(a in $arb_fp_type()) {
+                prop_assert!(Field::prop_one_is_mul_identity(a))
+            }
+                #[test]
+                fn prop_zero_is_add_identity(a in $arb_fp_type()) {
+                prop_assert!(Field::prop_zero_is_add_identity(a))
+            }
+                #[test]
+                fn prop_eq_reflexive(a in $arb_fp_type(), b in $arb_fp_type()) {
+                prop_assert!(Field::prop_eq_reflexive(a,b))
+            }
+                #[test]
+                fn prop_sub_same_as_neg_add(a in $arb_fp_type(), b in $arb_fp_type()) {
+                prop_assert!(Field::prop_sub_same_as_neg_add(a,b))
+            }
+                #[test]
+                fn prop_mul_distributive(a in $arb_fp_type(), b in $arb_fp_type(), c in $arb_fp_type()) {
+                prop_assert!(Field::prop_mul_distributive(a,b,c))
+            }
+                #[test]
+                fn prop_mul_assoc(a in $arb_fp_type(), b in $arb_fp_type(), c in $arb_fp_type()) {
+                prop_assert!(Field::prop_mul_assoc(a,b,c))
+            }
+                #[test]
+                fn prop_mul_commutative(a in $arb_fp_type(), b in $arb_fp_type(), c in $arb_fp_type()) {
+                prop_assert!(Field::prop_mul_commutative(a,b,c))
+            }
+                #[test]
+                fn prop_add_assoc(a in $arb_fp_type(), b in $arb_fp_type(), c in $arb_fp_type()) {
+                prop_assert!(Field::prop_add_assoc(a,b,c))
+            }
+                #[test]
+                fn prop_add_commutative(a in $arb_fp_type(), b in $arb_fp_type(), c in $arb_fp_type()) {
+                prop_assert!(Field::prop_add_commutative(a,b,c))
+            }
+                #[test]
+                fn prop_pow_is_mul(a in $arb_fp_type()) {
+                prop_assert!(Field::prop_pow_is_mul(a))
+            }
+                #[test]
+                fn prop_square_same_as_mul_self(a in $arb_fp_type()) {
+                prop_assert!(Field::prop_square_same_as_mul_self(a))
+            }
+                #[test]
+                fn prop_square2_same_as_pow4(a in $arb_fp_type()) {
+                prop_assert!(Field::prop_square2_same_as_pow4(a))
+            }
+            }
+        }}
+        };
+    }

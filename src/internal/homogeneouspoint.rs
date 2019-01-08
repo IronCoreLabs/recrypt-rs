@@ -512,7 +512,6 @@ pub mod test {
     use gridiron::fp_256::Fp256;
     use gridiron::fp_480::Fp480;
     use hex;
-    use num_traits::One;
     use proptest::prelude::*;
     fn order() -> Fp256 {
         fp256_unsafe_from("8fb501e34aa387f9aa6fecb86184dc212e8d8e12f82b39241a2ef45b57ac7261")
@@ -608,10 +607,9 @@ pub mod test {
         assert_eq!(result, double_result);
     }
 
-
     // macro to produce property-based tests for each FP type
     macro_rules! fp_proptest {
-        ($fp:ident, $arb_homogeneous:ident, $arb_homogeneous_fp2:ident, $m:ident) => {
+        ($fp:ident, $arb_fp:ident, $arb_homogeneous:ident, $arb_homogeneous_fp2:ident, $m:ident) => {
         mod $m {
         use super::*;
 
@@ -635,7 +633,7 @@ pub mod test {
             }
 
             #[test]
-            fn distributive(a in arb_fp256(), b in $arb_homogeneous(), c in $arb_homogeneous()) {
+            fn distributive(a in $arb_fp(), b in $arb_homogeneous(), c in $arb_homogeneous()) {
                 prop_assert!((b + c) * a == b * a + c * a);
             }
 
@@ -678,7 +676,7 @@ pub mod test {
             }
 
             #[test]
-            fn twisted_distributive(a in arb_fp256(), b in $arb_homogeneous_fp2(), c in $arb_homogeneous_fp2()) {
+            fn twisted_distributive(a in $arb_fp(), b in $arb_homogeneous_fp2(), c in $arb_homogeneous_fp2()) {
                 prop_assert!((b + c) * a == b * a + c * a);
             }
 
@@ -733,9 +731,20 @@ pub mod test {
     };
     } // end fp_proptest!
 
-    fp_proptest!(Fp256, arb_homogeneous_256, arb_homogeneous_fp2_256, fp256);
-    fp_proptest!(Fp480, arb_homogeneous_480, arb_homogeneous_fp2_480, fp480);
-
+    fp_proptest!(
+        Fp256,
+        arb_fp256,
+        arb_homogeneous_256,
+        arb_homogeneous_fp2_256,
+        fp256
+    );
+    fp_proptest!(
+        Fp480,
+        arb_fp480,
+        arb_homogeneous_480,
+        arb_homogeneous_fp2_480,
+        fp480
+    );
 
     prop_compose! {
         [pub] fn arb_homogeneous_fp2_256()(seed in any::<u64>()) -> TwistedHPoint<Fp256> {
