@@ -1,3 +1,4 @@
+use crate::api_common::{ApiErr, Result};
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
@@ -20,7 +21,6 @@ use gridiron::fp_256::Fp256;
 use rand;
 use std;
 use std::fmt;
-use crate::api_common::{ApiErr, Result};
 
 /// Recrypt public API
 #[derive(Debug)]

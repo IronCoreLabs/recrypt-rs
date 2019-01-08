@@ -77,7 +77,7 @@ extern crate proptest; // shouldn't be needed in Rust 2018, but hoping proptest 
 
 #[macro_use] // this is still required in Rust 2018
 mod internal; // this needs to come before `api` as api relies on macros defined in `internal`
-mod api_common;
 pub mod api;
 pub mod api_480;
+mod api_common;
 pub mod nonemptyvec;

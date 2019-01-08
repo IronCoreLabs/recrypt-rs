@@ -367,7 +367,7 @@ impl<T: Hashable + ExtensionField> Hashable for TwistedHPoint<T> {
     }
 }
 
-impl <T: ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
+impl<T: ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
     // TwistedHPoint is 2 Fp2s -- x and y
     const ENCODED_SIZE_BYTES: usize = Fp2Elem::<T>::ENCODED_SIZE_BYTES * 2;
 
@@ -506,10 +506,11 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use crate::internal::curve::FP_256_CURVE_POINTS;
+    use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
     use crate::internal::fp::fp256_unsafe_from;
-    use crate::internal::test::arb_fp256;
+    use crate::internal::test::{arb_fp256, arb_fp480};
     use gridiron::fp_256::Fp256;
+    use gridiron::fp_480::Fp480;
     use hex;
     use num_traits::One;
     use proptest::prelude::*;
@@ -607,6 +608,9 @@ pub mod test {
         assert_eq!(result, double_result);
     }
 
+    //
+    // Fp256
+    //
     proptest! {
         #[test]
         fn identity(a in arb_homogeneous()) {
@@ -721,6 +725,123 @@ pub mod test {
             prop_assert_eq!(arb_hpoint_fp2.double().double(), arb_hpoint_fp2 * Fp256::from(4u8));
         }
     }
+    //
+    // Fp480
+    //
+    proptest! {
+        #[test]
+        fn fp480_identity(a in arb_homogeneous_480()) {
+            prop_assert!(a * Fp480::one() == a);
+            prop_assert!(a + Zero::zero() == a);
+            prop_assert!(a - a == Zero::zero());
+            prop_assert!(HomogeneousPoint::<Fp480>::zero() + a == a);
+        }
+
+        #[test]
+        fn fp480_commutative(a in arb_homogeneous_480(), b in arb_homogeneous_480()) {
+            prop_assert!(a + b == b + a);
+        }
+
+        #[test]
+        fn fp480_associative(a in arb_homogeneous_480(), b in arb_homogeneous_480(), c in arb_homogeneous_480()) {
+            prop_assert!((a + b) + c == a + (b + c));
+        }
+
+        #[test]
+        fn fp480_distributive(a in arb_fp256(), b in arb_homogeneous_480(), c in arb_homogeneous_480()) {
+            prop_assert!((b + c) * a == b * a + c * a);
+        }
+
+        #[test]
+        fn fp480_add_equals_mult(a in arb_homogeneous_480()) {
+            prop_assert!(a + a == a * Fp480::from(2u64));
+            prop_assert!(a + a + a == a * Fp480::from(3u64));
+        }
+
+        #[test]
+        fn fp480_normalize_return_none_if_zero(a in arb_homogeneous_480()) {
+            prop_assert_eq!(a.is_zero(), a.normalize() == None);
+        }
+
+        #[test]
+        fn fp480_z_zero_means_none_normalize(a in arb_homogeneous_480()) {
+            let b = match a {
+               HomogeneousPoint {x, y, z: _ } =>
+                   HomogeneousPoint { x: x, y: y, z: Fp480::zero()},
+            };
+            prop_assert_eq!(None, b.normalize());
+        }
+
+        #[test]
+        fn fp480_twisted_identity(a in arb_homogeneous_fp2_480()) {
+            prop_assert!(a * Fp480::one() == a);
+            prop_assert!(a + Zero::zero() == a);
+            prop_assert!(a - a == Zero::zero());
+            prop_assert!(<TwistedHPoint<Fp480> as Zero>::zero() + a == a);
+        }
+
+        #[test]
+        fn fp480_twisted_commutative(a in arb_homogeneous_fp2_480(), b in arb_homogeneous_fp2_480()) {
+            prop_assert!(a + b == b + a);
+        }
+
+        #[test]
+        fn fp480_twisted_associative(a in arb_homogeneous_fp2_480(), b in arb_homogeneous_fp2_480(), c in arb_homogeneous_fp2_480()) {
+            prop_assert!((a + b) + c == a + (b + c));
+        }
+
+        #[test]
+        fn fp480_twisted_distributive(a in arb_fp256(), b in arb_homogeneous_fp2_480(), c in arb_homogeneous_fp2_480()) {
+            prop_assert!((b + c) * a == b * a + c * a);
+        }
+
+        #[test]
+        fn fp480_twisted_add_equals_mult(a in arb_homogeneous_fp2_480()) {
+            let added = a + a;
+            prop_assert_eq!(added.normalize(),  (a * Fp480::from(2u64)).normalize());
+            prop_assert!(a + a == a * Fp480::from(2u64));
+            prop_assert!(a + a + a == a * Fp480::from(3u64));
+        }
+
+        #[test]
+        fn fp480_twisted_normalize_return_none_if_zero(a in arb_homogeneous_fp2_480()) {
+            prop_assert_eq!(a.is_zero(), a.normalize() == None);
+        }
+
+        #[test]
+        fn fp480_twisted_z_zero_means_none_normalize(a in arb_homogeneous_fp2_480()) {
+            let b = match a {
+                TwistedHPoint {x, y, z: _ } =>
+                   TwistedHPoint { x: x, y: y, z: zero()},
+            };
+            prop_assert_eq!(None, b.normalize());
+        }
+
+
+        #[test]
+        fn fp480_roundtrip_bytes(arb_tw_hpoint in arb_homogeneous_fp2_480()) {
+            prop_assume!(arb_tw_hpoint != zero());
+            let hashed_value_bytes = arb_tw_hpoint.to_bytes();
+            let hpoint = TwistedHPoint::<Fp480>::decode(hashed_value_bytes).unwrap();
+            assert_eq!(arb_tw_hpoint, hpoint)
+        }
+
+        #[test]
+        fn fp480_double_is_mul_2_fp256(arb_hpoint in arb_homogeneous_480()) {
+            prop_assert_eq!(arb_hpoint.double(), arb_hpoint * Fp480::from(2u8));
+        }
+
+        #[test]
+        fn fp480_double_is_mul_2_fp2(arb_hpoint_fp2 in arb_homogeneous_fp2_480()) {
+            prop_assert_eq!(arb_hpoint_fp2.double(), arb_hpoint_fp2 * Fp480::from(2u8));
+         prop_assert_eq!(arb_hpoint_fp2.double(), arb_hpoint_fp2 + arb_hpoint_fp2);
+        }
+
+        #[test]
+        fn fp480_double_twice_is_mul_4_fp2(arb_hpoint_fp2 in arb_homogeneous_fp2_480()) {
+            prop_assert_eq!(arb_hpoint_fp2.double().double(), arb_hpoint_fp2 * Fp480::from(4u8));
+        }
+    }
 
     prop_compose! {
         [pub] fn arb_homogeneous_fp2()(seed in any::<u64>()) -> TwistedHPoint<Fp256> {
@@ -742,6 +863,30 @@ pub mod test {
                 FP_256_CURVE_POINTS.generator
             } else {
                 FP_256_CURVE_POINTS.generator * Fp256::from(seed)
+            }
+        }
+    }
+
+    prop_compose! {
+        [pub] fn arb_homogeneous_fp2_480()(seed in any::<u64>()) -> TwistedHPoint<Fp480> {
+            if seed == 0 {
+                Zero::zero()
+            } else if seed == 1 {
+                FP_480_CURVE_POINTS.g1
+            } else {
+                FP_480_CURVE_POINTS.g1 * Fp480::from(seed)
+            }
+        }
+    }
+
+    prop_compose! {
+        [pub] fn arb_homogeneous_480()(seed in any::<u64>()) -> HomogeneousPoint<Fp480> {
+            if seed == 0 {
+                Zero::zero()
+            } else if seed == 1 {
+                FP_480_CURVE_POINTS.generator
+            } else {
+                FP_480_CURVE_POINTS.generator * Fp480::from(seed)
             }
         }
     }

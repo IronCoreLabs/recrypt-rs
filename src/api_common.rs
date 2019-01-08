@@ -48,13 +48,11 @@ impl From<internal::InternalError> for ApiErr {
     }
 }
 
-
-
 #[cfg(test)]
 pub(crate) mod test {
     use super::*;
 
-     //Writing a BS from conversion to make tests which contain `hex` constants easier to write.
+    //Writing a BS from conversion to make tests which contain `hex` constants easier to write.
     impl From<hex::FromHexError> for ApiErr {
         fn from(err: hex::FromHexError) -> Self {
             panic!("Error '{:?}' was found when parsing hex in tests.", err);

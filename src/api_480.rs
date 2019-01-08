@@ -8,6 +8,7 @@ use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp12elem::Fp12Elem;
 pub use crate::internal::hashable::Hashable;
 //use crate::internal::hashable::Hashable32;
+use crate::api_common::{ApiErr, Result};
 use crate::internal::hashable::Hashable60;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::pairing;
@@ -21,7 +22,6 @@ use gridiron::fp_480::Fp480;
 use rand;
 use std;
 use std::fmt;
-use crate::api_common::{ApiErr, Result};
 
 /// Recrypt public API
 #[derive(Debug)]
@@ -54,7 +54,6 @@ impl<CR: rand::CryptoRng + rand::RngCore> Api<Sha256, Ed25519, RandomBytes<CR>> 
         }
     }
 }
-
 
 /// Hashed but not encrypted Plaintext used for envelope encryption
 new_bytes_type!(DerivedSymmetricKey, 32);
