@@ -394,7 +394,6 @@ pub fn array_split_64<T: Copy + Zero>(array: &[T; 64]) -> ([T; 32], [T; 32]) {
     (one, two)
 }
 
-//TODO duplication
 pub fn array_split_120<T: Copy + Zero>(array: &[T; 120]) -> ([T; 60], [T; 60]) {
     let mut one = [T::zero(); 60];
     let mut two = [T::zero(); 60];

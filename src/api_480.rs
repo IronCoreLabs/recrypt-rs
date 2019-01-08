@@ -1,3 +1,4 @@
+use crate::api_common::{ApiErr, Result};
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
@@ -7,8 +8,6 @@ pub use crate::internal::ed25519::{
 use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp12elem::Fp12Elem;
 pub use crate::internal::hashable::Hashable;
-//use crate::internal::hashable::Hashable32;
-use crate::api_common::{ApiErr, Result};
 use crate::internal::hashable::Hashable60;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::pairing;
@@ -23,9 +22,10 @@ use rand;
 use std;
 use std::fmt;
 
-/// Recrypt public API
+/// Recrypt public API - 480-bit
+/// If you are looking better performance, you might consider the 256-bit API in `api.rs`
 #[derive(Debug)]
-pub struct Api<H, S, R> {
+pub struct Api480<H, S, R> {
     random_bytes: R,
     sha_256: H,
     ed25519: S,
@@ -34,17 +34,17 @@ pub struct Api<H, S, R> {
     schnorr_signing: SchnorrSign<Fp480, Fr480, H>,
 }
 
-impl Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
-    pub fn new() -> Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
-        Api::new_with_rand(rand::thread_rng())
+impl Api480<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+    pub fn new() -> Api480<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+        Api480::new_with_rand(rand::thread_rng())
     }
 }
-impl<CR: rand::CryptoRng + rand::RngCore> Api<Sha256, Ed25519, RandomBytes<CR>> {
-    pub fn new_with_rand(r: CR) -> Api<Sha256, Ed25519, RandomBytes<CR>> {
+impl<CR: rand::CryptoRng + rand::RngCore> Api480<Sha256, Ed25519, RandomBytes<CR>> {
+    pub fn new_with_rand(r: CR) -> Api480<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = pairing::Pairing::new();
         let curve_points = &*curve::FP_480_CURVE_POINTS;
         let schnorr_signing = internal::schnorr::SchnorrSign::<Fp480, Fr480, Sha256>::new_480();
-        Api {
+        Api480 {
             random_bytes: RandomBytes::new(r),
             sha_256: Sha256,
             ed25519: Ed25519,
@@ -613,7 +613,7 @@ pub trait SchnorrOps {
 }
 
 impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
-    for Api<H, S, RandomBytes<CR>>
+    for Api480<H, S, RandomBytes<CR>>
 {
     fn schnorr_sign<A: Hashable>(
         &mut self,
@@ -649,7 +649,7 @@ pub trait Ed25519Ops {
     fn generate_ed25519_key_pair(&mut self) -> SigningKeypair;
 }
 
-impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Api<H, S, RandomBytes<CR>> {
+impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Api480<H, S, RandomBytes<CR>> {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
     fn generate_ed25519_key_pair(&mut self) -> SigningKeypair {
@@ -690,7 +690,7 @@ pub trait KeyGenOps {
     ) -> Result<TransformKey>;
 }
 
-impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H, S, R> {
+impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api480<H, S, R> {
     fn compute_public_key(&self, private_key: &PrivateKey) -> Result<PublicKey> {
         let pub_key_internal = internal::public_keygen(
             internal::PrivateKey::from(private_key),
@@ -795,7 +795,7 @@ pub trait CryptoOps {
     ) -> Result<EncryptedValue>;
 }
 
-impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H, S, R> {
+impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api480<H, S, R> {
     fn gen_plaintext(&mut self) -> Plaintext {
         let rand_fp12 = gen_random_fp12(&mut self.random_bytes);
         Plaintext::from(rand_fp12)
@@ -892,6 +892,7 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp480> {
     )
 }
 
+/// Wrapper around 60 byte array so what we can add Debug, Eq, etc
 #[derive(Clone, Copy)]
 struct SixtyBytes([u8; Fp480::ENCODED_SIZE_BYTES]);
 
@@ -1011,7 +1012,7 @@ impl PrivateKey {
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
         let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes));
         PrivateKey {
-            bytes: SixtyBytes(bytes), //TODO using non validated input
+            bytes: SixtyBytes(internal_key.value.to_bytes_60()),
             _internal_key: internal_key,
         }
     }
@@ -1103,9 +1104,9 @@ pub(crate) mod test {
     fn api_with<R: RandomBytesGen + Default, S: Ed25519Signing>(
         random_bytes: Option<R>,
         ed25519: S,
-    ) -> Api<Sha256, S, R> {
-        let api = Api::new();
-        Api {
+    ) -> Api480<Sha256, S, R> {
+        let api = Api480::new();
+        Api480 {
             random_bytes: random_bytes.unwrap_or_default(),
             sha_256: api.sha_256,
             ed25519,
@@ -1117,7 +1118,7 @@ pub(crate) mod test {
 
     #[test]
     fn schnorr_signing_roundtrip_augmented() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let (aug_private_key, aug_pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8];
@@ -1128,7 +1129,7 @@ pub(crate) mod test {
     }
     #[test]
     fn schnorr_signing_roundtrip_unaugmented() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8, 3u8, 4u8];
         let sig = api.schnorr_sign(&private_key, pub_key, &message);
@@ -1138,7 +1139,7 @@ pub(crate) mod test {
 
     #[test]
     fn public_key_roundtrip_with_internal() {
-        let (_, pub_key_api) = Api::new().generate_key_pair().unwrap();
+        let (_, pub_key_api) = Api480::new().generate_key_pair().unwrap();
 
         let internal_pk = pub_key_api._internal_key;
         let roundtrip = PublicKey::try_from(&internal_pk).unwrap();
@@ -1148,7 +1149,7 @@ pub(crate) mod test {
 
     #[test]
     fn private_key_roundtrip_with_internal() {
-        let (priv_key_api, _) = Api::new().generate_key_pair().unwrap();
+        let (priv_key_api, _) = Api480::new().generate_key_pair().unwrap();
 
         let internal_pk = internal::PrivateKey::<Fp480>::from(&priv_key_api);
         let roundtrip = PrivateKey::from(internal_pk);
@@ -1159,7 +1160,7 @@ pub(crate) mod test {
 
     #[test]
     fn gen_plaintext_len() {
-        let api = &mut Api::new();
+        let api = &mut Api480::new();
 
         let result = api.gen_plaintext();
         assert_eq!(Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES, result.bytes.len());
@@ -1197,7 +1198,7 @@ pub(crate) mod test {
     }
 
     fn good_transform_key() -> TransformKey {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let signing_key = ed25519::test::good_signing_keypair();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
         api.generate_transform_key(&master_priv, master_pub, &signing_key)
@@ -1226,7 +1227,7 @@ pub(crate) mod test {
 
     #[test]
     fn roundtrip_transform_block() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let pub_key1 = api.generate_key_pair().unwrap().1;
         let pub_key2 = api.generate_key_pair().unwrap().1;
         let ee1 = EncryptedTempKey::new(api.gen_plaintext().bytes);
@@ -1242,7 +1243,7 @@ pub(crate) mod test {
     #[test]
     fn encrypt_decrypt_roundtrip() -> Result<()> {
         use rand::SeedableRng;
-        let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
+        let mut api = Api480::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
         let pt = api.gen_plaintext();
         let (priv_key, pub_key) = api.generate_key_pair().unwrap();
         let priv_signing_key = api.generate_ed25519_key_pair();
@@ -1298,7 +1299,7 @@ pub(crate) mod test {
 
     #[test]
     fn encrypt_decrypt_roundtrip_augmented_keys() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let signing_key = api.generate_ed25519_key_pair();
         let pt = api.gen_plaintext();
         let (master_private_key, client_generated_pub) = api.generate_key_pair().unwrap();
@@ -1395,7 +1396,7 @@ pub(crate) mod test {
     }
     #[test]
     fn publickey_new_from_slice() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let (_, pk1) = api.generate_key_pair().unwrap();
         let input = (pk1.x.0, pk1.y.0);
         let slice: (&[u8], &[u8]) = (&input.0, &input.1);
@@ -1413,7 +1414,7 @@ pub(crate) mod test {
     // note that this doesn't show that Drop is working properly, just that clear does
     #[test]
     fn private_key_clear() {
-        let (mut priv_key, _) = Api::new().generate_key_pair().unwrap();
+        let (mut priv_key, _) = Api480::new().generate_key_pair().unwrap();
         priv_key.clear();
         assert_eq!(SixtyBytes(priv_key.bytes().clone()), SixtyBytes([0u8; 60]));
         assert_eq!(priv_key._internal_key, Default::default())

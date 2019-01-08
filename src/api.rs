@@ -22,7 +22,7 @@ use rand;
 use std;
 use std::fmt;
 
-/// Recrypt public API
+/// Recrypt public API - 256-bit
 #[derive(Debug)]
 pub struct Api<H, S, R> {
     random_bytes: R,

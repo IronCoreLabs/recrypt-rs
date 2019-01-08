@@ -7,7 +7,7 @@ use recrypt::api::Api as Api256;
 use recrypt::api::CryptoOps;
 use recrypt::api::Ed25519Ops;
 use recrypt::api::KeyGenOps;
-use recrypt::api_480::Api as Api480;
+use recrypt::api_480::Api480;
 use recrypt::api_480::CryptoOps as CryptoOps480;
 use recrypt::api_480::Ed25519Ops as Ed25519Ops480;
 use recrypt::api_480::KeyGenOps as KeyGenOps480;

@@ -119,7 +119,7 @@ impl fr_480::Fr480 {
         while {
             let bytes: [u8; 60] = random_bytes.random_bytes_60();
             fr = fr_480::Fr480::from(bytes);
-            fr.to_bytes_array().to_vec() != bytes.to_vec() //TODO to_vec for now since it has PartialEq for 60 bytes
+            fr.to_bytes_array()[..] != bytes[..]
         } {}
         fr
     }
@@ -139,7 +139,7 @@ impl From<[u8; 64]> for fr_480::Fr480 {
         // our input is the exact length we need for our
         // optimized barrett reduction
         let mut limbs = [0u32; 32];
-        let limbs_17 = ::gridiron::from_sixty_four_bytes(src); //TODO 17 bytes is still fine, right?
+        let limbs_17 = ::gridiron::from_sixty_four_bytes(src);
         limbs.copy_from_slice(&limbs_17);
         fr_480::Fr480::new(fr_480::Fr480::reduce_barrett(&limbs))
     }
@@ -192,7 +192,6 @@ pub fn fp256_unsafe_from(hex_str: &str) -> fp_256::Fp256 {
     }
 }
 
-//TODO duplication
 pub fn fp480_unsafe_from(hex_str: &str) -> fp_480::Fp480 {
     // add in a leading zero as needed to be more compatible with sage
     let even_hex_str = if hex_str.len() % 2 != 0 {
