@@ -1040,7 +1040,7 @@ mod test {
     use crate::internal::ed25519::Ed25519;
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::fp12elem::test::arb_fp12;
-    use crate::internal::homogeneouspoint::test::arb_homogeneous;
+    use crate::internal::homogeneouspoint::test::arb_homogeneous_256;
     use crate::internal::sha256::Sha256;
     use crate::internal::sum_n;
     use num_traits::Pow;
@@ -1773,7 +1773,7 @@ mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
+        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
             PublicKey { value: *hpoint }
         }
     }
