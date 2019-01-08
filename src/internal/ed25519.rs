@@ -1,4 +1,4 @@
-use crate::api::ApiErr;
+use crate::api_common::ApiErr;
 use crate::internal::array_split_64;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;

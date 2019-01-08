@@ -5,8 +5,6 @@ use crate::internal::field::Field;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
-use gridiron::fp_256::Fp256;
-use gridiron::fp_480::Fp480;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
