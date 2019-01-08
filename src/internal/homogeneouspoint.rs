@@ -12,7 +12,6 @@ use num_traits::zero;
 use num_traits::Inv;
 use num_traits::Pow;
 use quick_error::quick_error;
-use std::ops::Not;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::option::Option;
 
