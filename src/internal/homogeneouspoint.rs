@@ -82,7 +82,7 @@ where
     U: BitRepr,
 {
     type Output = HomogeneousPoint<T>;
-    //This is a translation of Costello "Montgomery curves and their arithmetic" 
+    //This is a translation of Costello "Montgomery curves and their arithmetic"
     //algorithm 8.
     //https://eprint.iacr.org/2017/212.pdf
     fn mul(self, rhs: U) -> HomogeneousPoint<T> {
@@ -285,7 +285,7 @@ where
     U: BitRepr,
 {
     type Output = TwistedHPoint<T>;
-    //This is a translation of Costello "Montgomery curves and their arithmetic" 
+    //This is a translation of Costello "Montgomery curves and their arithmetic"
     //algorithm 8.
     //https://eprint.iacr.org/2017/212.pdf
     fn mul(self, rhs: U) -> TwistedHPoint<T> {
