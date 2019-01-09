@@ -305,6 +305,6 @@ recrypt_bench! {api = Api256; suite_desc = criterion_benchmark_fp256; bits = "25
 criterion_group! {
     name = benches;
     config = Criterion::default().sample_size(20);
-    targets = criterion_benchmark_fp256, criterion_benchmark_fp480
+    targets = criterion_benchmark_fp256//, criterion_benchmark_fp480
 }
 criterion_main!(benches);
