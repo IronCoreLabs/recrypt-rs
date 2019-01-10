@@ -5,6 +5,8 @@ use crate::internal::field::Field;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
+use gridiron::digits::constant_bool::ConstantBool;
+use gridiron::digits::constant_time_primitives::ConstantSwap;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
@@ -76,12 +78,26 @@ impl<T> Eq for HomogeneousPoint<T> where T: Field {}
 
 impl<T, U> Mul<U> for HomogeneousPoint<T>
 where
-    T: Field,
+    T: Field + ConstantSwap,
     U: BitRepr,
 {
     type Output = HomogeneousPoint<T>;
+    //This is a translation of Costello "Montgomery curves and their arithmetic"
+    //algorithm 8.
+    //https://eprint.iacr.org/2017/212.pdf
     fn mul(self, rhs: U) -> HomogeneousPoint<T> {
-        self.times(&rhs)
+        let bits = rhs.to_bits();
+        let mut x0: HomogeneousPoint<T> = zero();
+        let mut x1 = self;
+        let mut last_bit = ConstantBool::new_false();
+        bits.iter().rev().for_each(|&bit| {
+            x0.swap_if(&mut x1, bit ^ last_bit);
+            x1 = x1 + x0;
+            x0 = x0.double();
+            last_bit = bit;
+        });
+        x0.swap_if(&mut x1, bits[0]);
+        x0
     }
 }
 
@@ -170,6 +186,14 @@ impl<T: Field + Hashable> Hashable for HomogeneousPoint<T> {
     }
 }
 
+impl<T: ConstantSwap> ConstantSwap for HomogeneousPoint<T> {
+    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<u32>) {
+        self.x.swap_if(&mut other.x, swap);
+        self.y.swap_if(&mut other.y, swap);
+        self.z.swap_if(&mut other.z, swap);
+    }
+}
+
 impl<T> HomogeneousPoint<T>
 where
     T: One,
@@ -198,29 +222,6 @@ impl<T> HomogeneousPoint<T>
 where
     T: Field,
 {
-    ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
-    pub fn times<A: BitRepr>(&self, multiple: &A) -> HomogeneousPoint<T> {
-        match self {
-            ref p if p.is_zero() => Zero::zero(),
-            HomogeneousPoint { y, .. } => {
-                if *y == zero() {
-                    *self
-                } else {
-                    let mut naf = multiple.to_bits();
-                    naf.reverse();
-                    naf.iter().fold(zero(), |res, &cur| {
-                        let doubled = res.double();
-                        if cur == 1 {
-                            doubled + *self
-                        } else {
-                            doubled
-                        }
-                    })
-                }
-            }
-        }
-    }
-
     ///Divide out by the z we've been carrying around.
     pub fn normalize(&self) -> Option<(T, T)> {
         if self.is_zero() {
@@ -242,6 +243,14 @@ pub struct TwistedHPoint<T> {
     pub x: Fp2Elem<T>,
     pub y: Fp2Elem<T>,
     pub z: Fp2Elem<T>,
+}
+
+impl<T: ConstantSwap> ConstantSwap for TwistedHPoint<T> {
+    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<u32>) {
+        self.x.swap_if(&mut other.x, swap);
+        self.y.swap_if(&mut other.y, swap);
+        self.z.swap_if(&mut other.z, swap);
+    }
 }
 
 impl<T> PartialEq for TwistedHPoint<T>
@@ -272,12 +281,26 @@ impl<T> Eq for TwistedHPoint<T> where T: ExtensionField {}
 
 impl<T, U> Mul<U> for TwistedHPoint<T>
 where
-    T: ExtensionField,
+    T: ExtensionField + ConstantSwap,
     U: BitRepr,
 {
     type Output = TwistedHPoint<T>;
+    //This is a translation of Costello "Montgomery curves and their arithmetic"
+    //algorithm 8.
+    //https://eprint.iacr.org/2017/212.pdf
     fn mul(self, rhs: U) -> TwistedHPoint<T> {
-        self.times(&rhs)
+        let bits = rhs.to_bits();
+        let mut x0: TwistedHPoint<T> = zero();
+        let mut x1 = self;
+        let mut last_bit = ConstantBool::new_false();
+        bits.iter().rev().for_each(|&bit| {
+            x0.swap_if(&mut x1, bit ^ last_bit);
+            x1 = x1 + x0;
+            x0 = x0.double();
+            last_bit = bit;
+        });
+        x0.swap_if(&mut x1, bits[0]);
+        x0
     }
 }
 
@@ -424,26 +447,6 @@ impl<T> TwistedHPoint<T>
 where
     T: ExtensionField,
 {
-    ///Add self `multiple` times, where `multiple` is represented by the A, which must be able to be converted into a NAF.
-    pub fn times<A: BitRepr>(&self, multiple: &A) -> TwistedHPoint<T> {
-        match self {
-            ref p if p.is_zero() => Zero::zero(),
-            TwistedHPoint { y, .. } => {
-                if *y == zero() {
-                    *self
-                } else {
-                    let mut naf = multiple.to_bits();
-                    naf.reverse();
-                    naf.iter().fold(zero(), |res, &cur| {
-                        let doubled = res.double();
-                        let result = if cur == 1 { doubled + *self } else { doubled };
-                        result
-                    })
-                }
-            }
-        }
-    }
-
     ///Divide out by the z we've been carrying around.
     pub fn normalize(&self) -> Option<(Fp2Elem<T>, Fp2Elem<T>)> {
         if self.is_zero() {
@@ -567,7 +570,7 @@ pub mod test {
         let computed_g2 = FP_256_CURVE_POINTS.generator + FP_256_CURVE_POINTS.generator;
         assert_eq!(g2, computed_g2);
         assert_eq!(
-            FP_256_CURVE_POINTS.generator.times(&Fp256::from(2u8)),
+            FP_256_CURVE_POINTS.generator * Fp256::from(2u8),
             computed_g2
         );
         assert_eq!(FP_256_CURVE_POINTS.generator.double(), computed_g2);
