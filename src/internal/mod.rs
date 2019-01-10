@@ -15,6 +15,8 @@ use crate::internal::pairing::PairingConfig;
 use crate::internal::sha256::Sha256Hashing;
 use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
+use gridiron::digits::constant_bool::ConstantBool;
+use gridiron::digits::constant_time_primitives::ConstantSwap;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use num_traits::{One, Zero};
@@ -146,7 +148,7 @@ impl<T> BitRepr for PrivateKey<T>
 where
     T: BitRepr + Copy,
 {
-    fn to_bits(&self) -> Vec<u8> {
+    fn to_bits(&self) -> Vec<ConstantBool<u32>> {
         self.value.to_bits()
     }
 }
@@ -413,7 +415,7 @@ where
 ///Generate a public key using the private key and generator point.
 pub fn public_keygen<T>(private_key: PrivateKey<T>, generator: HomogeneousPoint<T>) -> PublicKey<T>
 where
-    T: Field + BitRepr,
+    T: Field + BitRepr + ConstantSwap,
 {
     PublicKey {
         value: generator * private_key.value,
@@ -481,13 +483,13 @@ pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     sign: &G,
 ) -> SignedValue<EncryptedValue<T>>
 where
-    T: ExtensionField + PairingConfig + BitRepr + Hashable,
+    T: ExtensionField + PairingConfig + BitRepr + Hashable + ConstantSwap,
 {
     let ephem_pub_key = PublicKey {
         value: curve_points.generator * encrypting_key,
     };
     let encrypted_message =
-        pairing.pair(to_public_key.value.times(&encrypting_key), curve_points.g1) * plaintext;
+        pairing.pair(to_public_key.value * encrypting_key, curve_points.g1) * plaintext;
     let auth_hash = AuthHash::create(hash, &(&ephem_pub_key, &plaintext));
     sign_value(
         EncryptedValue::EncryptedOnce(EncryptedOnceValue {
@@ -524,7 +526,13 @@ pub fn decrypt<T, H: Sha256Hashing, G: Ed25519Signing>(
     signing: &G,
 ) -> ErrorOr<Fp12Elem<T>>
 where
-    T: ExtensionField + PairingConfig + BitRepr + Hashable + From<[u8; 64]> + Default,
+    T: ExtensionField
+        + PairingConfig
+        + BitRepr
+        + Hashable
+        + From<[u8; 64]>
+        + Default
+        + ConstantSwap,
 {
     verify_signed_value(signed_encrypted_value, signing).map_or(
         Result::Err(InternalError::InvalidEncryptedMessageSignature),
@@ -592,7 +600,7 @@ fn decrypt_encrypted_once<T>(
     curve_points: &CurvePoints<T>,
 ) -> Fp12Elem<T>
 where
-    T: ExtensionField + PairingConfig + BitRepr,
+    T: ExtensionField + PairingConfig + BitRepr + ConstantSwap,
 {
     let g1 = curve_points.g1;
     let EncryptedOnceValue {
@@ -621,7 +629,13 @@ fn decrypt_reencrypted_value<FP, H>(
     sha256: &H,
 ) -> Fp12Elem<FP>
 where
-    FP: Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
+    FP: Hashable
+        + ExtensionField
+        + PairingConfig
+        + BitRepr
+        + From<[u8; 64]>
+        + Default
+        + ConstantSwap,
     H: Sha256Hashing,
 {
     let re_blocks = &reencrypted_value.encryption_blocks;
@@ -728,7 +742,13 @@ pub fn generate_reencryption_key<FP, H, S>(
     ed25519: &S,
 ) -> SignedValue<ReencryptionKey<FP>>
 where
-    FP: ExtensionField + PairingConfig + BitRepr + Hashable + From<[u8; 64]> + Default,
+    FP: ExtensionField
+        + PairingConfig
+        + BitRepr
+        + Hashable
+        + From<[u8; 64]>
+        + Default
+        + ConstantSwap,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -792,7 +812,7 @@ fn hash2<FP, H>(
     sha256: &H,
 ) -> TwistedHPoint<FP>
 where
-    FP: Hashable + From<[u8; 64]> + BitRepr + Default + ExtensionField,
+    FP: Hashable + From<[u8; 64]> + BitRepr + Default + ExtensionField + ConstantSwap,
     H: Sha256Hashing,
 {
     let hash_element = curve_points.hash_element;
@@ -830,7 +850,7 @@ impl<FP: Hashable + ExtensionField> Hashable for ReencryptionKey<FP> {
     }
 }
 
-impl<FP: BitRepr + ExtensionField> ReencryptionKey<FP> {
+impl<FP: BitRepr + ExtensionField + ConstantSwap> ReencryptionKey<FP> {
     ///Augment this ReencryptionKey with a priv_key. This is useful if the ReencryptionKey was from an unaugmented
     ///private key.
     pub fn augment(
@@ -874,7 +894,13 @@ pub fn reencrypt<FP, S, H>(
     pairing: &Pairing<FP>,
 ) -> ErrorOr<SignedValue<EncryptedValue<FP>>>
 where
-    FP: Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
+    FP: Hashable
+        + ExtensionField
+        + PairingConfig
+        + BitRepr
+        + From<[u8; 64]>
+        + Default
+        + ConstantSwap,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -941,7 +967,13 @@ fn reencrypt_encrypted_once<FP, H>(
     sha256: &H,
 ) -> ReencryptedValue<FP>
 where
-    FP: Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
+    FP: Hashable
+        + ExtensionField
+        + PairingConfig
+        + BitRepr
+        + From<[u8; 64]>
+        + Default
+        + ConstantSwap,
     H: Sha256Hashing,
 {
     // encrypt and product auth hashes for the rand_re_temp_key
@@ -994,7 +1026,13 @@ fn reencrypt_reencrypted_value<FP, H>(
     sha256: &H,
 ) -> ReencryptedValue<FP>
 where
-    FP: Hashable + ExtensionField + PairingConfig + BitRepr + From<[u8; 64]> + Default,
+    FP: Hashable
+        + ExtensionField
+        + PairingConfig
+        + BitRepr
+        + From<[u8; 64]>
+        + Default
+        + ConstantSwap,
     H: Sha256Hashing,
 {
     let re_blocks = reencrypted_value.encryption_blocks.clone();
