@@ -24,6 +24,7 @@ See https://crates.io/crates/recrypt for the most recent version.
 In addition to the native Rust implementation, we provide additional bindings to Recrypt: 
 
 * [Node.js](https://github.com/IronCoreLabs/recrypt-node-binding)
+* [WebAssembly](https://github.com/IronCoreLabs/recrypt-wasm-binding)
 
 A [Scala implementation](https://github.com/IronCoreLabs/recrypt) of recrypt is also available.
 
