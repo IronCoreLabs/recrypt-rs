@@ -245,16 +245,8 @@ where
     fn frobenius(&self, point: TwistedHPoint<T>) -> TwistedHPoint<T> {
         match point {
             TwistedHPoint { x, y, z } => {
-                let new_x = (self.pairing_frobenius_factor_1 * x.frobenius())
-                    .to_fp2()
-                    .unwrap_or_else(|| {
-                        panic!("frobenius not defined when the x of `point` can't convert to fp2.")
-                    });
-                let new_y = (self.pairing_frobenius_factor_2 * y.frobenius())
-                    .to_fp2()
-                    .unwrap_or_else(|| {
-                        panic!("frobenius not defined when the y of `point` can't convert to fp2.")
-                    });
+                let new_x = (self.pairing_frobenius_factor_1 * x.frobenius()).frobenius_to_fp2();
+                let new_y = (self.pairing_frobenius_factor_2 * y.frobenius()).frobenius_to_fp2();
                 TwistedHPoint {
                     x: new_x,
                     y: new_y,

@@ -312,11 +312,22 @@ impl<T> Fp12Elem<T>
 where
     T: PartialEq + Zero + Copy,
 {
-    pub fn to_fp2(&self) -> Option<Fp2Elem<T>> {
+    /// Converts this Fp12 to an Fp2 for frobenius. This is only possible if `elem1` is zero.
+    ///
+    /// ### Constant time analysis
+    /// If called with an Fp12 that is not appropriate for conversion (non-zero `elem1`),
+    /// the value of `elem1` is leaked and a panic!() will occur. Because of the definition
+    /// of `Pairing.frobenius()`, this leaking condition would be a developer error.
+    ///
+    /// In the case where conversion is possible, the (zero) `elem1` is leaked, but the
+    /// non-zero portion of `elem2` is not. See `Fp6Elem.frobenious_to_fp2()` for more details.
+    pub fn frobenius_to_fp2(&self) -> Fp2Elem<T> {
         if self.elem1 == Zero::zero() {
-            self.elem2.to_fp2()
+            self.elem2.frobenius_to_fp2()
         } else {
-            None
+            panic!(
+                "Developer error: frobenius_to_fp2 for Fp12 is not defined if elem1 is not zero."
+            )
         }
     }
 }
