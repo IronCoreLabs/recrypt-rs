@@ -264,38 +264,11 @@ where
 pub mod test {
     use super::*;
     use crate::internal::test::arb_fp256;
+    use crate::internal::test::arb_fp480;
     use gridiron::fp_256::Fp256;
+    use gridiron::fp_480::Fp480;
     use proptest::prop_compose;
     use proptest::proptest;
-
-    pub fn get_fp2s() -> [Fp2Elem<Fp256>; 6] {
-        let fp2a = Fp2Elem {
-            elem1: Fp256::from(100u32),
-            elem2: Fp256::from(200u32),
-        };
-        let fp2b = Fp2Elem {
-            elem1: Fp256::from(300u32),
-            elem2: Fp256::from(400u32),
-        };
-        let fp2c = Fp2Elem {
-            elem1: Fp256::from(500u32),
-            elem2: Fp256::from(600u32),
-        };
-        let fp2d = Fp2Elem {
-            elem1: Fp256::from(700u32),
-            elem2: Fp256::from(800u32),
-        };
-        let fp2e = Fp2Elem {
-            elem1: Fp256::from(900u32),
-            elem2: Fp256::from(1000u32),
-        };
-        let fp2f = Fp2Elem {
-            elem1: Fp256::from(1100u32),
-            elem2: Fp256::from(1200u32),
-        };
-
-        [fp2a, fp2b, fp2c, fp2d, fp2e, fp2f]
-    }
 
     #[test]
     #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -368,67 +341,15 @@ pub mod test {
        }
     }
 
-    proptest! {
-        ///All of these are tests from field.rs
-        #[test]
-        fn prop_semigroup(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
-            prop_assert!(Field::prop_semigroup(a,b,c))
-        }
-        #[test]
-        fn prop_monoid_identity(a in arb_fp2()) {
-            prop_assert!(Field::prop_monoid_identity(a))
-        }
-        #[test]
-        fn prop_inv(a in arb_fp2(), b in arb_fp2()) {
-            prop_assert!(Field::prop_inv(a,b))
-        }
-        #[test]
-        fn prop_one_is_mul_identity(a in arb_fp2()) {
-            prop_assert!(Field::prop_one_is_mul_identity(a))
-        }
-        #[test]
-        fn prop_zero_is_add_identity(a in arb_fp2()) {
-            prop_assert!(Field::prop_zero_is_add_identity(a))
-        }
-        #[test]
-        fn prop_eq_reflexive(a in arb_fp2(), b in arb_fp2()) {
-            prop_assert!(Field::prop_eq_reflexive(a,b))
-        }
-        #[test]
-        fn prop_sub_same_as_neg_add(a in arb_fp2(), b in arb_fp2()) {
-            prop_assert!(Field::prop_sub_same_as_neg_add(a,b))
-        }
-        #[test]
-        fn prop_mul_distributive(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
-            prop_assert!(Field::prop_mul_distributive(a,b,c))
-        }
-        #[test]
-        fn prop_mul_assoc(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
-            prop_assert!(Field::prop_mul_assoc(a,b,c))
-        }
-        #[test]
-        fn prop_mul_commutative(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
-            prop_assert!(Field::prop_mul_commutative(a,b,c))
-        }
-        #[test]
-        fn prop_add_assoc(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
-            prop_assert!(Field::prop_add_assoc(a,b,c))
-        }
-        #[test]
-        fn prop_add_commutative(a in arb_fp2(), b in arb_fp2(), c in arb_fp2()) {
-            prop_assert!(Field::prop_add_commutative(a,b,c))
-        }
-        #[test]
-        fn prop_pow_is_mul(a in arb_fp2()) {
-            prop_assert!(Field::prop_pow_is_mul(a))
-        }
-        #[test]
-        fn prop_square_same_as_mul_self(a in arb_fp2()) {
-            prop_assert!(Field::prop_square_same_as_mul_self(a))
-        }
-        #[test]
-        fn prop_square2_same_as_pow4(a in arb_fp2()) {
-            prop_assert!(Field::prop_square2_same_as_pow4(a))
+    prop_compose! {
+        [pub] fn arb_fp2_480()(e1 in arb_fp480(), e2 in arb_fp480()) -> Fp2Elem<Fp480> {
+            Fp2Elem {
+                elem1: e1,
+                elem2: e2
+            }
         }
     }
+
+    field_proptest!(arb_fp2, fp256, fp2);
+    field_proptest!(arb_fp2_480, fp480, fp2);
 }

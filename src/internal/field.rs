@@ -1,8 +1,10 @@
 use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::Square;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use num_traits::{Inv, Pow};
 use num_traits::{One, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -103,18 +105,24 @@ pub trait Field:
 
 impl Field for Fp256 {}
 impl Field for Fr256 {}
+impl Field for Fp480 {}
+impl Field for Fr480 {}
 
 /// Contains the values needed to configure a new Fp type to be used as an extension field
 /// (FP2Elem, FP6Elem, FP12Elem)
 /// All `ExtensionField`s are `Field`s
 pub trait ExtensionField: Field
 where
-    Self: Sized,
+    Self: Sized + From<u8>,
 {
     /// Xi is u + 3 which is v^3.
     /// v^p == Xi^((p-1)/3) * v
-    fn xi() -> Fp2Elem<Self>;
-
+    fn xi() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: Self::one(),
+            elem2: Self::from(3u8),
+        }
+    }
     ///Precomputed xi.inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self>;
 
@@ -132,19 +140,18 @@ where
 
     ///v is the thing that cubes to xi
     ///v^3 = u+3, because by definition it is a solution to the equation y^3 - (u + 3)
-    fn v() -> Fp6Elem<Self>;
+    fn v() -> Fp6Elem<Self> {
+        Fp6Elem {
+            elem1: Zero::zero(),
+            elem2: One::one(),
+            elem3: Zero::zero(),
+        }
+    }
 }
 
 impl ExtensionField for Fp256 {
-    #[inline]
-    fn xi() -> Fp2Elem<Self> {
-        Fp2Elem {
-            elem1: Self::one(),
-            elem2: Self::from(3u8),
-        }
-    }
-
     //precalculate this since it's used in every double and add operation in the extension field.
+    // Fp256::xi().inv() * 9
     #[inline]
     fn xi_inv_times_9() -> Fp2Elem<Self> {
         Fp2Elem {
@@ -206,12 +213,73 @@ impl ExtensionField for Fp256 {
             ]),
         }
     }
-    #[inline]
-    fn v() -> Fp6Elem<Self> {
-        Fp6Elem {
-            elem1: Zero::zero(),
-            elem2: One::one(),
-            elem3: Zero::zero(),
+}
+
+impl ExtensionField for Fp480 {
+    // precalculate this since it's used in every double and add operation in the extension field.
+    // Fp480::xi().inv() * 9
+    fn xi_inv_times_9() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: Fp480::new([
+                0x2c7937c6, 0x3f331d0b, 0x1cddc7ca, 0x327d046a, 0x2255fb13, 0x6935454, 0x36a73701,
+                0xa1abada, 0x103430a2, 0x16882d4e, 0x2b6116e, 0x6a60dfd0, 0x1a6591d0, 0x2c4f8de0,
+                0x6e144ddc, 0x2665,
+            ]),
+            elem2: Fp480::new([
+                0x397dbd45, 0x151109ae, 0x5ef497ee, 0x3b7f0178, 0x361ca906, 0x57867171, 0x678d1255,
+                0x35e3e48, 0x5abc1036, 0x782b9c4, 0x563cb07a, 0x4e204a9a, 0x5e21db45, 0xec52f4a,
+                0x4f5c19f4, 0xccc,
+            ]),
+        }
+    }
+    fn frobenius_factor_1() -> Fp2Elem<Self> {
+        Fp2Elem {
+            // 2705020609406098470693743943193507017690525853579041639836321147125100162418094245778443957282985233325521741487078451689773015537700623376387510
+            elem1: Fp480::new([
+                1289162166, 138724829, 377249524, 1410516015, 1649183802, 1808893220, 2099893442,
+                1613052070, 1271534030, 616853401, 1876231282, 773310939, 80164335, 2003460751,
+                1588206447, 28393,
+            ]),
+            // 1651643729828744562959031609260204931467006255025965356538853937438900508750440674159520451455470865884696804132950675577710427706655106873786415
+            elem2: Fp480::new([
+                477724719, 2123594952, 1106539541, 600250264, 1564472042, 1937537843, 948293455,
+                550173476, 897981975, 1628932098, 587901015, 969156276, 1317419705, 1782565297,
+                1670845724, 17336,
+            ]),
+        }
+    }
+
+    fn frobenius_factor_2() -> Fp2Elem<Self> {
+        Fp2Elem {
+            // 2306651261022207350847683647334036061609898996050387019709069937614457385067216464366007100887697910705559503143400341307341852524867445116042081
+            elem1: Fp480::new([
+                1396636513, 1578821261, 1092430650, 1309873789, 762700047, 238274856, 585447501,
+                330355371, 341111234, 1648355101, 582077952, 1115762901, 1455751468, 925169272,
+                393911954, 24212,
+            ]),
+            // 2700715513864156317217817646762981219394581764002749630356081821581587105847754189716578562648186994801551242072586877237522675959303129100251619
+            elem2: Fp480::new([
+                635236835, 624246053, 2099448091, 1718272887, 1818939813, 1465844392, 1322326592,
+                1282579346, 996132666, 1551423827, 390948370, 1787987376, 668506041, 2046466517,
+                1181867369, 28348,
+            ]),
+        }
+    }
+
+    fn frobenius_factor_fp12() -> Fp2Elem<Self> {
+        Fp2Elem {
+            // 1656507924366244928424688705439191250492553228839737584554076474712325077234544758394965182643615114744030751122897661836350026981040666763359635
+            elem1: Fp480::new([
+                1334605203, 1827599780, 529391447, 1381967368, 251805170, 216998276, 602980270,
+                266708112, 1531079225, 1198586746, 726932044, 1251262731, 1028183026, 1513346905,
+                1795185920, 17387,
+            ]),
+            // 411347727129503104504468123876138850111359831064167067331474757563790630947112631916366442374487601276802707186517326847256605909760387475785136
+            elem2: Fp480::new([
+                747324848, 1152034816, 579621566, 423208337, 761265896, 1462212589, 2002170354,
+                1072168795, 1348910927, 2067945986, 585062688, 570324324, 868980721, 996048971,
+                1688016050, 4317,
+            ]),
         }
     }
 }

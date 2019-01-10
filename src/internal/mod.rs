@@ -6,8 +6,9 @@ use crate::internal::ed25519::{
 use crate::internal::field::ExtensionField;
 use crate::internal::field::Field;
 use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp12elem::Fp12Elem;
-use crate::internal::hashable::{Hashable, Hashable32};
+use crate::internal::hashable::{Hashable, Hashable32, Hashable60};
 use crate::internal::homogeneouspoint::{HomogeneousPoint, PointErr, TwistedHPoint};
 use crate::internal::pairing::Pairing;
 use crate::internal::pairing::PairingConfig;
@@ -17,6 +18,7 @@ use clear_on_drop::clear::Clear;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use num_traits::{One, Zero};
 use quick_error::quick_error;
 use std::ops::{Add, Mul, Neg};
@@ -39,6 +41,7 @@ pub mod schnorr;
 pub mod sha256;
 
 use crate::api;
+use crate::api_480;
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
@@ -61,21 +64,29 @@ pub struct PublicKey<T: Field> {
     pub value: HomogeneousPoint<T>,
 }
 
-impl<T: Field + Hashable32> PublicKey<T> {
+impl<T: Field + From<u32> + Hashable> PublicKey<T> {
+    pub fn new(point: HomogeneousPoint<T>) -> PublicKey<T> {
+        PublicKey { value: point }
+    }
+
+    pub fn from_x_y(x: T, y: T) -> ErrorOr<PublicKey<T>> {
+        Ok(HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?)
+    }
+}
+
+impl PublicKey<Fp256> {
     pub fn to_byte_vectors_32(&self) -> Option<([u8; 32], [u8; 32])> {
         self.value
             .normalize()
             .map(|(x, y)| (x.to_bytes_32(), y.to_bytes_32()))
     }
-
-    pub fn new(point: HomogeneousPoint<T>) -> PublicKey<T> {
-        PublicKey { value: point }
-    }
 }
 
-impl PublicKey<Fp256> {
-    pub fn from_x_y_fp256(x: Fp256, y: Fp256) -> ErrorOr<PublicKey<Fp256>> {
-        Ok(HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?)
+impl PublicKey<Fp480> {
+    pub fn to_byte_vectors_60(&self) -> Option<([u8; 60], [u8; 60])> {
+        self.value
+            .normalize()
+            .map(|(x, y)| (x.to_bytes_60(), y.to_bytes_60()))
     }
 }
 
@@ -108,6 +119,28 @@ impl<'a> From<&'a api::PrivateKey> for PrivateKey<Fp256> {
 impl PrivateKey<Fp256> {
     pub fn from_fp256(fp256: Fp256) -> PrivateKey<Fp256> {
         PrivateKey { value: fp256 }
+    }
+}
+
+impl From<api_480::PrivateKey> for PrivateKey<Fp480> {
+    fn from(api_pk: api_480::PrivateKey) -> Self {
+        PrivateKey {
+            value: Fp480::from(api_pk.to_bytes_60()),
+        }
+    }
+}
+
+impl<'a> From<&'a api_480::PrivateKey> for PrivateKey<Fp480> {
+    fn from(api_pk: &'a api_480::PrivateKey) -> Self {
+        PrivateKey {
+            value: Fp480::from(api_pk.to_bytes_60()),
+        }
+    }
+}
+
+impl PrivateKey<Fp480> {
+    pub fn from_fp480(fp480: Fp480) -> PrivateKey<Fp480> {
+        PrivateKey { value: fp480 }
     }
 }
 
@@ -291,6 +324,17 @@ impl Square for Fr256 {
         self.square()
     }
 }
+impl Square for gridiron::fp_480::Fp480 {
+    fn square(&self) -> Self {
+        self.square()
+    }
+}
+
+impl Square for Fr480 {
+    fn square(&self) -> Self {
+        self.square()
+    }
+}
 
 ///Sum t n times.
 fn sum_n<T: Add<Output = T> + Copy + Zero + PartialEq>(t: T, n: u64) -> T {
@@ -337,6 +381,13 @@ pub fn array_concat_32<T: Copy + Zero>(one: &[T; 32], two: &[T; 32]) -> [T; 64] 
     result
 }
 
+pub fn array_concat_60<T: Copy + Zero>(one: &[T; 60], two: &[T; 60]) -> [T; 120] {
+    let mut result: [T; 120] = [T::zero(); 120];
+    result[0..60].copy_from_slice(&one[..]);
+    result[60..120].copy_from_slice(&two[..]);
+    result
+}
+
 pub fn array_split_64<T: Copy + Zero>(array: &[T; 64]) -> ([T; 32], [T; 32]) {
     let mut one = [T::zero(); 32];
     let mut two = [T::zero(); 32];
@@ -345,6 +396,13 @@ pub fn array_split_64<T: Copy + Zero>(array: &[T; 64]) -> ([T; 32], [T; 32]) {
     (one, two)
 }
 
+pub fn array_split_120<T: Copy + Zero>(array: &[T; 120]) -> ([T; 60], [T; 60]) {
+    let mut one = [T::zero(); 60];
+    let mut two = [T::zero(); 60];
+    one.copy_from_slice(&array[0..60]);
+    two.copy_from_slice(&array[60..120]);
+    (one, two)
+}
 /// Generate one of the rth roots of unity (an element of G_T) given an FP12Elem.
 /// Useful for calling `encrypt`
 pub fn gen_rth_root<T>(pairing: &Pairing<T>, fp12_elem: Fp12Elem<T>) -> Fp12Elem<T>
@@ -735,6 +793,11 @@ impl From<api::Plaintext> for KValue<Fp256> {
         KValue(*pt.internal_fp12())
     }
 }
+impl From<api_480::Plaintext> for KValue<Fp480> {
+    fn from(pt: api_480::Plaintext) -> Self {
+        KValue(*pt.internal_fp12())
+    }
+}
 
 /// Arbitrary hash function to hash an integer into points base field subgroup of the elliptic curve
 ///
@@ -1015,7 +1078,7 @@ mod test {
     use crate::internal::ed25519::Ed25519;
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::fp12elem::test::arb_fp12;
-    use crate::internal::homogeneouspoint::test::arb_homogeneous;
+    use crate::internal::homogeneouspoint::test::arb_homogeneous_256;
     use crate::internal::sha256::Sha256;
     use crate::internal::sum_n;
     use num_traits::Pow;
@@ -1030,6 +1093,18 @@ mod test {
             } else {
                 Fp256::from(seed).pow(seed)
             }
+        }
+    }
+    prop_compose! {
+        [pub] fn arb_fp480()(seed in any::<u64>()) -> Fp480 {
+            if seed == 0 {
+                Fp480::zero()
+            } else if seed == 1 {
+                Fp480::one()
+            } else {
+                Fp480::from(seed).pow(seed)
+            }
+
         }
     }
 
@@ -1113,7 +1188,14 @@ mod test {
         let result2 = pow_for_square(v, 5);
         assert_eq!(result2, v.pow(5));
     }
-
+    #[test]
+    fn fp480_pow_for_square_works() {
+        let v = Fp480::from(10u8);
+        let result = pow_for_square(v, 2);
+        assert_eq!(result, v.pow(2));
+        let result2 = pow_for_square(v, 5);
+        assert_eq!(result2, v.pow(5));
+    }
     #[test]
         #[cfg_attr(rustfmt, rustfmt_skip)]
         fn create_transform_key_known_value() {
@@ -1137,7 +1219,7 @@ mod test {
             let parsed_pub_key_x = fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5");
             //46643694276241842996939080253335644316475473619096522181405937227991761798154
             let parsed_pub_key_y = fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a");
-            let public_key = PublicKey::from_x_y_fp256(parsed_pub_key_x, parsed_pub_key_y).unwrap();
+            let public_key = PublicKey::from_x_y(parsed_pub_key_x, parsed_pub_key_y).unwrap();
 
             let salt = KValue(Fp12Elem::create_from_t(
                 //20621517740542501009268492188240231175004875885443969425948886451683622135253
@@ -1729,7 +1811,7 @@ mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
+        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
             PublicKey { value: *hpoint }
         }
     }

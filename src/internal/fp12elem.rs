@@ -7,6 +7,7 @@ use crate::internal::ByteVector;
 use crate::internal::{pow_for_square, sum_n, Square};
 use core::fmt;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -337,6 +338,14 @@ impl Fp12Elem<Fp256> {
         dest
     }
 }
+impl Fp12Elem<Fp480> {
+    pub fn to_bytes_fp480(&self) -> [u8; Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES] {
+        let hashable = &self.to_bytes()[..];
+        let mut dest = [0u8; Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES];
+        dest.copy_from_slice(hashable);
+        dest
+    }
+}
 
 impl<T> BytesDecoder for Fp12Elem<T>
 where
@@ -369,24 +378,10 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use crate::internal::fp2elem::test::get_fp2s;
-    use crate::internal::fp6elem::test::arb_fp6;
-    use crate::internal::fp6elem::test::get_fp6s;
+    use crate::internal::fp6elem::test::{arb_fp6, arb_fp6_480};
     use gridiron::fp_256::Fp256;
+    use gridiron::fp_480::Fp480;
     use proptest::prelude::*;
-
-    #[test]
-    fn create_from_fp2s() {
-        let [fp2a, fp2b, fp2c, fp2d, fp2e, fp2f] = get_fp2s();
-
-        let [fp6a, fp6b] = get_fp6s(&fp2a, &fp2b, &fp2c, &fp2d, &fp2e, &fp2f);
-        let expected = Fp12Elem::create(fp2a, fp2b, fp2c, fp2d, fp2e, fp2f);
-        let result = Fp12Elem {
-            elem1: fp6a,
-            elem2: fp6b,
-        };
-        assert_eq!(expected, result);
-    }
 
     prop_compose! {
         [pub] fn arb_fp12()(e1 in arb_fp6(), e2 in arb_fp6()) -> Fp12Elem<Fp256> {
@@ -396,8 +391,21 @@ pub mod test {
             }
        }
     }
+    prop_compose! {
+        [pub] fn arb_fp12_480()(e1 in arb_fp6_480(), e2 in arb_fp6_480()) -> Fp12Elem<Fp480> {
+            Fp12Elem {
+                elem1: e1,
+                elem2: e2
+            }
+       }
+    }
 
     proptest! {
+
+        #[test]
+        fn fp480_roundtrip_hashable_bytesdecoder(ref fp in arb_fp12_480()) {
+            prop_assert_eq!(*fp, Fp12Elem::decode(fp.to_bytes()).unwrap())
+        }
 
         #[test]
         fn bytes_hashable_decode_roundtrip(ref fp in arb_fp12()) {
@@ -411,7 +419,7 @@ pub mod test {
         }
 
         #[test]
-        fn pow_test_1(ref fp1 in arb_fp12(), x in any::<u32>(), y in any::<u32>()) {
+        fn fp256_pow_test(ref fp1 in arb_fp12(), x in any::<u32>(), y in any::<u32>()) {
             //fp1^(x + y) == fp1^x * fp1^y
 
             let x = x as u64; //cast to avoid overflows
@@ -421,71 +429,8 @@ pub mod test {
 
             prop_assert_eq!(left, right);
         }
-
-        ///All of these are tests from field.rs
-        #[test]
-        fn prop_semigroup(a in arb_fp12(), b in arb_fp12(), c in arb_fp12()) {
-            prop_assert!(Field::prop_semigroup(a,b,c))
-        }
-        #[test]
-        fn prop_monoid_identity(a in arb_fp12()) {
-            prop_assert!(Field::prop_monoid_identity(a))
-        }
-        #[test]
-        fn prop_inv(a in arb_fp12(), b in arb_fp12()) {
-            prop_assert!(Field::prop_inv(a,b))
-        }
-        #[test]
-        fn prop_one_is_mul_identity(a in arb_fp12()) {
-            prop_assert!(Field::prop_one_is_mul_identity(a))
-        }
-        #[test]
-        fn prop_zero_is_add_identity(a in arb_fp12()) {
-            prop_assert!(Field::prop_zero_is_add_identity(a))
-        }
-        #[test]
-        fn prop_eq_reflexive(a in arb_fp12(), b in arb_fp12()) {
-            prop_assert!(Field::prop_eq_reflexive(a,b))
-        }
-        #[test]
-        fn prop_sub_same_as_neg_add(a in arb_fp12(), b in arb_fp12()) {
-            prop_assert!(Field::prop_sub_same_as_neg_add(a,b))
-        }
-        #[test]
-        fn prop_mul_distributive(a in arb_fp12(), b in arb_fp12(), c in arb_fp12()) {
-            prop_assert!(Field::prop_mul_distributive(a,b,c))
-        }
-        #[test]
-        fn prop_mul_assoc(a in arb_fp12(), b in arb_fp12(), c in arb_fp12()) {
-            prop_assert!(Field::prop_mul_assoc(a,b,c))
-        }
-        #[test]
-        fn prop_mul_commutative(a in arb_fp12(), b in arb_fp12(), c in arb_fp12()) {
-            prop_assert!(Field::prop_mul_commutative(a,b,c))
-        }
-        #[test]
-        fn prop_add_assoc(a in arb_fp12(), b in arb_fp12(), c in arb_fp12()) {
-            prop_assert!(Field::prop_add_assoc(a,b,c))
-        }
-        #[test]
-        fn prop_add_commutative(a in arb_fp12(), b in arb_fp12(), c in arb_fp12()) {
-            prop_assert!(Field::prop_add_commutative(a,b,c))
-        }
-        #[test]
-        fn prop_pow_is_mul(a in arb_fp12()) {
-            prop_assert!(Field::prop_pow_is_mul(a))
-        }
-        #[test]
-        fn prop_x_sub_y_eq_x_plus_y_mul_neg1(a in arb_fp12(), b in arb_fp12()) {
-            prop_assert!(Field::prop_x_sub_y_eq_x_plus_y_mul_neg1(a,b))
-        }
-        #[test]
-        fn prop_square_same_as_mul_self(a in arb_fp12()) {
-            prop_assert!(Field::prop_square_same_as_mul_self(a))
-        }
-        #[test]
-        fn prop_square2_same_as_pow4(a in arb_fp12()) {
-            prop_assert!(Field::prop_square2_same_as_pow4(a))
-        }
     }
+
+    field_proptest!(arb_fp12, fp256, fp12);
+    field_proptest!(arb_fp12_480, fp480, fp12);
 }

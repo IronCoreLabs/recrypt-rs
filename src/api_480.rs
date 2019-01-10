@@ -5,10 +5,10 @@ use crate::internal::curve;
 pub use crate::internal::ed25519::{
     Ed25519, Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair,
 };
-use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp12elem::Fp12Elem;
 pub use crate::internal::hashable::Hashable;
-use crate::internal::hashable::Hashable32;
+use crate::internal::hashable::Hashable60;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::pairing;
 pub use crate::internal::rand_bytes::*;
@@ -17,33 +17,34 @@ pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
-use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use rand;
 use std;
 use std::fmt;
 
-/// Recrypt public API - 256-bit
+/// Recrypt public API - 480-bit
+/// If you are looking better performance, you might consider the 256-bit API in `api.rs`
 #[derive(Debug)]
-pub struct Api<H, S, R> {
+pub struct Api480<H, S, R> {
     random_bytes: R,
     sha_256: H,
     ed25519: S,
-    pairing: internal::pairing::Pairing<Fp256>,
-    curve_points: &'static internal::curve::CurvePoints<Fp256>,
-    schnorr_signing: SchnorrSign<Fp256, Fr256, H>,
+    pairing: internal::pairing::Pairing<Fp480>,
+    curve_points: &'static internal::curve::CurvePoints<Fp480>,
+    schnorr_signing: SchnorrSign<Fp480, Fr480, H>,
 }
 
-impl Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
-    pub fn new() -> Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
-        Api::new_with_rand(rand::thread_rng())
+impl Api480<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+    pub fn new() -> Api480<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+        Api480::new_with_rand(rand::thread_rng())
     }
 }
-impl<CR: rand::CryptoRng + rand::RngCore> Api<Sha256, Ed25519, RandomBytes<CR>> {
-    pub fn new_with_rand(r: CR) -> Api<Sha256, Ed25519, RandomBytes<CR>> {
+impl<CR: rand::CryptoRng + rand::RngCore> Api480<Sha256, Ed25519, RandomBytes<CR>> {
+    pub fn new_with_rand(r: CR) -> Api480<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = pairing::Pairing::new();
-        let curve_points = &*curve::FP_256_CURVE_POINTS;
-        let schnorr_signing = internal::schnorr::SchnorrSign::<Fp256, Fr256, Sha256>::new_256();
-        Api {
+        let curve_points = &*curve::FP_480_CURVE_POINTS;
+        let schnorr_signing = internal::schnorr::SchnorrSign::<Fp480, Fr480, Sha256>::new_480();
+        Api480 {
             random_bytes: RandomBytes::new(r),
             sha_256: Sha256,
             ed25519: Ed25519,
@@ -63,7 +64,7 @@ new_bytes_type!(DerivedSymmetricKey, 32);
 new_bytes_type!(AuthHash, 32);
 
 /// Encrypted Plaintext (Fp12Elem)
-new_bytes_type!(EncryptedMessage, Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES);
+new_bytes_type!(EncryptedMessage, Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES);
 
 /// Not hashed, not encrypted Fp12Elem
 /// See DecryptedSymmetricKey and EncryptedMessage
@@ -71,17 +72,17 @@ new_bytes_type!(EncryptedMessage, Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES);
 // to avoid needless duplication
 pub struct Plaintext {
     bytes: [u8; Plaintext::ENCODED_SIZE_BYTES],
-    _internal_fp12: Fp12Elem<Fp256>,
+    _internal_fp12: Fp12Elem<Fp480>,
 }
 
 impl Plaintext {
-    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES;
 
     /// Construct a Plaintext from raw bytes
     pub fn new(bytes: [u8; Plaintext::ENCODED_SIZE_BYTES]) -> Plaintext {
         // since new takes a fixed size array, we know it is safe to decode the resultant vector
         Plaintext::from(
-            Fp12Elem::<Fp256>::decode(bytes.to_vec())
+            Fp12Elem::<Fp480>::decode(bytes.to_vec())
                 .expect("Developer error: did you change ENCODED_SIZE_BYTES?"),
         )
     }
@@ -92,7 +93,7 @@ impl Plaintext {
         &self.bytes
     }
 
-    pub(crate) fn internal_fp12(&self) -> &Fp12Elem<Fp256> {
+    pub(crate) fn internal_fp12(&self) -> &Fp12Elem<Fp480> {
         &self._internal_fp12
     }
 }
@@ -105,10 +106,10 @@ impl PartialEq for Plaintext {
     }
 }
 
-impl From<Fp12Elem<Fp256>> for Plaintext {
-    fn from(fp12: Fp12Elem<Fp256>) -> Self {
+impl From<Fp12Elem<Fp480>> for Plaintext {
+    fn from(fp12: Fp12Elem<Fp480>) -> Self {
         Plaintext {
-            bytes: fp12.to_bytes_fp256(),
+            bytes: fp12.to_bytes_fp480(),
             _internal_fp12: fp12,
         }
     }
@@ -129,7 +130,7 @@ impl Drop for Plaintext {
     }
 }
 impl BytesDecoder for Plaintext {
-    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES;
 
     fn decode(bytes: ByteVector) -> std::result::Result<Plaintext, DecodeErr> {
         Ok(Plaintext::from(Fp12Elem::decode(bytes)?))
@@ -153,7 +154,7 @@ pub struct TransformBlock {
     random_transform_public_key: PublicKey,
     /// encrypted temp key value. Used to go from the transformed value to the encrypted value
     encrypted_random_transform_temp_key: EncryptedTempKey,
-    _internal_re_block: internal::ReencryptionBlock<Fp256>,
+    _internal_re_block: internal::ReencryptionBlock<Fp480>,
 }
 
 impl TransformBlock {
@@ -189,7 +190,7 @@ impl TransformBlock {
         &self.encrypted_random_transform_temp_key
     }
 
-    fn try_from(re_block: internal::ReencryptionBlock<Fp256>) -> Result<Self> {
+    fn try_from(re_block: internal::ReencryptionBlock<Fp480>) -> Result<Self> {
         Ok(TransformBlock {
             public_key: PublicKey::try_from(&re_block.public_key)?,
             encrypted_temp_key: EncryptedTempKey::from_fp12(re_block.encrypted_temp_key),
@@ -237,9 +238,9 @@ pub enum EncryptedValue {
 
 impl EncryptedValue {
     fn try_from(
-        signed_value: internal::SignedValue<internal::EncryptedValue<Fp256>>,
+        signed_value: internal::SignedValue<internal::EncryptedValue<Fp480>>,
     ) -> Result<EncryptedValue> {
-        use crate::api::EncryptedValue as EncryptedValueP;
+        use crate::api_480::EncryptedValue as EncryptedValueP;
 
         match signed_value.payload {
             internal::EncryptedValue::EncryptedOnce(internal::EncryptedOnceValue {
@@ -249,7 +250,7 @@ impl EncryptedValue {
             }) => {
                 let result = EncryptedValueP::EncryptedOnceValue {
                     ephemeral_public_key: PublicKey::try_from(&ephemeral_public_key)?,
-                    encrypted_message: EncryptedMessage::new(encrypted_message.to_bytes_fp256()),
+                    encrypted_message: EncryptedMessage::new(encrypted_message.to_bytes_fp480()),
                     auth_hash: AuthHash::new(auth_hash.bytes),
                     public_signing_key: signed_value.public_signing_key,
                     signature: signed_value.signature,
@@ -273,7 +274,7 @@ impl EncryptedValue {
                         let result = EncryptedValueP::TransformedValue {
                             ephemeral_public_key: PublicKey::try_from(&ephemeral_public_key)?,
                             encrypted_message: EncryptedMessage::new(
-                                encrypted_message.to_bytes_fp256(),
+                                encrypted_message.to_bytes_fp480(),
                             ),
                             auth_hash: AuthHash::new(auth_hash.bytes),
                             transform_blocks: NonEmptyVec::new(good_first, good_rest),
@@ -296,7 +297,7 @@ impl EncryptedValue {
     fn try_into(
         ev: EncryptedValue,
     ) -> std::result::Result<
-        internal::SignedValue<internal::EncryptedValue<Fp256>>,
+        internal::SignedValue<internal::EncryptedValue<Fp480>>,
         internal::bytedecoder::DecodeErr,
     > {
         match ev {
@@ -310,8 +311,8 @@ impl EncryptedValue {
                 public_signing_key,
                 signature,
             } => {
-                let fp12 = Fp12Elem::<Fp256>::decode(encrypted_message.to_vec())?;
-                Ok(internal::SignedValue::<internal::EncryptedValue<Fp256>> {
+                let fp12 = Fp12Elem::<Fp480>::decode(encrypted_message.to_vec())?;
+                Ok(internal::SignedValue::<internal::EncryptedValue<Fp480>> {
                     public_signing_key,
                     signature,
                     payload: internal::EncryptedValue::EncryptedOnce(
@@ -336,14 +337,14 @@ impl EncryptedValue {
                 public_signing_key,
                 signature,
             } => {
-                let fp12 = Fp12Elem::<Fp256>::decode(encrypted_message.to_vec())?;
+                let fp12 = Fp12Elem::<Fp480>::decode(encrypted_message.to_vec())?;
                 let first_block = transform_blocks.first()._internal_re_block;
                 let rest_blocks = transform_blocks
                     .rest()
                     .iter()
                     .map(|tb| tb._internal_re_block)
                     .collect();
-                Ok(internal::SignedValue::<internal::EncryptedValue<Fp256>> {
+                Ok(internal::SignedValue::<internal::EncryptedValue<Fp480>> {
                     public_signing_key,
                     signature,
                     payload: internal::EncryptedValue::Reencrypted(internal::ReencryptedValue {
@@ -364,7 +365,7 @@ impl EncryptedValue {
 #[derive(Clone, Copy)]
 pub struct EncryptedTempKey {
     bytes: [u8; EncryptedTempKey::ENCODED_SIZE_BYTES],
-    _internal_fp12: Fp12Elem<Fp256>,
+    _internal_fp12: Fp12Elem<Fp480>,
 }
 
 impl Hashable for EncryptedTempKey {
@@ -374,17 +375,17 @@ impl Hashable for EncryptedTempKey {
 }
 
 impl EncryptedTempKey {
-    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES;
 
-    fn from_fp12(fp12: Fp12Elem<Fp256>) -> Self {
+    fn from_fp12(fp12: Fp12Elem<Fp480>) -> Self {
         EncryptedTempKey {
-            bytes: fp12.to_bytes_fp256(),
+            bytes: fp12.to_bytes_fp480(),
             _internal_fp12: fp12,
         }
     }
     pub fn new(bytes: [u8; EncryptedTempKey::ENCODED_SIZE_BYTES]) -> Self {
         EncryptedTempKey::from_fp12(
-            Fp12Elem::<Fp256>::decode(bytes.to_vec())
+            Fp12Elem::<Fp480>::decode(bytes.to_vec())
                 .expect("Developer error: did you change ENCODED_SIZE_BYTES?"),
         )
     }
@@ -408,7 +409,7 @@ impl PartialEq for EncryptedTempKey {
 #[derive(Clone, Copy)]
 pub struct HashedValue {
     bytes: [u8; HashedValue::ENCODED_SIZE_BYTES],
-    _internal_value: TwistedHPoint<Fp256>,
+    _internal_value: TwistedHPoint<Fp480>,
 }
 
 impl Hashable for HashedValue {
@@ -418,11 +419,11 @@ impl Hashable for HashedValue {
 }
 
 impl HashedValue {
-    const ENCODED_SIZE_BYTES: usize = TwistedHPoint::<Fp256>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = TwistedHPoint::<Fp480>::ENCODED_SIZE_BYTES;
 
     pub fn new(bytes: [u8; HashedValue::ENCODED_SIZE_BYTES]) -> Result<Self> {
         Ok(
-            TwistedHPoint::<Fp256>::decode(bytes.to_vec()).map(|hpoint| HashedValue {
+            TwistedHPoint::<Fp480>::decode(bytes.to_vec()).map(|hpoint| HashedValue {
                 bytes,
                 _internal_value: hpoint,
             })?,
@@ -453,8 +454,8 @@ impl PartialEq for HashedValue {
     }
 }
 
-impl From<TwistedHPoint<Fp256>> for HashedValue {
-    fn from(hp: TwistedHPoint<Fp256>) -> Self {
+impl From<TwistedHPoint<Fp480>> for HashedValue {
+    fn from(hp: TwistedHPoint<Fp480>) -> Self {
         // convert hashed_k to fixed array.
         // Assume the point is valid (on the curve, etc) since we're coming from internal types
         let src = &hp.to_bytes()[..];
@@ -485,7 +486,7 @@ pub struct TransformKey {
     hashed_temp_key: HashedValue,
     public_signing_key: PublicSigningKey,
     signature: Ed25519Signature,
-    _internal_key: internal::SignedValue<internal::ReencryptionKey<Fp256>>,
+    _internal_key: internal::SignedValue<internal::ReencryptionKey<Fp480>>,
 }
 
 impl Hashable for TransformKey {
@@ -521,7 +522,7 @@ impl TransformKey {
         &self.signature
     }
     fn try_from_internal(
-        re_key: internal::SignedValue<internal::ReencryptionKey<Fp256>>,
+        re_key: internal::SignedValue<internal::ReencryptionKey<Fp480>>,
     ) -> Result<TransformKey> {
         let result = TransformKey {
             ephemeral_public_key: PublicKey::try_from(&re_key.payload.re_public_key)?,
@@ -575,7 +576,7 @@ impl TransformKey {
         let new_internal = self
             ._internal_key
             .payload
-            .augment(&private_key.into(), &curve::FP_256_CURVE_POINTS.g1);
+            .augment(&private_key.into(), &curve::FP_480_CURVE_POINTS.g1);
         TransformKey::try_from_internal(internal::SignedValue {
             payload: new_internal,
             ..self._internal_key
@@ -612,7 +613,7 @@ pub trait SchnorrOps {
 }
 
 impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
-    for Api<H, S, RandomBytes<CR>>
+    for Api480<H, S, RandomBytes<CR>>
 {
     fn schnorr_sign<A: Hashable>(
         &mut self,
@@ -620,7 +621,7 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
         pub_key: PublicKey,
         message: &A,
     ) -> SchnorrSignature {
-        let k = Fr256::from_rand_no_bias(&mut self.random_bytes);
+        let k = Fr480::from_rand_no_bias(&mut self.random_bytes);
         self.schnorr_signing
             .sign(priv_key.into(), pub_key._internal_key, message, k)
             .unwrap() //The  curve we're using _cannot_ produce an x value which would be zero, so this can't happen
@@ -648,7 +649,7 @@ pub trait Ed25519Ops {
     fn generate_ed25519_key_pair(&mut self) -> SigningKeypair;
 }
 
-impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Api<H, S, RandomBytes<CR>> {
+impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Api480<H, S, RandomBytes<CR>> {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
     fn generate_ed25519_key_pair(&mut self) -> SigningKeypair {
@@ -689,7 +690,7 @@ pub trait KeyGenOps {
     ) -> Result<TransformKey>;
 }
 
-impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H, S, R> {
+impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api480<H, S, R> {
     fn compute_public_key(&self, private_key: &PrivateKey) -> Result<PublicKey> {
         let pub_key_internal = internal::public_keygen(
             internal::PrivateKey::from(private_key),
@@ -699,7 +700,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
     }
 
     fn random_private_key(&mut self) -> PrivateKey {
-        let rand_bytes = self.random_bytes.random_bytes_32();
+        let rand_bytes = self.random_bytes.random_bytes_60();
         PrivateKey::new(rand_bytes)
     }
 
@@ -737,11 +738,11 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
 pub trait CryptoOps {
     /// Using the random_bytes, generate a random element of G_T, which is one of the rth roots of unity in FP12.
     ///
-    /// What it means to be an rth root (for Fp256):
-    /// let curve_order = 6500054969564660373279643874235990574257040605390378638988106296904416679996; (this is "r" -- also defined as the prime for Fr256)
+    /// What it means to be an rth root (for Fp480):
+    /// let curve_order = 6500054969564660373279643874235990574257040605390378638988106296904416679996; (this is "r" -- also defined as the prime for Fr480)
     /// let rth_pow = plaintext.pow(curve_order);
     /// assert_eq!(rth_pow, Fp12Elem::one());
-    /// Note that this cannot be implemented here as we do not define a way to do: Fp12.pow(Fp256)
+    /// Note that this cannot be implemented here as we do not define a way to do: Fp12.pow(Fp480)
     fn gen_plaintext(&mut self) -> Plaintext;
 
     /// Convert our plaintext into a DecryptedSymmetricKey by hashing it.
@@ -794,7 +795,7 @@ pub trait CryptoOps {
     ) -> Result<EncryptedValue>;
 }
 
-impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H, S, R> {
+impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api480<H, S, R> {
     fn gen_plaintext(&mut self) -> Plaintext {
         let rand_fp12 = gen_random_fp12(&mut self.random_bytes);
         Plaintext::from(rand_fp12)
@@ -870,32 +871,62 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
     }
 }
 
-fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp256> {
+fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp480> {
     // generate 12 random Fp values
     internal::gen_rth_root(
         &pairing::Pairing::new(),
         Fp12Elem::create_from_t(
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
+            Fp480::from(random_bytes.random_bytes_60()),
         ),
     )
 }
 
+/// Wrapper around 60 byte array so what we can add Debug, Eq, etc
+#[derive(Clone, Copy)]
+struct SixtyBytes([u8; Fp480::ENCODED_SIZE_BYTES]);
+
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct PublicKey {
-    x: [u8; 32],
-    y: [u8; 32],
-    _internal_key: internal::PublicKey<Fp256>,
+    x: SixtyBytes,
+    y: SixtyBytes,
+    _internal_key: internal::PublicKey<Fp480>,
+}
+
+impl PartialEq for SixtyBytes {
+    fn eq(&self, other: &SixtyBytes) -> bool {
+        self.0[..] == other.0[..]
+    }
+}
+
+impl Eq for SixtyBytes {}
+
+impl fmt::Debug for SixtyBytes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.0.to_vec())
+    }
+}
+
+impl fmt::LowerHex for SixtyBytes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", hex::encode(self.0.to_vec()))
+    }
+}
+
+impl Default for SixtyBytes {
+    fn default() -> Self {
+        SixtyBytes([0u8; 60])
+    }
 }
 
 impl Hashable for PublicKey {
@@ -905,14 +936,14 @@ impl Hashable for PublicKey {
 }
 
 impl PublicKey {
-    pub const ENCODED_SIZE_BYTES: usize = Fp256::ENCODED_SIZE_BYTES * 2;
+    pub const ENCODED_SIZE_BYTES: usize = Fp480::ENCODED_SIZE_BYTES * 2;
 
-    fn try_from(internal_key: &internal::PublicKey<Fp256>) -> Result<PublicKey> {
+    fn try_from(internal_key: &internal::PublicKey<Fp480>) -> Result<PublicKey> {
         Ok(internal_key
-            .to_byte_vectors_32()
+            .to_byte_vectors_60()
             .map(|(x, y)| PublicKey {
-                x,
-                y,
+                x: SixtyBytes(x),
+                y: SixtyBytes(y),
                 _internal_key: *internal_key,
             })
             .ok_or_else(|| internal::homogeneouspoint::PointErr::ZeroPoint)?)
@@ -920,22 +951,22 @@ impl PublicKey {
 
     pub fn new(
         (x_bytes, y_bytes): (
-            [u8; Fp256::ENCODED_SIZE_BYTES],
-            [u8; Fp256::ENCODED_SIZE_BYTES],
+            [u8; Fp480::ENCODED_SIZE_BYTES],
+            [u8; Fp480::ENCODED_SIZE_BYTES],
         ),
     ) -> Result<PublicKey> {
-        let x = Fp256::from(x_bytes);
-        let y = Fp256::from(y_bytes);
+        let x = Fp480::from(x_bytes);
+        let y = Fp480::from(y_bytes);
         let i_pk = internal::PublicKey::from_x_y(x, y)?;
         PublicKey::try_from(&i_pk)
     }
 
     pub fn new_from_slice(bytes: (&[u8], &[u8])) -> Result<Self> {
-        if bytes.0.len() == Fp256::ENCODED_SIZE_BYTES && bytes.1.len() == Fp256::ENCODED_SIZE_BYTES
+        if bytes.0.len() == Fp480::ENCODED_SIZE_BYTES && bytes.1.len() == Fp480::ENCODED_SIZE_BYTES
         {
-            let mut x_dest = [0u8; Fp256::ENCODED_SIZE_BYTES];
+            let mut x_dest = [0u8; Fp480::ENCODED_SIZE_BYTES];
             x_dest.copy_from_slice(bytes.0);
-            let mut y_dest = [0u8; Fp256::ENCODED_SIZE_BYTES];
+            let mut y_dest = [0u8; Fp480::ENCODED_SIZE_BYTES];
             y_dest.copy_from_slice(bytes.1);
 
             Ok(PublicKey::new((x_dest, y_dest))?)
@@ -946,8 +977,13 @@ impl PublicKey {
             ))
         }
     }
-    pub fn bytes_x_y(&self) -> (&[u8; 32], &[u8; 32]) {
-        (&self.x, &self.y)
+    pub fn bytes_x_y(
+        &self,
+    ) -> (
+        &[u8; Fp480::ENCODED_SIZE_BYTES],
+        &[u8; Fp480::ENCODED_SIZE_BYTES],
+    ) {
+        (&self.x.0, &self.y.0)
     }
 
     ///Augment the PublicKey so that messages encrypted to that key cannot be decrypted by this PublicKey's PrivateKey.
@@ -962,38 +998,43 @@ impl PublicKey {
 
 #[derive(Eq, PartialEq, Default, Debug)]
 pub struct PrivateKey {
-    bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES],
-    _internal_key: internal::PrivateKey<Fp256>,
+    bytes: SixtyBytes,
+    _internal_key: internal::PrivateKey<Fp480>,
 }
 
 impl PrivateKey {
-    const ENCODED_SIZE_BYTES: usize = Fp256::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Fp480::ENCODED_SIZE_BYTES;
 
     pub fn bytes(&self) -> &[u8; PrivateKey::ENCODED_SIZE_BYTES] {
-        &self.bytes
+        &self.bytes.0
     }
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
-        let internal_key = internal::PrivateKey::from_fp256(Fp256::from(bytes));
+        let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes));
         PrivateKey {
-            bytes: internal_key.value.to_bytes_32(),
+            bytes: SixtyBytes(internal_key.value.to_bytes_60()),
             _internal_key: internal_key,
         }
     }
 
     new_from_slice!(PrivateKey);
 }
-
-impl Hashable32 for PrivateKey {
-    fn to_bytes_32(&self) -> [u8; 32] {
-        self.bytes
+impl Hashable60 for PrivateKey {
+    fn to_bytes_60(&self) -> [u8; 60] {
+        self.bytes.0
     }
 }
 
-impl From<internal::PrivateKey<Fp256>> for PrivateKey {
-    fn from(internal_pk: internal::PrivateKey<Fp256>) -> Self {
+impl Hashable for PrivateKey {
+    fn to_bytes(&self) -> Vec<u8> {
+        self.to_bytes_60().to_vec()
+    }
+}
+
+impl From<internal::PrivateKey<Fp480>> for PrivateKey {
+    fn from(internal_pk: internal::PrivateKey<Fp480>) -> Self {
         PrivateKey {
-            bytes: internal_pk.value.to_bytes_32(),
+            bytes: SixtyBytes(internal_pk.value.to_bytes_60()),
             _internal_key: internal_pk,
         }
     }
@@ -1006,21 +1047,21 @@ impl Drop for PrivateKey {
         self._internal_key.clear()
     }
 }
-new_bytes_type!(SchnorrSignature, 64);
+new_bytes_type!(SchnorrSignature, 120);
 
-impl From<internal::schnorr::SchnorrSignature<Fr256>> for SchnorrSignature {
-    fn from(internal: internal::schnorr::SchnorrSignature<Fr256>) -> Self {
-        SchnorrSignature::new(internal::array_concat_32(
-            &internal.r().to_bytes_32(),
-            &internal.s().to_bytes_32(),
+impl From<internal::schnorr::SchnorrSignature<Fr480>> for SchnorrSignature {
+    fn from(internal: internal::schnorr::SchnorrSignature<Fr480>) -> Self {
+        SchnorrSignature::new(internal::array_concat_60(
+            &internal.r().to_bytes_60(),
+            &internal.s().to_bytes_60(),
         ))
     }
 }
 
-impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr256> {
+impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr480> {
     fn from(sig: SchnorrSignature) -> Self {
-        let (r_bytes, s_bytes) = internal::array_split_64(&sig.bytes);
-        internal::schnorr::SchnorrSignature::new(Fr256::from(r_bytes), Fr256::from(s_bytes))
+        let (r_bytes, s_bytes) = internal::array_split_120(&sig.bytes);
+        internal::schnorr::SchnorrSignature::new(Fr480::from(r_bytes), Fr480::from(s_bytes))
     }
 }
 
@@ -1028,7 +1069,7 @@ impl From<SchnorrSignature> for internal::schnorr::SchnorrSignature<Fr256> {
 pub(crate) mod test {
     use super::*;
     use crate::internal::ed25519;
-    use crate::internal::fp::fp256_unsafe_from;
+    use crate::internal::fp::fp480_unsafe_from;
     use hex;
     use rand_chacha;
 
@@ -1056,28 +1097,28 @@ pub(crate) mod test {
         }
 
         fn random_bytes_60(&mut self) -> [u8; 60] {
-            unimplemented!() //not needed for Fp256
+            [std::u8::MAX; 60]
         }
     }
 
     fn api_with<R: RandomBytesGen + Default, S: Ed25519Signing>(
         random_bytes: Option<R>,
         ed25519: S,
-    ) -> Api<Sha256, S, R> {
-        let api = Api::new();
-        Api {
+    ) -> Api480<Sha256, S, R> {
+        let api = Api480::new();
+        Api480 {
             random_bytes: random_bytes.unwrap_or_default(),
             sha_256: api.sha_256,
             ed25519,
             pairing: api.pairing,
             curve_points: api.curve_points,
-            schnorr_signing: internal::schnorr::SchnorrSign::<Fp256, Fr256, Sha256>::new_256(),
+            schnorr_signing: internal::schnorr::SchnorrSign::<Fp480, Fr480, Sha256>::new_480(),
         }
     }
 
     #[test]
     fn schnorr_signing_roundtrip_augmented() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let (aug_private_key, aug_pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8];
@@ -1088,7 +1129,7 @@ pub(crate) mod test {
     }
     #[test]
     fn schnorr_signing_roundtrip_unaugmented() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8, 3u8, 4u8];
         let sig = api.schnorr_sign(&private_key, pub_key, &message);
@@ -1098,7 +1139,7 @@ pub(crate) mod test {
 
     #[test]
     fn public_key_roundtrip_with_internal() {
-        let (_, pub_key_api) = Api::new().generate_key_pair().unwrap();
+        let (_, pub_key_api) = Api480::new().generate_key_pair().unwrap();
 
         let internal_pk = pub_key_api._internal_key;
         let roundtrip = PublicKey::try_from(&internal_pk).unwrap();
@@ -1108,9 +1149,9 @@ pub(crate) mod test {
 
     #[test]
     fn private_key_roundtrip_with_internal() {
-        let (priv_key_api, _) = Api::new().generate_key_pair().unwrap();
+        let (priv_key_api, _) = Api480::new().generate_key_pair().unwrap();
 
-        let internal_pk = internal::PrivateKey::<Fp256>::from(&priv_key_api);
+        let internal_pk = internal::PrivateKey::<Fp480>::from(&priv_key_api);
         let roundtrip = PrivateKey::from(internal_pk);
 
         assert_eq!(priv_key_api, roundtrip);
@@ -1119,36 +1160,10 @@ pub(crate) mod test {
 
     #[test]
     fn gen_plaintext_len() {
-        let api = &mut Api::new();
+        let api = &mut Api480::new();
 
         let result = api.gen_plaintext();
-        assert_eq!(Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES, result.bytes.len());
-    }
-
-    #[test]
-    fn test_compute_public_key() {
-        let api = &mut Api::new();
-        //37777967648492203239675772600961898148040325589588086812374811831221462604944
-        let parsed_priv_key =
-            fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90");
-        let private_key = &PrivateKey::new(parsed_priv_key.to_bytes_32());
-
-        //56377452267431283559088187378398270325210563762492926393848580098576649271541
-        let parsed_pub_key_x =
-            fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5");
-        //46643694276241842996939080253335644316475473619096522181405937227991761798154
-        let parsed_pub_key_y =
-            fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a");
-        let public_key_expected = PublicKey::try_from(
-            &internal::PublicKey::from_x_y(parsed_pub_key_x, parsed_pub_key_y).unwrap(),
-        )
-        .unwrap();
-
-        let computed_pub_key = api
-            .compute_public_key(private_key)
-            .expect("compute_public_key FAILED");
-        assert_eq!(computed_pub_key, public_key_expected);
-        let _computed_pub_key2 = api.compute_public_key(private_key); //second invocation to prove move semantics
+        assert_eq!(Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES, result.bytes.len());
     }
 
     #[test]
@@ -1156,10 +1171,8 @@ pub(crate) mod test {
         let mut api = api_with(Some(DummyRandomBytes), DummyEd25519);
         let (_, pub_key) = api.generate_key_pair().unwrap();
         let internal_pk = internal::PublicKey::from_x_y(
-            //58483620629232886210555514960799664032881966270053836377116209031946678864174
-            fp256_unsafe_from("814c8e65863238dbd86f9fbdbe8f166e536140343b7f3c22e79c82b8af70892e"),
-            //39604663823550822619127054070927331080305575010367415285113646212320556073913
-            fp256_unsafe_from("578f72028091b2efa1c946c4caf9e883c9e8d3311e23050f560672795a7dc3b9"),
+            fp480_unsafe_from("b4ba49325c3450b8fe080cf8617223b9c40fe9e45e522ccc198df68b68fb937ceb2eb976fb74e9b531853ac1a68c32c000b3696673b09553914d6d98"),
+            fp480_unsafe_from("7781287474854f030c553e5ade3511659ec9969743d28b91d1322a8b798297127b26f7ad3b3314cfa79b7b0bfedb050df5773b96e2a1fffceab2b3fd"),
         )
         .unwrap();
         let expected_pub_key = PublicKey::try_from(&internal_pk).unwrap();
@@ -1176,16 +1189,16 @@ pub(crate) mod test {
     struct TestZeroBytes;
     impl RandomBytesGen for TestZeroBytes {
         fn random_bytes_32(&mut self) -> [u8; 32] {
-            [0u8; 32]
+            unimplemented!() // not needed for 480
         }
 
         fn random_bytes_60(&mut self) -> [u8; 60] {
-            unimplemented!() // not needed for Fp256
+            [0u8; 60]
         }
     }
 
     fn good_transform_key() -> TransformKey {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let signing_key = ed25519::test::good_signing_keypair();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
         api.generate_transform_key(&master_priv, master_pub, &signing_key)
@@ -1198,7 +1211,7 @@ pub(crate) mod test {
         let hashedvalue = tk.hashed_temp_key;
         assert_eq!(
             tk._internal_key.payload.hashed_k,
-            TwistedHPoint::<Fp256>::decode(hashedvalue.bytes.to_vec()).unwrap()
+            TwistedHPoint::<Fp480>::decode(hashedvalue.bytes.to_vec()).unwrap()
         )
     }
 
@@ -1214,7 +1227,7 @@ pub(crate) mod test {
 
     #[test]
     fn roundtrip_transform_block() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let pub_key1 = api.generate_key_pair().unwrap().1;
         let pub_key2 = api.generate_key_pair().unwrap().1;
         let ee1 = EncryptedTempKey::new(api.gen_plaintext().bytes);
@@ -1228,28 +1241,9 @@ pub(crate) mod test {
     }
 
     #[test]
-    fn decrypt_known_value() -> Result<()> {
-        let expected_pt = Plaintext::new_from_slice(&hex::decode("3e0348980131e4db298445c3ef424ad60ebfa816069689be559f5ffeecf5e635201172f1bc931833b431a8d7a118e90d516de84e6e4de2f3105695b7699104ee18dd4598f93417ed736b40515a4817499a748be1bf126c132a8a4e8da83780a9054d6e1de22e21e446dbaa3a121d103fdf813a31afac09881beb0a3ae974ffdd537049eea02dade975525c720d152c87b4f0e76645c4cf46ee0e731378ad5c5d12630a32d0610c52c3c56fc0d7666ad6464adeca698a2ee4c44666c05d2e58154b961a595a445b156ce0bdd3e13ffa5b296e8c364aecec6208a0aa54cdea40455032a11458b08d143a51013dcdb8febd01bd93966bff2fc8bbd121efc19fedcb576d82e70838f8f987c5cb887a857d4a6d68c8bbf9196d72b98bea0a62d3fda109a46c28c6d87851223f38712226ba8a5c36197ee016baa27051c398a95c184820e6493c972f7e53936a2abd9c22483d3595fee87ad2a2771af0cc847548bc233f258d4bf77df8265b566ef54c288ad3a8034d18b3af4cb1d71b2da649200fa1")?)?;
-        let encrypted = EncryptedValue::EncryptedOnceValue{
-                ephemeral_public_key: PublicKey::new_from_slice((&hex::decode("7013008e19061384a3e6ba1f1a98834cb787b671a0fe181c3adeae15e24c0bba").unwrap(), &hex::decode("3165123233dc537c870673495c7db71239a51647d29113a0d3f5f99eea8de513").unwrap()))?,
-                encrypted_message: EncryptedMessage::new_from_slice(&hex::decode("2aab5397ef54cd3ea6f3ea3313df53059a47fb35786fb9374dda260af183d0150b062c9ee31feded7c2f966c5323d51954c382c583bb14123ad220c7d1457f7e849e95a28f434df3406561c303084644c6a950218996f871a45e0ebf842d65e828ce3bb04067bc7674edee95b0f697764d546ec760c416c390b869bc18c458c7867fee841d6c50f85a4db4591a4a95b7fbabc2add2f09e4a574d3c21f54b8846247ba2ec7373db45a86df589dd1b5cb5e9178aa14502877fb12d243626081ebd7eb4d501bb9da3d21ba1b4b779d4ffdd468f25e8c2f0cbecca3cd4e0c5960ab55471e42a6183714da09cfc0e70c8bd4ea720618a077c296b4744dfdf898bc95016f5d38e776d750b51da8fc98ef68894f7087730ad7e60d23062c8f216bfc4293c10d1d966203601db3db27eaa50afab06ab1eba9e9bb1f8b8ebc42cf01c73284f0861aab05d492c7d98137a1dcacdca45b277fcb51f665690e21a5549758b0c3654e38745c39c17b953ebfd66e685153a6b6aae1ac2a87f866896bda8d14012")?)?,
-                auth_hash: AuthHash::new_from_slice(&hex::decode("334bad3490633ebb346fb22a628356f19c299b2be90e5efe0ec344039662c307")?)?,
-                public_signing_key: PublicSigningKey::new_from_slice(&hex::decode("7ada8837de936ec230afd05b73a378987784534d731ba35f68ecb777846232ab")?)?,
-                signature: Ed25519Signature::new_from_slice(&hex::decode("312901e121e0637eb0814b1411ec6772147d5ab2063ae781ec2f227748059ac5d892a6eed7c66e1638649903fe3ecbb9c2b5674e87e9b9c39009a175f2177e0f")?)?,
-            };
-        let priv_key = PrivateKey::new_from_slice(&hex::decode(
-            "3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea",
-        )?)?;
-        let api = Api::new();
-        let pt = api.decrypt(encrypted, &priv_key)?;
-        assert_eq!(pt, expected_pt);
-        Ok(())
-    }
-
-    #[test]
     fn encrypt_decrypt_roundtrip() -> Result<()> {
         use rand::SeedableRng;
-        let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
+        let mut api = Api480::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
         let pt = api.gen_plaintext();
         let (priv_key, pub_key) = api.generate_key_pair().unwrap();
         let priv_signing_key = api.generate_ed25519_key_pair();
@@ -1261,19 +1255,6 @@ pub(crate) mod test {
         // compare the bytes as a vec as Plaintext and [u8; 384] don't define Eq
         assert_eq!(pt.bytes.to_vec(), decrypted_val.bytes.to_vec());
         Ok(())
-    }
-
-    #[test]
-    fn derive_known_symmetric_key() {
-        let bytes = hex::decode("28c0f558c02d983d7c652f16acbe91a566ac420fe02e41cf6d4f09a107f75cf76b6776ebb53365100ebeb7fa332995ae7bdddf0779fe79e1f43d5c51a73ced0a8cf5789804a79960ccf1a64bd55a923f4786d31ec06bf33e739254016d077b838e739f85586087e52ab659471df3904035e5e1f7ad6ac7b9f9dba6daf39e3f882b583e309c03e35ae7dfd4ed063b6c226bb3338627772e4c9a556fee7f3f96030ae1e265654fc322015a1c2d50eb273cd8b0e1e0353e6b09749343b5fe72ae2f302bebc527aca6ec465a95c4b41efe174eb5165993a30a922434a6f45cbafda201d6540bf2202c65751c90e4cd87e1b690997d9cd23474ef9ace4def3f17cbdd648c8545eaceb3f28c166f720fd8dd87b47523c55a52e32f8c1595a586763276411e8bd4400fac41234277cc560e919f76b21d757cda7c253078927e75482ee2759b222bf4fb070ab3032c9556a069d754efc3c0e63533311b29334108a5121a7e4018782324bf2c1517b6fe4df7a1bbb34c985c6d0796ff1e18ed80fd78d402").unwrap();
-        let pt = Plaintext::from(Fp12Elem::decode(bytes).unwrap());
-        let src = &hex::decode("0e62a3e388cb0ca3279792353f7fcad75acf180d430a5c69e0a68be96520f454")
-            .unwrap()[..];
-        let mut dest: [u8; 32] = [0u8; 32];
-        dest.copy_from_slice(src);
-        let expected_result = DerivedSymmetricKey::new(dest);
-        let result = Api::new().derive_symmetric_key(&pt);
-        assert_eq!(expected_result, result)
     }
 
     use std::default::Default;
@@ -1318,7 +1299,7 @@ pub(crate) mod test {
 
     #[test]
     fn encrypt_decrypt_roundtrip_augmented_keys() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let signing_key = api.generate_ed25519_key_pair();
         let pt = api.gen_plaintext();
         let (master_private_key, client_generated_pub) = api.generate_key_pair().unwrap();
@@ -1384,29 +1365,6 @@ pub(crate) mod test {
     }
 
     #[test]
-    fn generate_ed25519_key_pair() {
-        use rand::SeedableRng;
-        let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
-        let signing_keypair = api.generate_ed25519_key_pair();
-        let expected_signing_keypair = SigningKeypair::new_unchecked([
-            118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
-            25, 184, 160, 141, 237, 26, 168, 54, 239, 204, 139, 119, 13, 199, 32, 253, 186, 201,
-            177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150, 215, 30, 78, 212,
-            76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
-        ]);
-        let expected_pub = PublicSigningKey::new([
-            32, 253, 186, 201, 177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150,
-            215, 30, 78, 212, 76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
-        ]);
-        assert_eq!(signing_keypair, expected_signing_keypair);
-        assert_eq!(signing_keypair.public_key(), expected_pub);
-
-        //Assert that the generation doesn't just return the same value.
-        let keypair_two = api.generate_ed25519_key_pair();
-        assert_ne!(keypair_two, expected_signing_keypair);
-        assert_ne!(keypair_two.public_key(), expected_pub);
-    }
-    #[test]
     //written against AuthHash, but valid for all types generated from that macro
     fn new_byte_type_from_slice() {
         let input: [u8; 32] = [42u8; 32];
@@ -1424,7 +1382,7 @@ pub(crate) mod test {
 
     #[test]
     fn hashedvalue_new_from_slice() {
-        let input: [u8; 128] = good_transform_key().hashed_temp_key.bytes;
+        let input: [u8; 240] = good_transform_key().hashed_temp_key.bytes;
         let slice: &[u8] = &input;
         let hv_from_fixed = HashedValue::new(input);
         let hv_from_slice = HashedValue::new_from_slice(slice);
@@ -1432,15 +1390,15 @@ pub(crate) mod test {
         assert_eq!(hv_from_fixed.unwrap(), hv_from_slice.unwrap());
 
         assert_eq!(
-            ApiErr::InputWrongSize("HashedValue", 128),
+            ApiErr::InputWrongSize("HashedValue", 240),
             HashedValue::new_from_slice(&input[..30]).unwrap_err()
         )
     }
     #[test]
     fn publickey_new_from_slice() {
-        let mut api = Api::new();
+        let mut api = Api480::new();
         let (_, pk1) = api.generate_key_pair().unwrap();
-        let input: ([u8; 32], [u8; 32]) = (pk1.x, pk1.y);
+        let input = (pk1.x.0, pk1.y.0);
         let slice: (&[u8], &[u8]) = (&input.0, &input.1);
         let pk_from_fixed = PublicKey::new(input);
         let pk_from_slice = PublicKey::new_from_slice(slice);
@@ -1448,7 +1406,7 @@ pub(crate) mod test {
         assert_eq!(pk_from_fixed.unwrap(), pk_from_slice.unwrap());
 
         assert_eq!(
-            ApiErr::InputWrongSize("PublicKey", 64),
+            ApiErr::InputWrongSize("PublicKey", 120),
             PublicKey::new_from_slice((&input.0[..30], &input.1[..32])).unwrap_err()
         )
     }
@@ -1456,9 +1414,9 @@ pub(crate) mod test {
     // note that this doesn't show that Drop is working properly, just that clear does
     #[test]
     fn private_key_clear() {
-        let (mut priv_key, _) = Api::new().generate_key_pair().unwrap();
+        let (mut priv_key, _) = Api480::new().generate_key_pair().unwrap();
         priv_key.clear();
-        assert_eq!(priv_key.bytes(), &[0u8; 32]);
+        assert_eq!(SixtyBytes(priv_key.bytes().clone()), SixtyBytes([0u8; 60]));
         assert_eq!(priv_key._internal_key, Default::default())
     }
 }

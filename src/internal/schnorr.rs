@@ -1,7 +1,8 @@
 use crate::internal::array_concat_32;
 use crate::internal::bit_repr::BitRepr;
-use crate::internal::curve::FP_256_CURVE_POINTS;
+use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
 use crate::internal::fp::fr_256::Fr256;
+use crate::internal::fp::fr_480::Fr480;
 use crate::internal::hashable::Hashable;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::sha256::Sha256;
@@ -9,11 +10,12 @@ use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
 use gridiron::digits::constant_time_primitives::ConstantSwap;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480::Fp480;
 use std::marker::PhantomData;
 
-///- r is the x coordinate for a point on the elliptic curve.
-///- s is the signature.
-///These names are choosen because it's common terminology when working in `EC-Schnorr` algorithms.
+/// `r` - the x coordinate for a point on the elliptic curve.
+/// `s` - the signature.
+/// These names are chosen because it's common terminology when working in `EC-Schnorr` algorithms.
 #[derive(Debug, PartialEq, Eq)]
 pub struct SchnorrSignature<T> {
     r: T,
@@ -46,6 +48,16 @@ impl SchnorrSign<Fp256, Fr256, Sha256> {
             sha256: Sha256,
             g: FP_256_CURVE_POINTS.generator,
             phantom: PhantomData::<Fr256>,
+        }
+    }
+}
+
+impl SchnorrSign<Fp480, Fr480, Sha256> {
+    pub fn new_480() -> SchnorrSign<Fp480, Fr480, Sha256> {
+        SchnorrSign {
+            sha256: Sha256,
+            g: FP_480_CURVE_POINTS.generator,
+            phantom: PhantomData::<Fr480>,
         }
     }
 }
