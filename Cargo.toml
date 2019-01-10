@@ -33,7 +33,6 @@ debug = true
 [profile.test]
 opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
 debug = true
-lto = false
 
 [profile.release]
 opt-level = 3
