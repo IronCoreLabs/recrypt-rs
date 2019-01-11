@@ -148,15 +148,9 @@ where
 {
     type Output = HomogeneousPoint<T>;
     fn neg(self) -> HomogeneousPoint<T> {
-        if self.is_zero() {
-            Zero::zero()
-        } else {
-            let neg_y: T = -self.y;
-            HomogeneousPoint::<T> {
-                x: self.x,
-                y: neg_y,
-                z: self.z,
-            }
+        HomogeneousPoint::<T> {
+            y: -self.y,
+            ..self
         }
     }
 }
@@ -352,15 +346,9 @@ where
 {
     type Output = TwistedHPoint<T>;
     fn neg(self) -> TwistedHPoint<T> {
-        if self.is_zero() {
-            Zero::zero()
-        } else {
-            let neg_y: Fp2Elem<T> = -self.y;
-            TwistedHPoint::<T> {
-                x: self.x,
-                y: neg_y,
-                z: self.z,
-            }
+        TwistedHPoint::<T> {
+            y: -self.y,
+            ..self
         }
     }
 }
