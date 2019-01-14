@@ -148,10 +148,7 @@ where
 {
     type Output = HomogeneousPoint<T>;
     fn neg(self) -> HomogeneousPoint<T> {
-        HomogeneousPoint::<T> {
-            y: -self.y,
-            ..self
-        }
+        HomogeneousPoint::<T> { y: -self.y, ..self }
     }
 }
 
@@ -346,10 +343,7 @@ where
 {
     type Output = TwistedHPoint<T>;
     fn neg(self) -> TwistedHPoint<T> {
-        TwistedHPoint::<T> {
-            y: -self.y,
-            ..self
-        }
+        TwistedHPoint::<T> { y: -self.y, ..self }
     }
 }
 
