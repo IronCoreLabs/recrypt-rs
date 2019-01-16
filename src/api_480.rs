@@ -392,8 +392,6 @@ impl EncryptedTempKey {
 
 bytes_only_debug!(EncryptedTempKey);
 
-
-
 /// A combination of the hash of `EncryptedTempKey` and the `PrivateKey` of the delegator.
 /// Used to recover the plaintext from an `EncryptedTempKey`
 #[derive(Clone, Copy)]
@@ -889,8 +887,6 @@ pub struct PublicKey {
     _internal_key: internal::PublicKey<Fp480>,
 }
 
-
-
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.0.to_vec())
@@ -1066,14 +1062,14 @@ pub(crate) mod test {
         }
     }
     impl PartialEq for EncryptedTempKey {
-    fn eq(&self, other: &EncryptedTempKey) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+        fn eq(&self, other: &EncryptedTempKey) -> bool {
+            self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+        }
     }
-}
     impl PartialEq for SixtyBytes {
-    fn eq(&self, other: &SixtyBytes) -> bool {
-        self.0[..] == other.0[..]
-    }
+        fn eq(&self, other: &SixtyBytes) -> bool {
+            self.0[..] == other.0[..]
+        }
     }
 
     impl Eq for SixtyBytes {}
