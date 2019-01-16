@@ -98,13 +98,14 @@ where
     }
 }
 
-impl<T> Mul<u64> for Fp6Elem<T>
+///This is not constant time. It reveals the u32, but not the Fp6 itself.
+impl<T> Mul<u32> for Fp6Elem<T>
 where
     T: Copy + Add<Output = T> + Zero + PartialEq,
 {
     type Output = Fp6Elem<T>;
 
-    fn mul(self, other: u64) -> Self {
+    fn mul(self, other: u32) -> Self {
         sum_n(self, other)
     }
 }
@@ -237,12 +238,13 @@ where
     }
 }
 
-impl<T> Pow<u64> for Fp6Elem<T>
+///This is not constant time. It reveals the u32, but not the fp6 itself.
+impl<T> Pow<u32> for Fp6Elem<T>
 where
     T: ExtensionField,
 {
     type Output = Fp6Elem<T>;
-    fn pow(self, rhs: u64) -> Self {
+    fn pow(self, rhs: u32) -> Self {
         pow_for_square(self, rhs)
     }
 }
@@ -468,8 +470,8 @@ pub mod test {
         fn pow_test_1(ref fp1 in arb_fp6(), x in any::<u32>(), y in any::<u32>()) {
             //fp1^(x + y) == fp1^x * fp1^y
 
-            let x = x as u64; //cast to avoid overflows
-            let y = y as u64;
+            let x = x & 0x7FFFFFFF; //mask to avoid overflows
+            let y = y >> 1;
             let left = fp1.pow(x + y);
             let right = fp1.pow(x) * fp1.pow(y);
 

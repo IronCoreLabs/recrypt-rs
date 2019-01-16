@@ -19,9 +19,9 @@ pub trait Field:
     + Add<Output = Self>
     + Mul<Output = Self>
     + Div<Output = Self>
-    + Mul<u64, Output = Self>
+    + Mul<u32, Output = Self>
     + Inv<Output = Self>
-    + Pow<u64, Output = Self>
+    + Pow<u32, Output = Self>
     + Sub<Output = Self>
 {
     fn prop_semigroup(a: Self, b: Self, c: Self) -> bool {

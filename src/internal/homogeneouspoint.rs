@@ -204,7 +204,7 @@ pub trait Double {
 
 impl<T: Field> Double for HomogeneousPoint<T> {
     fn double(&self) -> HomogeneousPoint<T> {
-        let (x, y, z) = double(self.x, self.y, self.z, 9u64);
+        let (x, y, z) = double(self.x, self.y, self.z, 9);
         HomogeneousPoint { x, y, z }
     }
 }
@@ -479,10 +479,10 @@ where
     let y_squared = y.pow(2);
     let z_squared = z.pow(2);
     let three_b_times_z_squared = z_squared * three_b;
-    let eight_times_y_squared = y_squared * 8u64; // 8Y^2
-    let m1 = y_squared - (three_b_times_z_squared * 3u64); // Y^2 - 9bZ^2
+    let eight_times_y_squared = y_squared * 8; // 8Y^2
+    let m1 = y_squared - (three_b_times_z_squared * 3); // Y^2 - 9bZ^2
     let m2 = y_squared + three_b_times_z_squared; // Y^2 + 3bZ^2
-    let x3 = x * y * m1 * 2u64;
+    let x3 = x * y * m1 * 2;
     let y3 = m1 * m2 + three_b_times_z_squared * eight_times_y_squared;
     let z3 = eight_times_y_squared * y * z;
     (x3, y3, z3)
@@ -624,8 +624,8 @@ pub mod test {
 
             #[test]
             fn add_equals_mult(a in $arb_homogeneous()) {
-                prop_assert!(a + a == a * $fp::from(2u64));
-                prop_assert!(a + a + a == a * $fp::from(3u64));
+                prop_assert!(a + a == a * $fp::from(2u32));
+                prop_assert!(a + a + a == a * $fp::from(3u32));
             }
 
             #[test]
@@ -668,9 +668,9 @@ pub mod test {
             #[test]
             fn twisted_add_equals_mult(a in $arb_homogeneous_fp2()) {
                 let added = a + a;
-                prop_assert_eq!(added.normalize(),  (a * $fp::from(2u64)).normalize());
-                prop_assert!(a + a == a * $fp::from(2u64));
-                prop_assert!(a + a + a == a * $fp::from(3u64));
+                prop_assert_eq!(added.normalize(),  (a * $fp::from(2u32)).normalize());
+                prop_assert!(a + a == a * $fp::from(2u32));
+                prop_assert!(a + a + a == a * $fp::from(3u32));
             }
 
             #[test]

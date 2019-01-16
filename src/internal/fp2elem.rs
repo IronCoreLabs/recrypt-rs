@@ -86,13 +86,14 @@ where
     }
 }
 
-impl<T> Mul<u64> for Fp2Elem<T>
+///This is not constant time. It reveals the u32, but not the point itself.
+impl<T> Mul<u32> for Fp2Elem<T>
 where
-    T: Mul<u64, Output = T>,
+    T: Mul<u32, Output = T>,
 {
     type Output = Fp2Elem<T>;
 
-    fn mul(self, other: u64) -> Self {
+    fn mul(self, other: u32) -> Self {
         Fp2Elem {
             elem1: self.elem1 * other,
             elem2: self.elem2 * other,
@@ -102,15 +103,7 @@ where
 
 impl<T> Div<Fp2Elem<T>> for Fp2Elem<T>
 where
-    T: Mul<Output = T>
-        + Inv<Output = T>
-        + Sub<Output = T>
-        + Add<Output = T>
-        + Pow<u64, Output = T>
-        + Add<Output = T>
-        + Neg<Output = T>
-        + Div<Output = T>
-        + Copy,
+    T: Field,
 {
     type Output = Fp2Elem<T>;
     fn div(self, other: Fp2Elem<T>) -> Self {
@@ -168,7 +161,7 @@ where
 
 impl<T> Inv for Fp2Elem<T>
 where
-    T: Pow<u64, Output = T> + Add<Output = T> + Neg<Output = T> + Div<Output = T> + Copy,
+    T: Pow<u32, Output = T> + Add<Output = T> + Neg<Output = T> + Div<Output = T> + Copy,
 {
     type Output = Fp2Elem<T>;
     fn inv(self) -> Fp2Elem<T> {
@@ -180,12 +173,13 @@ where
     }
 }
 
-impl<T> Pow<u64> for Fp2Elem<T>
+///This is not constant time. It reveals the u32, but not the point itself.
+impl<T> Pow<u32> for Fp2Elem<T>
 where
     T: Field,
 {
     type Output = Fp2Elem<T>;
-    fn pow(self, rhs: u64) -> Self {
+    fn pow(self, rhs: u32) -> Self {
         pow_for_square(self, rhs)
     }
 }

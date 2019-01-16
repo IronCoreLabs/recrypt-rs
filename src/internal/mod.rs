@@ -337,7 +337,8 @@ impl Square for Fr480 {
 }
 
 ///Sum t n times.
-fn sum_n<T: Add<Output = T> + Copy + Zero + PartialEq>(t: T, n: u64) -> T {
+///This is not constant time, it reveals the n, but if the t has a constant time add, doesn't reveal the t.
+fn sum_n<T: Add<Output = T> + Copy + Zero + PartialEq>(t: T, n: u32) -> T {
     if n == 0 {
         Zero::zero()
     } else {
@@ -345,7 +346,7 @@ fn sum_n<T: Add<Output = T> + Copy + Zero + PartialEq>(t: T, n: u64) -> T {
     }
 }
 
-fn sum_n_loop<T: Add<Output = T> + Copy>(t: T, k: u64, extra: T) -> T {
+fn sum_n_loop<T: Add<Output = T> + Copy>(t: T, k: u32, extra: T) -> T {
     if k == 1 {
         t + extra
     } else {
@@ -354,7 +355,8 @@ fn sum_n_loop<T: Add<Output = T> + Copy>(t: T, k: u64, extra: T) -> T {
     }
 }
 
-fn pow_for_square<T: One + Mul<T, Output = T> + Copy + Square>(t: T, exp: u64) -> T {
+/// This is not constant time, it reveals the n, but if the t has a constant time square and multiply, doesn't reveal the t.
+fn pow_for_square<T: One + Mul<T, Output = T> + Copy + Square>(t: T, exp: u32) -> T {
     if exp == 0 {
         T::one()
     } else {
@@ -1085,24 +1087,24 @@ mod test {
     use proptest::arbitrary::any;
     use proptest::prelude::*;
     prop_compose! {
-        [pub] fn arb_fp256()(seed in any::<u64>()) -> Fp256 {
+        [pub] fn arb_fp256()(seed in any::<u32>()) -> Fp256 {
             if seed == 0 {
                 Fp256::zero()
             } else if seed == 1 {
                 Fp256::one()
             } else {
-                Fp256::from(seed).pow(seed)
+                Fp256::from(seed).pow(seed).pow(seed)
             }
         }
     }
     prop_compose! {
-        [pub] fn arb_fp480()(seed in any::<u64>()) -> Fp480 {
+        [pub] fn arb_fp480()(seed in any::<u32>()) -> Fp480 {
             if seed == 0 {
                 Fp480::zero()
             } else if seed == 1 {
                 Fp480::one()
             } else {
-                Fp480::from(seed).pow(seed)
+                Fp480::from(seed).pow(seed).pow(seed)
             }
 
         }
@@ -1780,9 +1782,9 @@ mod test {
         fn sum_n_is_times(x in any::<i32>(), n in any::<i32>()) {
             //all the casts are to ensure we don't overflow.
             let computed_result = if n < 0 {
-                -sum_n(x as i64, n.abs() as u64)
+                -sum_n(x as i64, n.abs() as u32)
             } else{
-                sum_n(x as i64, n as u64)
+                sum_n(x as i64, n as u32)
             };
             prop_assert_eq!(computed_result, (x as i64) * (n as i64));
         }

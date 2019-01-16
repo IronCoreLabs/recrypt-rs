@@ -679,16 +679,14 @@ mod test {
       //"follow the law pair(a * P, a * Q) == pair(P, Q) ^ (a^2)"
       #[test]
       fn law_bilinearity(a in any::<u32>().prop_filter("", |a| !(*a == 0))) {
-        let a: u64 = a as u64;
         let pairing: Pairing<Fp256> = Pairing::new();
         let p = FP_256_CURVE_POINTS.generator;
-        let a_sqr = Fp256::from(a.pow(2));
-        let a_sqr_u64: u64 = a.pow(2) as u64;
-        let a = Fp256::from(a);
-        let a_times_p = p * a;
+        let a_sqr = Fp256::from(a).pow(2);
+        let a_fp256 = Fp256::from(a);
+        let a_times_p = p * a_fp256;
         let a_sqr_times_p = p * a_sqr;
         let q = FP_256_CURVE_POINTS.g1;
-        let a_times_q = q * a;
+        let a_times_q = q * a_fp256;
         let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q);
 
         // pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
@@ -696,23 +694,22 @@ mod test {
         prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q));
 
         // pair(a * P, a * Q) == pair(P, Q) ^ (a^2)
-        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).pow(a_sqr_u64));
+        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).pow(a).pow(a));
       }
 
       //"follow the law pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
       //"follow the law pair(a * P, a * Q) == pair(P, Q) ^ (a^2)"
       #[test]
       fn fp480_law_bilinearity(a in any::<u32>().prop_filter("", |a| !(*a == 0))) {
-        let a: u64 = a as u64;
+        let a_u64 = a as u64;
         let pairing: Pairing<Fp480> = Pairing::new();
         let p = FP_480_CURVE_POINTS.generator;
-        let a_sqr = Fp480::from(a.pow(2));
-        let a_sqr_u64: u64 = a.pow(2) as u64;
-        let a = Fp480::from(a);
-        let a_times_p = p * a;
+        let a_sqr = Fp480::from(a_u64.pow(2));
+        let a_fp480 = Fp480::from(a);
+        let a_times_p = p * a_fp480;
         let a_sqr_times_p = p * a_sqr;
         let q = FP_480_CURVE_POINTS.g1;
-        let a_times_q = q * a;
+        let a_times_q = q * a_fp480;
         let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q);
 
         // pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
@@ -720,7 +717,7 @@ mod test {
         prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q));
 
         // pair(a * P, a * Q) == pair(P, Q) ^ (a^2)
-        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).pow(a_sqr_u64));
+        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).pow(a).pow(a));
       }
     }
 }
