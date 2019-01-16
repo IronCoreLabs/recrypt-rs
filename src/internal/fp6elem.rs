@@ -470,7 +470,7 @@ pub mod test {
         fn pow_test_1(ref fp1 in arb_fp6(), x in any::<u32>(), y in any::<u32>()) {
             //fp1^(x + y) == fp1^x * fp1^y
 
-            let x = x >> 1; //shift to avoid overflows
+            let x = x & 0x7FFFFFFF; //mask to avoid overflows
             let y = y >> 1;
             let left = fp1.pow(x + y);
             let right = fp1.pow(x) * fp1.pow(y);
