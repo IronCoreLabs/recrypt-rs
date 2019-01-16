@@ -392,11 +392,7 @@ impl EncryptedTempKey {
 
 bytes_only_debug!(EncryptedTempKey);
 
-impl PartialEq for EncryptedTempKey {
-    fn eq(&self, other: &EncryptedTempKey) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
-    }
-}
+
 
 /// A combination of the hash of `EncryptedTempKey` and the `PrivateKey` of the delegator.
 /// Used to recover the plaintext from an `EncryptedTempKey`
@@ -893,13 +889,7 @@ pub struct PublicKey {
     _internal_key: internal::PublicKey<Fp480>,
 }
 
-impl PartialEq for SixtyBytes {
-    fn eq(&self, other: &SixtyBytes) -> bool {
-        self.0[..] == other.0[..]
-    }
-}
 
-impl Eq for SixtyBytes {}
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1075,7 +1065,18 @@ pub(crate) mod test {
             self.bytes[..] == other.bytes[..] && self._internal_value == other._internal_value
         }
     }
+    impl PartialEq for EncryptedTempKey {
+    fn eq(&self, other: &EncryptedTempKey) -> bool {
+        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+    }
+}
+    impl PartialEq for SixtyBytes {
+    fn eq(&self, other: &SixtyBytes) -> bool {
+        self.0[..] == other.0[..]
+    }
+    }
 
+    impl Eq for SixtyBytes {}
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
         fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {

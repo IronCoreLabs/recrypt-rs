@@ -17,7 +17,10 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// A value in FP12 is represented as a polynomial a + b * w, where a and b are both FP6Elems.
 ///
 /// Recall that v is the attached variable for FP6.
-#[derive(Clone, PartialEq, Eq, Copy, Default)] //@clintfred
+///
+/// Note that PartialEq and Eq are not constant time and equality checks of Fp12Elems will
+/// reveal the value of the Fp12
+#[derive(Clone, PartialEq, Eq, Copy, Default)]
 #[repr(C)]
 pub struct Fp12Elem<T> {
     pub elem1: Fp6Elem<T>,

@@ -14,6 +14,9 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// FP2Elems. That is, FP6 = FP2[v]/(v^3 - (u + 3)).
 ///
 /// Recall that u is the attached variable for FP2.
+///
+/// Note that PartialEq and Eq are not constant time and equality checks of Fp6Elems will
+/// reveal the value of the Fp6
 #[derive(Clone, PartialEq, Eq, Copy, Default)]
 #[repr(C)]
 pub struct Fp6Elem<T> {

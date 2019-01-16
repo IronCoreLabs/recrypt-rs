@@ -63,13 +63,15 @@ macro_rules! _bytes_core {
 
         bytes_only_debug!($t);
 
-        // Not constant time
+        // PartialEq and Eq are Not constant time, so only generate them for tests
+        #[cfg(test)]
         impl PartialEq for $t {
             fn eq(&self, other: &$t) -> bool {
                 self.bytes[..] == other.bytes[..]
             }
         }
 
+        #[cfg(test)]
         impl Eq for $t {}
     };
 }

@@ -160,7 +160,8 @@ where
     }
 }
 
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct SignedValue<T> {
     pub public_signing_key: PublicSigningKey,
     pub signature: Ed25519Signature,
@@ -175,6 +176,8 @@ impl<T: Hashable> Hashable for SignedValue<T> {
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
 /// It is a hash of the plaintext.
+///
+/// PartialEq/Eq are not constant time, but AuthHash is not secret
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct AuthHash {
     pub bytes: [u8; 32],
