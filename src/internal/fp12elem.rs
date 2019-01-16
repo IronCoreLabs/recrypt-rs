@@ -97,13 +97,13 @@ where
     }
 }
 
-impl<T> Mul<u64> for Fp12Elem<T>
+impl<T> Mul<u32> for Fp12Elem<T>
 where
     T: Copy + Add<Output = T> + Zero + PartialEq,
 {
     type Output = Fp12Elem<T>;
 
-    fn mul(self, other: u64) -> Self {
+    fn mul(self, other: u32) -> Self {
         sum_n(self, other)
     }
 }
@@ -114,7 +114,7 @@ where
         + Sub<Output = T>
         + Add<Output = T>
         + Copy
-        + Mul<u64, Output = T>
+        + Mul<u32, Output = T>
         + ExtensionField,
 {
     type Output = Fp12Elem<T>;
@@ -174,7 +174,7 @@ where
         + Sub<Output = T>
         + Add<Output = T>
         + PartialEq
-        + Mul<u64, Output = T>
+        + Mul<u32, Output = T>
         + ExtensionField
         + Copy,
 {
@@ -211,19 +211,19 @@ where
     }
 }
 
-impl<T> Pow<u64> for Fp12Elem<T>
+impl<T> Pow<u32> for Fp12Elem<T>
 where
     T: ExtensionField,
 {
     type Output = Fp12Elem<T>;
-    fn pow(self, rhs: u64) -> Self {
+    fn pow(self, rhs: u32) -> Self {
         pow_for_square(self, rhs)
     }
 }
 
 impl<T> Square for Fp12Elem<T>
 where
-    T: Clone + Field + Mul<u64, Output = T> + ExtensionField,
+    T: Clone + Field + Mul<u32, Output = T> + ExtensionField,
 {
     fn square(&self) -> Self {
         let a2 = self.elem1 * self.elem2 * 2;
@@ -235,7 +235,7 @@ where
     }
 }
 
-impl<T> Field for Fp12Elem<T> where T: ExtensionField + Mul<u64, Output = T> {}
+impl<T> Field for Fp12Elem<T> where T: ExtensionField {}
 
 impl<T> Fp12Elem<T>
 where
@@ -433,8 +433,8 @@ pub mod test {
         fn fp256_pow_test(ref fp1 in arb_fp12(), x in any::<u32>(), y in any::<u32>()) {
             //fp1^(x + y) == fp1^x * fp1^y
 
-            let x = x as u64; //cast to avoid overflows
-            let y = y as u64;
+            let x = x >> 1; //shift to avoid overflows
+            let y = y >> 1;
             let left = fp1.pow(x + y);
             let right = fp1.pow(x) * fp1.pow(y);
 
