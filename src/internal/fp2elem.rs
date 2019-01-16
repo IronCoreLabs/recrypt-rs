@@ -103,7 +103,7 @@ where
 
 impl<T> Div<Fp2Elem<T>> for Fp2Elem<T>
 where
-    T: Field
+    T: Field,
 {
     type Output = Fp2Elem<T>;
     fn div(self, other: Fp2Elem<T>) -> Self {
