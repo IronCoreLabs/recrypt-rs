@@ -100,7 +100,6 @@ impl Plaintext {
 
 bytes_only_debug!(Plaintext);
 
-
 impl From<Fp12Elem<Fp480>> for Plaintext {
     fn from(fp12: Fp12Elem<Fp480>) -> Self {
         Plaintext {
@@ -886,7 +885,8 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp480> {
 #[derive(Clone, Copy)]
 struct SixtyBytes([u8; Fp480::ENCODED_SIZE_BYTES]);
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct PublicKey {
     x: SixtyBytes,
     y: SixtyBytes,
@@ -1064,11 +1064,12 @@ pub(crate) mod test {
     use hex;
     use rand_chacha;
 
-impl PartialEq for Plaintext { // only derive for tests
-    fn eq(&self, other: &Plaintext) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+    impl PartialEq for Plaintext {
+        // only derive for tests
+        fn eq(&self, other: &Plaintext) -> bool {
+            self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+        }
     }
-}
     impl PartialEq for HashedValue {
         fn eq(&self, other: &HashedValue) -> bool {
             self.bytes[..] == other.bytes[..] && self._internal_value == other._internal_value

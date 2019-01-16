@@ -25,7 +25,9 @@
 //! // decrypt!
 //! let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
 //!
-//! assert_eq!(pt, decrypted_val)
+//! // plaintext recovered.
+//! // Note that the equality check is not constant time.
+//! assert_eq!(pt.bytes().to_vec(), decrypted_val.bytes().to_vec())
 //! ```
 
 //! ## Single-hop Transform Encryption Example
@@ -68,7 +70,9 @@
 //! // decrypt the transformed value with the target private key and recover the plaintext
 //! let decrypted_val = api.decrypt(transformed_val, &target_priv_key).unwrap();
 //!
-//! assert_eq!(pt, decrypted_val);
+//! // plantext recovered.
+//! // Note that the equality check is not constant time.
+//! assert_eq!(pt.bytes().to_vec(), decrypted_val.bytes().to_vec());
 //! ```
 
 #[cfg(test)]

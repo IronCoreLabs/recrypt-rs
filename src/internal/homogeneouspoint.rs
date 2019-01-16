@@ -56,34 +56,6 @@ impl<T: One + Field + From<u32> + Hashable> HomogeneousPoint<T> {
     }
 }
 
-/// Not constant time, but only used for PublicKeys. If used for anything else
-/// both LHS and RHS would be revealed.
-impl<T> PartialEq for HomogeneousPoint<T>
-where
-    T: Field,
-{
-    fn eq(&self, other: &HomogeneousPoint<T>) -> bool {
-        match (*self, *other) {
-            (ref p1, ref p2) if p1.is_zero() && p2.is_zero() => true,
-            (ref p1, ref p2) if p1.is_zero() || p2.is_zero() => false,
-            (
-                HomogeneousPoint {
-                    x: x1,
-                    y: y1,
-                    z: z1,
-                },
-                HomogeneousPoint {
-                    x: x2,
-                    y: y2,
-                    z: z2,
-                },
-            ) => x1 * z2 == x2 * z1 && y1 * z2 == y2 * z1,
-        }
-    }
-}
-
-impl<T> Eq for HomogeneousPoint<T> where T: Field {}
-
 impl<T, U> Mul<U> for HomogeneousPoint<T>
 where
     T: Field + ConstantSwap,
@@ -254,8 +226,6 @@ impl<T: ConstantSwap> ConstantSwap for TwistedHPoint<T> {
 
 /// Note that this implementation is not constant time, but since TwistedHPoint
 ///
-
-
 
 impl<T, U> Mul<U> for TwistedHPoint<T>
 where
@@ -486,9 +456,35 @@ pub mod test {
     use hex;
     use proptest::prelude::*;
 
+    impl<T> PartialEq for HomogeneousPoint<T>
+    where
+        T: Field,
+    {
+        fn eq(&self, other: &HomogeneousPoint<T>) -> bool {
+            match (*self, *other) {
+                (ref p1, ref p2) if p1.is_zero() && p2.is_zero() => true,
+                (ref p1, ref p2) if p1.is_zero() || p2.is_zero() => false,
+                (
+                    HomogeneousPoint {
+                        x: x1,
+                        y: y1,
+                        z: z1,
+                    },
+                    HomogeneousPoint {
+                        x: x2,
+                        y: y2,
+                        z: z2,
+                    },
+                ) => x1 * z2 == x2 * z1 && y1 * z2 == y2 * z1,
+            }
+        }
+    }
+
+    impl<T> Eq for HomogeneousPoint<T> where T: Field {}
+
     impl<T> PartialEq for TwistedHPoint<T>
-        where
-            T: ExtensionField,
+    where
+        T: ExtensionField,
     {
         fn eq(&self, other: &TwistedHPoint<T>) -> bool {
             match (*self, *other) {

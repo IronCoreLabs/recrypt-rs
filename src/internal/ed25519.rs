@@ -187,13 +187,12 @@ pub(crate) mod test {
     use ed25519_dalek::SecretKey;
 
     impl PartialEq for SigningKeypair {
-    fn eq(&self, other: &SigningKeypair) -> bool {
-        self.bytes[..] == other.bytes[..]
+        fn eq(&self, other: &SigningKeypair) -> bool {
+            self.bytes[..] == other.bytes[..]
+        }
     }
-}
 
-impl Eq for SigningKeypair {}
-
+    impl Eq for SigningKeypair {}
 
     pub fn good_signing_keypair() -> SigningKeypair {
         SigningKeypair::new_unchecked([

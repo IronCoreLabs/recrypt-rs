@@ -99,8 +99,6 @@ impl Plaintext {
 
 bytes_only_debug!(Plaintext);
 
-
-
 impl From<Fp12Elem<Fp256>> for Plaintext {
     fn from(fp12: Fp12Elem<Fp256>) -> Self {
         Plaintext {
@@ -392,12 +390,6 @@ impl EncryptedTempKey {
 }
 
 bytes_only_debug!(EncryptedTempKey);
-
-impl PartialEq for EncryptedTempKey { //@clintfred
-    fn eq(&self, other: &EncryptedTempKey) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
-    }
-}
 
 /// A combination of the hash of `EncryptedTempKey` and the `PrivateKey` of the delegator.
 /// Used to recover the plaintext from an `EncryptedTempKey`
@@ -882,7 +874,8 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp256> {
     )
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct PublicKey {
     x: [u8; 32],
     y: [u8; 32],
@@ -1035,7 +1028,11 @@ pub(crate) mod test {
             self.bytes[..] == other.bytes[..] && self._internal_value == other._internal_value
         }
     }
-
+    impl PartialEq for EncryptedTempKey {
+        fn eq(&self, other: &EncryptedTempKey) -> bool {
+            self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+        }
+    }
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
         fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {
