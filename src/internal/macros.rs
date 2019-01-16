@@ -63,6 +63,7 @@ macro_rules! _bytes_core {
 
         bytes_only_debug!($t);
 
+        // Not constant time
         impl PartialEq for $t {
             fn eq(&self, other: &$t) -> bool {
                 self.bytes[..] == other.bytes[..]
@@ -87,6 +88,7 @@ macro_rules! new_bytes_type {
 
 // macro to produce property-based tests for each FP type
 #[allow(unused_macros)]
+#[cfg(test)]
 macro_rules! field_proptest {
         ($arb_fp_type:ident, $base_fp_mod:ident, $fp_mod:ident) => {
         #[allow(unused_imports)]

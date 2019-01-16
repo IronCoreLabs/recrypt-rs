@@ -59,6 +59,10 @@ quick_error! {
     }
 }
 
+/// Marker struct to show potential weakness to side-channel attacks for normally secure types.
+/// Never wrapped around u8, u32, u64 as those are always assumed to be revealed.
+pub struct Revealed<T>(T);
+
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct PublicKey<T: Field> {
     pub value: HomogeneousPoint<T>,
@@ -70,7 +74,7 @@ impl<T: Field + From<u32> + Hashable> PublicKey<T> {
     }
 
     pub fn from_x_y(x: T, y: T) -> ErrorOr<PublicKey<T>> {
-        Ok(HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?)
+        Ok(HomogeneousPoint::from_x_y((Revealed(x), Revealed(y))).map(|value| PublicKey { value })?)
     }
 }
 
@@ -96,7 +100,7 @@ impl<T: Field + Hashable> Hashable for PublicKey<T> {
     }
 }
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)] //@clintfred
 pub struct PrivateKey<T> {
     pub value: T,
 }
@@ -838,7 +842,8 @@ where
 ///                   successive levels of multi-hop transform encryption
 /// `hashed_k`      - a combination of the hash of K and the secret key of the delegator,
 ///                   used to recover `K` from `encrypted_k`
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct ReencryptionKey<FP: ExtensionField> {
     pub re_public_key: PublicKey<FP>,
     pub to_public_key: PublicKey<FP>,

@@ -100,11 +100,6 @@ impl Plaintext {
 
 bytes_only_debug!(Plaintext);
 
-impl PartialEq for Plaintext {
-    fn eq(&self, other: &Plaintext) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
-    }
-}
 
 impl From<Fp12Elem<Fp480>> for Plaintext {
     fn from(fp12: Fp12Elem<Fp480>) -> Self {
@@ -448,12 +443,6 @@ impl HashedValue {
 
 bytes_only_debug!(HashedValue);
 
-impl PartialEq for HashedValue {
-    fn eq(&self, other: &HashedValue) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_value == other._internal_value
-    }
-}
-
 impl From<TwistedHPoint<Fp480>> for HashedValue {
     fn from(hp: TwistedHPoint<Fp480>) -> Self {
         // convert hashed_k to fixed array.
@@ -478,7 +467,8 @@ impl From<TwistedHPoint<Fp480>> for HashedValue {
 /// `to_public_key`         - public key of the delagatee
 /// `encrypted_k`           - random value K, encrypted to the delegatee; used to un-roll successive levels of multi-hop transform encryption
 /// `hashed_k`              - combination of the hash of K and the secret key of the delegator; used to recover K from `encrypted_k`
-#[derive(Debug, Clone, PartialEq)] //can't derive Copy because of NonEmptyVec
+#[derive(Debug, Clone)] //can't derive Copy because of NonEmptyVec
+#[cfg_attr(test, derive(PartialEq))]
 pub struct TransformKey {
     ephemeral_public_key: PublicKey,
     to_public_key: PublicKey,
@@ -996,7 +986,8 @@ impl PublicKey {
     }
 }
 
-#[derive(Eq, PartialEq, Default, Debug)]
+#[derive(Default, Debug)]
+#[cfg_attr(test, derive(PartialEq))] // derive PartialEq only for the tests
 pub struct PrivateKey {
     bytes: SixtyBytes,
     _internal_key: internal::PrivateKey<Fp480>,
@@ -1072,6 +1063,17 @@ pub(crate) mod test {
     use crate::internal::fp::fp480_unsafe_from;
     use hex;
     use rand_chacha;
+
+impl PartialEq for Plaintext { // only derive for tests
+    fn eq(&self, other: &Plaintext) -> bool {
+        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+    }
+}
+    impl PartialEq for HashedValue {
+        fn eq(&self, other: &HashedValue) -> bool {
+            self.bytes[..] == other.bytes[..] && self._internal_value == other._internal_value
+        }
+    }
 
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {

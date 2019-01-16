@@ -163,7 +163,6 @@ impl From<fp_480::Fp480> for fr_480::Fr480 {
 ///
 /// Example:
 ///
-///
 /// use gridiron::fp_256;
 /// use recrypt::internal::fp::fp_unsafe_from;
 /// let fp_value = fp_256::Fp256::new([1883708157, 273156172, 2109116376, 1424078749, 1853636711, 680917384, 134358213, 1586179707, 57]);

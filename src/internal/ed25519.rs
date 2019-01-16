@@ -52,13 +52,6 @@ pub struct SigningKeypair {
     pub(crate) bytes: [u8; 64],
 }
 bytes_only_debug!(SigningKeypair);
-impl PartialEq for SigningKeypair {
-    fn eq(&self, other: &SigningKeypair) -> bool {
-        self.bytes[..] == other.bytes[..]
-    }
-}
-
-impl Eq for SigningKeypair {}
 
 impl SigningKeypair {
     const ENCODED_SIZE_BYTES: usize = 64;
@@ -192,6 +185,15 @@ pub(crate) mod test {
     use super::*;
     use crate::internal::array_concat_32;
     use ed25519_dalek::SecretKey;
+
+    impl PartialEq for SigningKeypair {
+    fn eq(&self, other: &SigningKeypair) -> bool {
+        self.bytes[..] == other.bytes[..]
+    }
+}
+
+impl Eq for SigningKeypair {}
+
 
     pub fn good_signing_keypair() -> SigningKeypair {
         SigningKeypair::new_unchecked([
