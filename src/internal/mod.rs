@@ -336,7 +336,8 @@ impl Square for Fr480 {
     }
 }
 
-///Sum t n times. Reveals the n, but if the t has a constant time add, doesn't re
+///Sum t n times.
+///This is not constant time, it reveals the n, but if the t has a constant time add, doesn't reveal the t.
 fn sum_n<T: Add<Output = T> + Copy + Zero + PartialEq>(t: T, n: u32) -> T {
     if n == 0 {
         Zero::zero()
@@ -354,7 +355,7 @@ fn sum_n_loop<T: Add<Output = T> + Copy>(t: T, k: u32, extra: T) -> T {
     }
 }
 
-///Note that this reveals the u32, but not t as long as it has constant time multiply and square.
+/// This is not constant time, it reveals the n, but if the t has a constant time square and multiply, doesn't reveal the t.
 fn pow_for_square<T: One + Mul<T, Output = T> + Copy + Square>(t: T, exp: u32) -> T {
     if exp == 0 {
         T::one()

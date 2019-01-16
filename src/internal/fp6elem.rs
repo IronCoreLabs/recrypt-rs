@@ -98,7 +98,7 @@ where
     }
 }
 
-///Note that this reveals the u32, but not the Fp6 itself.
+///This is not constant time. It reveals the u32, but not the Fp6 itself.
 impl<T> Mul<u32> for Fp6Elem<T>
 where
     T: Copy + Add<Output = T> + Zero + PartialEq,
@@ -238,7 +238,7 @@ where
     }
 }
 
-///Note that this reveals the u32, but not the Fp6 itself.
+///This is not constant time. It reveals the u32, but not the fp6 itself.
 impl<T> Pow<u32> for Fp6Elem<T>
 where
     T: ExtensionField,
