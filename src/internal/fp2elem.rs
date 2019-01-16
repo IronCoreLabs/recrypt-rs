@@ -86,6 +86,7 @@ where
     }
 }
 
+///Scale the point by a u32. Note that this reveals the u32, but not the point itself.
 impl<T> Mul<u32> for Fp2Elem<T>
 where
     T: Mul<u32, Output = T>,
@@ -102,15 +103,7 @@ where
 
 impl<T> Div<Fp2Elem<T>> for Fp2Elem<T>
 where
-    T: Mul<Output = T>
-        + Inv<Output = T>
-        + Sub<Output = T>
-        + Add<Output = T>
-        + Pow<u32, Output = T>
-        + Add<Output = T>
-        + Neg<Output = T>
-        + Div<Output = T>
-        + Copy,
+    T: Field
 {
     type Output = Fp2Elem<T>;
     fn div(self, other: Fp2Elem<T>) -> Self {
@@ -180,6 +173,7 @@ where
     }
 }
 
+///Note that this reveals the u32, but not the point itself.
 impl<T> Pow<u32> for Fp2Elem<T>
 where
     T: Field,

@@ -96,7 +96,7 @@ where
         }
     }
 }
-
+///Scale the fp12 by a u32. Note that this reveals the u32, but not the Fp12 itself.
 impl<T> Mul<u32> for Fp12Elem<T>
 where
     T: Copy + Add<Output = T> + Zero + PartialEq,
@@ -211,6 +211,7 @@ where
     }
 }
 
+///Note that this reveals the u32, but not the Fp12 itself.
 impl<T> Pow<u32> for Fp12Elem<T>
 where
     T: ExtensionField,
