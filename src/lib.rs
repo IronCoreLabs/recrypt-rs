@@ -8,6 +8,7 @@
 //!
 //! ## Basic Encrypt/Decrypt Example
 //! ```
+//! use recrypt::Revealed;
 //! use recrypt::api::*;
 //! // create a new recrypt api
 //! let mut api = Api::new();
@@ -26,14 +27,14 @@
 //! let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
 //!
 //! // plaintext recovered.
-//! // Note that the equality check is not constant time.
-//! assert_eq!(pt.bytes().to_vec(), decrypted_val.bytes().to_vec())
+//! assert_eq!(Revealed(pt), Revealed(decrypted_val))
 //! ```
 
 //! ## Single-hop Transform Encryption Example
 //! Encrypt a message to public key `initial_pub_key` and decrypt it with `target_priv_key`
 //! after transforming the encrypted message.
 //! ```
+//! use recrypt::Revealed;
 //! use recrypt::api::*;
 //! // create a new recrypt api
 //! let mut api = Api::new();
@@ -71,8 +72,7 @@
 //! let decrypted_val = api.decrypt(transformed_val, &target_priv_key).unwrap();
 //!
 //! // plaintext recovered.
-//! // Note that the equality check is not constant time.
-//! assert_eq!(pt.bytes().to_vec(), decrypted_val.bytes().to_vec());
+//! assert_eq!(Revealed(pt), Revealed(decrypted_val));
 //! ```
 
 #[cfg(test)]
@@ -85,3 +85,8 @@ pub mod api;
 pub mod api_480;
 mod api_common;
 pub mod nonemptyvec;
+
+/// Marker struct to show potential weakness to side-channel attacks for normally secure types.
+/// Never wrapped around u8, u32, u64 as those are always assumed to be revealed.
+#[derive(Debug)]
+pub struct Revealed<T>(pub T);

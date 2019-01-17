@@ -42,6 +42,7 @@ pub mod sha256;
 
 use crate::api;
 use crate::api_480;
+use crate::Revealed;
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
@@ -58,10 +59,6 @@ quick_error! {
         CorruptReencryptionKey {}
     }
 }
-
-/// Marker struct to show potential weakness to side-channel attacks for normally secure types.
-/// Never wrapped around u8, u32, u64 as those are always assumed to be revealed.
-pub struct Revealed<T>(T);
 
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(test, derive(PartialEq, Eq))]

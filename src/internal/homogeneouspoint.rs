@@ -5,7 +5,7 @@ use crate::internal::field::Field;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
-use crate::internal::Revealed;
+use crate::Revealed;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
 use num_traits::identities::{One, Zero};
