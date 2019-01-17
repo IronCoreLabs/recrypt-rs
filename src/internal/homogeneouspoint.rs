@@ -56,8 +56,6 @@ where
 {
     fn eq(&self, other: &HomogeneousPoint<T>) -> bool {
         match (*self, *other) {
-            (ref p1, ref p2) if p1.is_zero() && p2.is_zero() => true,
-            (ref p1, ref p2) if p1.is_zero() || p2.is_zero() => false,
             (
                 HomogeneousPoint {
                     x: x1,
@@ -137,6 +135,7 @@ where
         }
     }
 
+    //This is not constant time and shouldn't be used for algorithms that are.
     fn is_zero(&self) -> bool {
         self.z == Zero::zero()
     }
@@ -250,8 +249,6 @@ where
 {
     fn eq(&self, other: &TwistedHPoint<T>) -> bool {
         match (*self, *other) {
-            (ref p1, ref p2) if p1.is_zero() && p2.is_zero() => true,
-            (ref p1, ref p2) if p1.is_zero() || p2.is_zero() => false,
             (
                 TwistedHPoint {
                     x: x1,
@@ -332,6 +329,7 @@ where
         }
     }
 
+    //This is not constant time and shouldn't be used for algorithms that are.
     fn is_zero(&self) -> bool {
         self.z == Zero::zero()
     }
