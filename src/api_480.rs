@@ -1,4 +1,5 @@
 use crate::api_common::{ApiErr, Result};
+use crate::Revealed;
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
@@ -56,7 +57,14 @@ impl<CR: rand::CryptoRng + rand::RngCore> Api480<Sha256, Ed25519, RandomBytes<CR
 }
 
 /// Hashed but not encrypted Plaintext used for envelope encryption
-new_bytes_type!(DerivedSymmetricKey, 32);
+/// If you are looking for PartialEq for DerivedSymmetricKey, see PartialEq for Revealed<DerivedSymmetricKey>
+new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
+
+impl PartialEq for Revealed<DerivedSymmetricKey> {
+    fn eq(&self, other: &Revealed<DerivedSymmetricKey>) -> bool {
+        self.0.bytes == other.0.bytes
+    }
+}
 
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
@@ -99,6 +107,20 @@ impl Plaintext {
 }
 
 bytes_only_debug!(Plaintext);
+
+impl PartialEq for Revealed<Plaintext> {
+    fn eq(&self, other: &Revealed<Plaintext>) -> bool {
+        self.0.bytes[..] == other.0.bytes[..]
+    }
+}
+
+/// If you are looking for PartialEq for Plaintext, see PartialEq for Revealed<Plaintext>
+#[cfg(test)]
+impl PartialEq for Plaintext {
+    fn eq(&self, other: &Plaintext) -> bool {
+        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+    }
+}
 
 impl From<Fp12Elem<Fp480>> for Plaintext {
     fn from(fp12: Fp12Elem<Fp480>) -> Self {
@@ -196,9 +218,18 @@ impl TransformBlock {
         })
     }
 }
+
+impl PartialEq for TransformBlock {
+    fn eq(&self, other: &TransformBlock) -> bool {
+        self.public_key == other.public_key
+            && self.encrypted_temp_key == other.encrypted_temp_key
+            && self.random_transform_public_key == other.random_transform_public_key
+            && self.encrypted_random_transform_temp_key == other.encrypted_random_transform_temp_key
+    }
+}
 /// Encrypted value that is either initially encrypted or one that has been
 /// transformed one or more times
-#[derive(Debug, Clone)] //cannot derive Copy because of NonEmptyVec
+#[derive(Debug, Clone, PartialEq)] //cannot derive Copy because of NonEmptyVec
 pub enum EncryptedValue {
     /// Value which has been encrypted, but not transformed
     /// `ephemeral_public_key`  - public key of the ephemeral private key that was used to encrypt
@@ -392,6 +423,12 @@ impl EncryptedTempKey {
 
 bytes_only_debug!(EncryptedTempKey);
 
+impl PartialEq for EncryptedTempKey {
+    fn eq(&self, other: &EncryptedTempKey) -> bool {
+        self.bytes[..] == other.bytes[..]
+    }
+}
+
 /// A combination of the hash of `EncryptedTempKey` and the `PrivateKey` of the delegator.
 /// Used to recover the plaintext from an `EncryptedTempKey`
 #[derive(Clone, Copy)]
@@ -435,6 +472,11 @@ impl HashedValue {
 }
 
 bytes_only_debug!(HashedValue);
+impl PartialEq for HashedValue {
+    fn eq(&self, other: &HashedValue) -> bool {
+        self.bytes[..] == other.bytes[..]
+    }
+}
 
 impl From<TwistedHPoint<Fp480>> for HashedValue {
     fn from(hp: TwistedHPoint<Fp480>) -> Self {
@@ -461,7 +503,6 @@ impl From<TwistedHPoint<Fp480>> for HashedValue {
 /// `encrypted_k`           - random value K, encrypted to the delegatee; used to un-roll successive levels of multi-hop transform encryption
 /// `hashed_k`              - combination of the hash of K and the secret key of the delegator; used to recover K from `encrypted_k`
 #[derive(Debug, Clone)] //can't derive Copy because of NonEmptyVec
-#[cfg_attr(test, derive(PartialEq))]
 pub struct TransformKey {
     ephemeral_public_key: PublicKey,
     to_public_key: PublicKey,
@@ -564,6 +605,17 @@ impl TransformKey {
             payload: new_internal,
             ..self._internal_key
         })
+    }
+}
+
+impl PartialEq for TransformKey {
+    fn eq(&self, other: &TransformKey) -> bool {
+        self.ephemeral_public_key == other.ephemeral_public_key
+            && self.to_public_key == other.to_public_key
+            && self.encrypted_temp_key == other.encrypted_temp_key
+            && self.hashed_temp_key == other.hashed_temp_key
+            && self.public_signing_key == other.public_signing_key
+            && self.signature == other.signature
     }
 }
 
@@ -879,14 +931,6 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp480> {
 #[derive(Clone, Copy)]
 struct SixtyBytes([u8; Fp480::ENCODED_SIZE_BYTES]);
 
-#[derive(Clone, Copy, Debug)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
-pub struct PublicKey {
-    x: SixtyBytes,
-    y: SixtyBytes,
-    _internal_key: internal::PublicKey<Fp480>,
-}
-
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.0.to_vec())
@@ -903,6 +947,19 @@ impl Default for SixtyBytes {
     fn default() -> Self {
         SixtyBytes([0u8; 60])
     }
+}
+
+impl PartialEq for SixtyBytes {
+    fn eq(&self, other: &SixtyBytes) -> bool {
+        self.0[..] == other.0[..]
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct PublicKey {
+    x: SixtyBytes,
+    y: SixtyBytes,
+    _internal_key: internal::PublicKey<Fp480>,
 }
 
 impl Hashable for PublicKey {
@@ -972,8 +1029,15 @@ impl PublicKey {
     }
 }
 
+impl PartialEq for PublicKey {
+    fn eq(&self, other: &PublicKey) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
 #[derive(Default, Debug)]
-#[cfg_attr(test, derive(PartialEq))] // derive PartialEq only for the tests
+#[cfg_attr(test, derive(PartialEq))]
+// If you are looking for PartialEq for PrivateKey, see PartialEq for Revealed<PrivateKey>
 pub struct PrivateKey {
     bytes: SixtyBytes,
     _internal_key: internal::PrivateKey<Fp480>,
@@ -996,6 +1060,13 @@ impl PrivateKey {
 
     new_from_slice!(PrivateKey);
 }
+
+impl PartialEq for Revealed<PrivateKey> {
+    fn eq(&self, other: &Revealed<PrivateKey>) -> bool {
+        self.0.bytes == other.0.bytes
+    }
+}
+
 impl Hashable60 for PrivateKey {
     fn to_bytes_60(&self) -> [u8; 60] {
         self.bytes.0
@@ -1047,32 +1118,11 @@ pub(crate) mod test {
     use super::*;
     use crate::internal::ed25519;
     use crate::internal::fp::fp480_unsafe_from;
-    use hex;
     use rand_chacha;
 
-    impl PartialEq for Plaintext {
-        // only derive for tests
-        fn eq(&self, other: &Plaintext) -> bool {
-            self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
-        }
-    }
-    impl PartialEq for HashedValue {
-        fn eq(&self, other: &HashedValue) -> bool {
-            self.bytes[..] == other.bytes[..] && self._internal_value == other._internal_value
-        }
-    }
-    impl PartialEq for EncryptedTempKey {
-        fn eq(&self, other: &EncryptedTempKey) -> bool {
-            self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
-        }
-    }
-    impl PartialEq for SixtyBytes {
-        fn eq(&self, other: &SixtyBytes) -> bool {
-            self.0[..] == other.0[..]
-        }
-    }
+    // just for tests...
+    _bytes_eq!(DerivedSymmetricKey);
 
-    impl Eq for SixtyBytes {}
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
         fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {

@@ -224,9 +224,6 @@ impl<T: ConstantSwap> ConstantSwap for TwistedHPoint<T> {
     }
 }
 
-/// Note that this implementation is not constant time, but since TwistedHPoint
-///
-
 impl<T, U> Mul<U> for TwistedHPoint<T>
 where
     T: ExtensionField + ConstantSwap,

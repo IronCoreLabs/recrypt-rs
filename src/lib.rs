@@ -74,6 +74,14 @@
 //! // plaintext recovered.
 //! assert_eq!(Revealed(pt), Revealed(decrypted_val));
 //! ```
+//!
+//! ## Constant Time and Equality
+//!
+//! We have done a lot of work in recrypt-rs to ensure that operations dealing with secret data
+//! are [constant time](https://www.bearssl.org/constanttime.html) and not susceptible to [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
+//! The public API is also constant time, except for equality. In the future we might implement
+//! constant time `PartialEq`, but until then secret API values (`Plaintext`, `PrivateKey`, `DerivedSymmetricKey`)
+//! have equality only when wrapped in the `Revealed` type.
 
 #[cfg(test)]
 #[macro_use]

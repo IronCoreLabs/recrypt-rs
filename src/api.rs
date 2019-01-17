@@ -56,7 +56,14 @@ impl<CR: rand::CryptoRng + rand::RngCore> Api<Sha256, Ed25519, RandomBytes<CR>> 
 }
 
 /// Hashed but not encrypted Plaintext used for envelope encryption
-new_bytes_type!(DerivedSymmetricKey, 32);
+/// If you are looking for PartialEq for DerivedSymmetricKey, see PartialEq for Revealed<DerivedSymmetricKey>
+new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
+
+impl PartialEq for Revealed<DerivedSymmetricKey> {
+    fn eq(&self, other: &Revealed<DerivedSymmetricKey>) -> bool {
+        self.0.bytes == other.0.bytes
+    }
+}
 
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
@@ -996,6 +1003,7 @@ impl PartialEq for PublicKey {
 
 #[derive(Default, Debug)]
 #[cfg_attr(test, derive(PartialEq))]
+// If you are looking for PartialEq for PrivateKey, see PartialEq for Revealed<PrivateKey>
 pub struct PrivateKey {
     bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES],
     _internal_key: internal::PrivateKey<Fp256>,
@@ -1072,6 +1080,9 @@ pub(crate) mod test {
     use crate::internal::fp::fp256_unsafe_from;
     use hex;
     use rand_chacha;
+
+    // just for tests...
+    _bytes_eq!(DerivedSymmetricKey);
 
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
