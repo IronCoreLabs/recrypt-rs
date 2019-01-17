@@ -1,5 +1,4 @@
 use crate::api_common::{ApiErr, Result};
-use crate::Revealed;
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
@@ -17,6 +16,7 @@ use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
+use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_480::Fp480;
 use rand;
