@@ -165,6 +165,7 @@ where
         }
     }
 
+    //This is not constant time and shouldn't be used for algorithms that are.
     fn is_zero(&self) -> bool {
         *self == Zero::zero()
     }
@@ -188,6 +189,7 @@ where
         }
     }
 
+    //This is not constant time and shouldn't be used for algorithms that are.
     fn is_one(&self) -> bool {
         *self == One::one()
     }
