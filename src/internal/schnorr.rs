@@ -162,7 +162,7 @@ mod test {
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::fp::fr_256::Fr256;
     use crate::internal::test::arb_priv_key;
-    use crate::internal::{PublicKey, Revealed};
+    use crate::internal::PublicKey;
     use num_traits::{One, Pow, Zero};
     use proptest::arbitrary::any;
     use proptest::prelude::*;
@@ -201,12 +201,12 @@ mod test {
         //46939991746311747972637410299323006395308387045114925817569453518797610905887)
         let pub_key = PublicKey::new(
             HomogeneousPoint::from_x_y((
-                Revealed(fp256_unsafe_from(
+                fp256_unsafe_from(
                     "1410bb708e0e14396243ca3cfa0e4907397abaf8ac6523e7b5e4c00740c9fc93",
-                )),
-                Revealed(fp256_unsafe_from(
+                ),
+                fp256_unsafe_from(
                     "67c71804fc824e10ffe0383425492a83642433ef8c75a869ef30f5856573711f",
-                )),
+                ),
             ))
             .unwrap(),
         );

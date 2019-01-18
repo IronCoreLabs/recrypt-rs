@@ -42,7 +42,6 @@ pub mod sha256;
 
 use crate::api;
 use crate::api_480;
-use crate::Revealed;
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
@@ -72,8 +71,7 @@ impl<T: Field + From<u32> + Hashable> PublicKey<T> {
     }
 
     pub fn from_x_y(x: T, y: T) -> ErrorOr<PublicKey<T>> {
-        Ok(HomogeneousPoint::from_x_y((Revealed(x), Revealed(y)))
-            .map(|value| PublicKey { value })?)
+        Ok(HomogeneousPoint::from_x_y((x, y)).map(|value| PublicKey { value })?)
     }
 }
 

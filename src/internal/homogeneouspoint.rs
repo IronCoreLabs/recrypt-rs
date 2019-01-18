@@ -5,7 +5,6 @@ use crate::internal::field::Field;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
-use crate::Revealed;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
 use num_traits::identities::{One, Zero};
@@ -38,12 +37,7 @@ pub struct HomogeneousPoint<T> {
 }
 
 impl<T: One + Field + From<u32> + Hashable> HomogeneousPoint<T> {
-    /// Construct a HomogeneousPoint from an x and y portion.
-    ///
-    /// Revealed - `x` and `y` values
-    pub fn from_x_y(
-        (Revealed(x), Revealed(y)): (Revealed<T>, Revealed<T>),
-    ) -> Result<HomogeneousPoint<T>, PointErr> {
+    pub fn from_x_y((x, y): (T, T)) -> Result<HomogeneousPoint<T>, PointErr> {
         if x.pow(3) + T::from(3) == y.pow(2) {
             Ok(HomogeneousPoint {
                 x,
