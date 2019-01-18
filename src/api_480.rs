@@ -1120,9 +1120,6 @@ pub(crate) mod test {
     use crate::internal::fp::fp480_unsafe_from;
     use rand_chacha;
 
-    // just for tests...
-    _bytes_eq!(DerivedSymmetricKey);
-
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
         fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {

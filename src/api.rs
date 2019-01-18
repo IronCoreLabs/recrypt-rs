@@ -1081,9 +1081,6 @@ pub(crate) mod test {
     use hex;
     use rand_chacha;
 
-    // just for tests...
-    _bytes_eq!(DerivedSymmetricKey);
-
     pub struct DummyEd25519;
     impl Ed25519Signing for DummyEd25519 {
         fn sign<T: Hashable>(&self, _t: &T, _signing_keypair: &SigningKeypair) -> Ed25519Signature {
@@ -1325,7 +1322,7 @@ pub(crate) mod test {
         dest.copy_from_slice(src);
         let expected_result = DerivedSymmetricKey::new(dest);
         let result = Api::new().derive_symmetric_key(&pt);
-        assert_eq!(expected_result, result)
+        assert_eq!(Revealed(expected_result), Revealed(result))
     }
 
     use std::default::Default;
@@ -1439,24 +1436,24 @@ pub(crate) mod test {
     fn generate_ed25519_key_pair() {
         use rand::SeedableRng;
         let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
-        let signing_keypair = api.generate_ed25519_key_pair();
-        let expected_signing_keypair = SigningKeypair::new_unchecked([
+        let signing_keypair = Revealed(api.generate_ed25519_key_pair());
+        let expected_signing_keypair = Revealed(SigningKeypair::new_unchecked([
             118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
             25, 184, 160, 141, 237, 26, 168, 54, 239, 204, 139, 119, 13, 199, 32, 253, 186, 201,
             177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150, 215, 30, 78, 212,
             76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
-        ]);
+        ]));
         let expected_pub = PublicSigningKey::new([
             32, 253, 186, 201, 177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150,
             215, 30, 78, 212, 76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
         ]);
         assert_eq!(signing_keypair, expected_signing_keypair);
-        assert_eq!(signing_keypair.public_key(), expected_pub);
+        assert_eq!(signing_keypair.0.public_key(), expected_pub);
 
         //Assert that the generation doesn't just return the same value.
-        let keypair_two = api.generate_ed25519_key_pair();
+        let keypair_two = Revealed(api.generate_ed25519_key_pair());
         assert_ne!(keypair_two, expected_signing_keypair);
-        assert_ne!(keypair_two.public_key(), expected_pub);
+        assert_ne!(keypair_two.0.public_key(), expected_pub);
     }
     #[test]
     //written against AuthHash, but valid for all types generated from that macro

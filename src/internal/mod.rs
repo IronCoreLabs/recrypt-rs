@@ -174,7 +174,7 @@ impl<T: Hashable> Hashable for SignedValue<T> {
 /// to ensure that you got the same value out as the one that was originally encrypted.
 /// It is a hash of the plaintext.
 ///
-/// PartialEq/Eq are not constant time, but AuthHash is not secret
+/// PartialEq/Eq are not constant time, but AuthHash is not secret and we need equality for checking hashes.
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct AuthHash {
     pub bytes: [u8; 32],

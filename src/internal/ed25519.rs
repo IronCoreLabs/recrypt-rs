@@ -2,6 +2,7 @@ use crate::api_common::ApiErr;
 use crate::internal::array_split_64;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
+use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use ed25519_dalek;
 use ed25519_dalek::PublicKey;
@@ -120,6 +121,12 @@ impl SigningKeypair {
     }
 }
 
+impl PartialEq for Revealed<SigningKeypair> {
+    fn eq(&self, other: &Revealed<SigningKeypair>) -> bool {
+        self.0.bytes[..] == other.0.bytes[..]
+    }
+}
+
 impl<'a> From<&'a SigningKeypair> for PublicSigningKey {
     fn from(kp: &SigningKeypair) -> PublicSigningKey {
         let (_, pub_bytes) = array_split_64(&kp.bytes);
@@ -185,14 +192,6 @@ pub(crate) mod test {
     use super::*;
     use crate::internal::array_concat_32;
     use ed25519_dalek::SecretKey;
-
-    impl PartialEq for SigningKeypair {
-        fn eq(&self, other: &SigningKeypair) -> bool {
-            self.bytes[..] == other.bytes[..]
-        }
-    }
-
-    impl Eq for SigningKeypair {}
 
     pub fn good_signing_keypair() -> SigningKeypair {
         SigningKeypair::new_unchecked([
