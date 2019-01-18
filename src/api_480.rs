@@ -1070,7 +1070,6 @@ pub(crate) mod test {
     use super::*;
     use crate::internal::ed25519;
     use crate::internal::fp::fp480_unsafe_from;
-    use hex;
     use rand_chacha;
 
     pub struct DummyEd25519;
