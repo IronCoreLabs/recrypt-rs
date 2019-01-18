@@ -209,7 +209,7 @@ macro_rules! recrypt_bench {
                     },
                 );
             });
-
+/* take out for now to speed up PR builds
             c.bench_function(concat!($bits, "-bit transform (level 3)"), |b| {
                 let api = RefCell::new($api::new());
                 let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
@@ -295,6 +295,7 @@ macro_rules! recrypt_bench {
                     },
                 );
             });
+*/
         }
     };
 }
