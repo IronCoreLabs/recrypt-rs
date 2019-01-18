@@ -209,93 +209,93 @@ macro_rules! recrypt_bench {
                     },
                 );
             });
-/* take out for now to speed up PR builds
-            c.bench_function(concat!($bits, "-bit transform (level 3)"), |b| {
-                let api = RefCell::new($api::new());
-                let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-                let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-                let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-                let (_, level_3_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-                let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
-                let tk_0_to_1 = api
-                    .borrow_mut()
-                    .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
-                    .unwrap();
-                let tk_1_to_2 = api
-                    .borrow_mut()
-                    .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
-                    .unwrap();
-                let tk_2_to_3 = api
-                    .borrow_mut()
-                    .generate_transform_key(&level_2_pvk, level_3_pbk, &signing_keypair)
-                    .unwrap();
-                b.iter_with_setup(
-                    || {
-                        let pt = api.borrow_mut().gen_plaintext();
-                        api.borrow_mut()
-                            .encrypt(&pt, level_0_pbk, &signing_keypair)
-                            .unwrap()
-                    },
-                    |ev| {
-                        let ev_to_1 = api
-                            .borrow_mut()
-                            .transform(ev, tk_0_to_1.clone(), &signing_keypair)
-                            .unwrap();
-                        let ev_to_2 = api
-                            .borrow_mut()
-                            .transform(ev_to_1, tk_1_to_2.clone(), &signing_keypair)
-                            .unwrap();
-                        api.borrow_mut()
-                            .transform(ev_to_2, tk_2_to_3.clone(), &signing_keypair)
-                            .unwrap();
-                    },
-                );
-            });
+            /* take out for now to speed up PR builds
+                        c.bench_function(concat!($bits, "-bit transform (level 3)"), |b| {
+                            let api = RefCell::new($api::new());
+                            let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
+                            let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
+                            let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
+                            let (_, level_3_pbk) = api.borrow_mut().generate_key_pair().unwrap();
+                            let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
+                            let tk_0_to_1 = api
+                                .borrow_mut()
+                                .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
+                                .unwrap();
+                            let tk_1_to_2 = api
+                                .borrow_mut()
+                                .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
+                                .unwrap();
+                            let tk_2_to_3 = api
+                                .borrow_mut()
+                                .generate_transform_key(&level_2_pvk, level_3_pbk, &signing_keypair)
+                                .unwrap();
+                            b.iter_with_setup(
+                                || {
+                                    let pt = api.borrow_mut().gen_plaintext();
+                                    api.borrow_mut()
+                                        .encrypt(&pt, level_0_pbk, &signing_keypair)
+                                        .unwrap()
+                                },
+                                |ev| {
+                                    let ev_to_1 = api
+                                        .borrow_mut()
+                                        .transform(ev, tk_0_to_1.clone(), &signing_keypair)
+                                        .unwrap();
+                                    let ev_to_2 = api
+                                        .borrow_mut()
+                                        .transform(ev_to_1, tk_1_to_2.clone(), &signing_keypair)
+                                        .unwrap();
+                                    api.borrow_mut()
+                                        .transform(ev_to_2, tk_2_to_3.clone(), &signing_keypair)
+                                        .unwrap();
+                                },
+                            );
+                        });
 
-            c.bench_function(concat!($bits, "-bit decrypt (level 3)"), |b| {
-                let api = RefCell::new($api::new());
-                let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
-                let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-                let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-                let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-                let (level_3_pvk, level_3_pbk) = api.borrow_mut().generate_key_pair().unwrap();
-                let tk_0_to_1 = api
-                    .borrow_mut()
-                    .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
-                    .unwrap();
-                let tk_1_to_2 = api
-                    .borrow_mut()
-                    .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
-                    .unwrap();
-                let tk_2_to_3 = api
-                    .borrow_mut()
-                    .generate_transform_key(&level_2_pvk, level_3_pbk, &signing_keypair)
-                    .unwrap();
-                b.iter_with_setup(
-                    || {
-                        let pt = api.borrow_mut().gen_plaintext();
-                        let ev_to_0 = api
-                            .borrow_mut()
-                            .encrypt(&pt, level_0_pbk, &signing_keypair)
-                            .unwrap();
-                        let ev_to_1 = api
-                            .borrow_mut()
-                            .transform(ev_to_0, tk_0_to_1.clone(), &signing_keypair)
-                            .unwrap();
-                        let ev_to_2 = api
-                            .borrow_mut()
-                            .transform(ev_to_1, tk_1_to_2.clone(), &signing_keypair)
-                            .unwrap();
-                        api.borrow_mut()
-                            .transform(ev_to_2, tk_2_to_3.clone(), &signing_keypair)
-                            .unwrap()
-                    },
-                    |ev_to_3| {
-                        api.borrow_mut().decrypt(ev_to_3, &level_3_pvk).unwrap();
-                    },
-                );
-            });
-*/
+                        c.bench_function(concat!($bits, "-bit decrypt (level 3)"), |b| {
+                            let api = RefCell::new($api::new());
+                            let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
+                            let (level_0_pvk, level_0_pbk) = api.borrow_mut().generate_key_pair().unwrap();
+                            let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
+                            let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
+                            let (level_3_pvk, level_3_pbk) = api.borrow_mut().generate_key_pair().unwrap();
+                            let tk_0_to_1 = api
+                                .borrow_mut()
+                                .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
+                                .unwrap();
+                            let tk_1_to_2 = api
+                                .borrow_mut()
+                                .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
+                                .unwrap();
+                            let tk_2_to_3 = api
+                                .borrow_mut()
+                                .generate_transform_key(&level_2_pvk, level_3_pbk, &signing_keypair)
+                                .unwrap();
+                            b.iter_with_setup(
+                                || {
+                                    let pt = api.borrow_mut().gen_plaintext();
+                                    let ev_to_0 = api
+                                        .borrow_mut()
+                                        .encrypt(&pt, level_0_pbk, &signing_keypair)
+                                        .unwrap();
+                                    let ev_to_1 = api
+                                        .borrow_mut()
+                                        .transform(ev_to_0, tk_0_to_1.clone(), &signing_keypair)
+                                        .unwrap();
+                                    let ev_to_2 = api
+                                        .borrow_mut()
+                                        .transform(ev_to_1, tk_1_to_2.clone(), &signing_keypair)
+                                        .unwrap();
+                                    api.borrow_mut()
+                                        .transform(ev_to_2, tk_2_to_3.clone(), &signing_keypair)
+                                        .unwrap()
+                                },
+                                |ev_to_3| {
+                                    api.borrow_mut().decrypt(ev_to_3, &level_3_pvk).unwrap();
+                                },
+                            );
+                        });
+            */
         }
     };
 }
