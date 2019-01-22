@@ -1,8 +1,20 @@
 Changelog
 ====================
 
+## 0.6.0
+### Public API changes
+  * [[#35](#35)] 480-bit public API available. See api_480.rs
+### Notable Internal Changes
+- [[#27](#27)] Use Rust 2018 edition
+- Progress toward Constant Time algorithms
+  * [[#42](#42)] Fp `is_one` and `is_zero` documented to not be constant time
+  * [[#40](#40)] Fp `Mul<u64>` and `Add<u64>` now use `u32` and are documented to not be constant time
+  * [[#39](#39)] Point negation is constant time
+  * [[#37](#37)] Fp12/6 `to_fp2` constant time behavior documented
+  * [[#26](#26)] Point double and add functions are constant time
+
 ## 0.5.1
- [[#24](#24)] Added better errors for Ed25519 and NonEmptyVec
+- [[#24](#24)] Added better errors for Ed25519 and NonEmptyVec
 
 ## 0.5.0
 - [[#21](#21)] Consume gridiron 0.4.0 (primatives are now constant time)
