@@ -50,30 +50,6 @@ impl<T: One + Field + From<u32> + Hashable> HomogeneousPoint<T> {
     }
 }
 
-impl<T> PartialEq for HomogeneousPoint<T>
-where
-    T: Field,
-{
-    fn eq(&self, other: &HomogeneousPoint<T>) -> bool {
-        match (*self, *other) {
-            (
-                HomogeneousPoint {
-                    x: x1,
-                    y: y1,
-                    z: z1,
-                },
-                HomogeneousPoint {
-                    x: x2,
-                    y: y2,
-                    z: z2,
-                },
-            ) => x1 * z2 == x2 * z1 && y1 * z2 == y2 * z1,
-        }
-    }
-}
-
-impl<T> Eq for HomogeneousPoint<T> where T: Field {}
-
 impl<T, U> Mul<U> for HomogeneousPoint<T>
 where
     T: Field + ConstantSwap,
@@ -242,30 +218,6 @@ impl<T: ConstantSwap> ConstantSwap for TwistedHPoint<T> {
         self.z.swap_if(&mut other.z, swap);
     }
 }
-
-impl<T> PartialEq for TwistedHPoint<T>
-where
-    T: ExtensionField,
-{
-    fn eq(&self, other: &TwistedHPoint<T>) -> bool {
-        match (*self, *other) {
-            (
-                TwistedHPoint {
-                    x: x1,
-                    y: y1,
-                    z: z1,
-                },
-                TwistedHPoint {
-                    x: x2,
-                    y: y2,
-                    z: z2,
-                },
-            ) => x1 * z2 == x2 * z1 && y1 * z2 == y2 * z1,
-        }
-    }
-}
-
-impl<T> Eq for TwistedHPoint<T> where T: ExtensionField {}
 
 impl<T, U> Mul<U> for TwistedHPoint<T>
 where
@@ -496,6 +448,55 @@ pub mod test {
     use gridiron::fp_480::Fp480;
     use hex;
     use proptest::prelude::*;
+
+    impl<T> PartialEq for HomogeneousPoint<T>
+    where
+        T: Field,
+    {
+        fn eq(&self, other: &HomogeneousPoint<T>) -> bool {
+            match (*self, *other) {
+                (
+                    HomogeneousPoint {
+                        x: x1,
+                        y: y1,
+                        z: z1,
+                    },
+                    HomogeneousPoint {
+                        x: x2,
+                        y: y2,
+                        z: z2,
+                    },
+                ) => x1 * z2 == x2 * z1 && y1 * z2 == y2 * z1,
+            }
+        }
+    }
+
+    impl<T> Eq for HomogeneousPoint<T> where T: Field {}
+
+    impl<T> PartialEq for TwistedHPoint<T>
+    where
+        T: ExtensionField,
+    {
+        fn eq(&self, other: &TwistedHPoint<T>) -> bool {
+            match (*self, *other) {
+                (
+                    TwistedHPoint {
+                        x: x1,
+                        y: y1,
+                        z: z1,
+                    },
+                    TwistedHPoint {
+                        x: x2,
+                        y: y2,
+                        z: z2,
+                    },
+                ) => x1 * z2 == x2 * z1 && y1 * z2 == y2 * z1,
+            }
+        }
+    }
+
+    impl<T> Eq for TwistedHPoint<T> where T: ExtensionField {}
+
     fn order() -> Fp256 {
         fp256_unsafe_from("8fb501e34aa387f9aa6fecb86184dc212e8d8e12f82b39241a2ef45b57ac7261")
     }

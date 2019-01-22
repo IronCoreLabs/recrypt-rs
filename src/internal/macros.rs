@@ -46,6 +46,19 @@ macro_rules! _bytes_struct {
     };
 }
 
+macro_rules! _bytes_eq {
+    ($t: ident) => {
+        // PartialEq and Eq are Not constant time
+        impl PartialEq for $t {
+            fn eq(&self, other: &$t) -> bool {
+                self.bytes[..] == other.bytes[..]
+            }
+        }
+
+        impl Eq for $t {}
+    };
+}
+
 macro_rules! _bytes_core {
     ($t: ident, $n: expr) => {
         impl $t {
@@ -62,19 +75,24 @@ macro_rules! _bytes_core {
         }
 
         bytes_only_debug!($t);
-
-        impl PartialEq for $t {
-            fn eq(&self, other: &$t) -> bool {
-                self.bytes[..] == other.bytes[..]
-            }
-        }
-
-        impl Eq for $t {}
     };
 }
 
 /// macro for generation of "new-types" around a byte array with a standard pattern for construction and access
 macro_rules! new_bytes_type {
+    ($t: ident, $n: expr) => {
+        _bytes_struct!($t, derive(Copy, Clone));
+        _bytes_core!($t, $n);
+        _bytes_eq!($t);
+    };
+    ($t: ident, $n: expr, $derive: meta) => {
+        _bytes_struct!($t, $n, $derive);
+        _bytes_core!($t, $n);
+        _bytes_eq!($t);
+    };
+}
+
+macro_rules! new_bytes_type_no_eq {
     ($t: ident, $n: expr) => {
         _bytes_struct!($t, derive(Copy, Clone));
         _bytes_core!($t, $n);
@@ -87,6 +105,7 @@ macro_rules! new_bytes_type {
 
 // macro to produce property-based tests for each FP type
 #[allow(unused_macros)]
+#[cfg(test)]
 macro_rules! field_proptest {
         ($arb_fp_type:ident, $base_fp_mod:ident, $fp_mod:ident) => {
         #[allow(unused_imports)]

@@ -16,6 +16,7 @@ use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
+use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_480::Fp480;
 use rand;
@@ -56,7 +57,14 @@ impl<CR: rand::CryptoRng + rand::RngCore> Api480<Sha256, Ed25519, RandomBytes<CR
 }
 
 /// Hashed but not encrypted Plaintext used for envelope encryption
-new_bytes_type!(DerivedSymmetricKey, 32);
+/// If you are looking for PartialEq for DerivedSymmetricKey, see PartialEq for Revealed<DerivedSymmetricKey>
+new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
+
+impl PartialEq for Revealed<DerivedSymmetricKey> {
+    fn eq(&self, other: &Revealed<DerivedSymmetricKey>) -> bool {
+        self.0.bytes == other.0.bytes
+    }
+}
 
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
@@ -100,6 +108,14 @@ impl Plaintext {
 
 bytes_only_debug!(Plaintext);
 
+impl PartialEq for Revealed<Plaintext> {
+    fn eq(&self, other: &Revealed<Plaintext>) -> bool {
+        self.0.bytes[..] == other.0.bytes[..]
+    }
+}
+
+/// If you are looking for PartialEq for Plaintext, see PartialEq for Revealed<Plaintext>
+#[cfg(test)]
 impl PartialEq for Plaintext {
     fn eq(&self, other: &Plaintext) -> bool {
         self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
@@ -202,9 +218,18 @@ impl TransformBlock {
         })
     }
 }
+
+impl PartialEq for TransformBlock {
+    fn eq(&self, other: &TransformBlock) -> bool {
+        self.public_key == other.public_key
+            && self.encrypted_temp_key == other.encrypted_temp_key
+            && self.random_transform_public_key == other.random_transform_public_key
+            && self.encrypted_random_transform_temp_key == other.encrypted_random_transform_temp_key
+    }
+}
 /// Encrypted value that is either initially encrypted or one that has been
 /// transformed one or more times
-#[derive(Debug, Clone)] //cannot derive Copy because of NonEmptyVec
+#[derive(Debug, Clone, PartialEq)] //cannot derive Copy because of NonEmptyVec
 pub enum EncryptedValue {
     /// Value which has been encrypted, but not transformed
     /// `ephemeral_public_key`  - public key of the ephemeral private key that was used to encrypt
@@ -400,7 +425,7 @@ bytes_only_debug!(EncryptedTempKey);
 
 impl PartialEq for EncryptedTempKey {
     fn eq(&self, other: &EncryptedTempKey) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+        self.bytes[..] == other.bytes[..]
     }
 }
 
@@ -447,10 +472,9 @@ impl HashedValue {
 }
 
 bytes_only_debug!(HashedValue);
-
 impl PartialEq for HashedValue {
     fn eq(&self, other: &HashedValue) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_value == other._internal_value
+        self.bytes[..] == other.bytes[..]
     }
 }
 
@@ -478,7 +502,7 @@ impl From<TwistedHPoint<Fp480>> for HashedValue {
 /// `to_public_key`         - public key of the delagatee
 /// `encrypted_k`           - random value K, encrypted to the delegatee; used to un-roll successive levels of multi-hop transform encryption
 /// `hashed_k`              - combination of the hash of K and the secret key of the delegator; used to recover K from `encrypted_k`
-#[derive(Debug, Clone, PartialEq)] //can't derive Copy because of NonEmptyVec
+#[derive(Debug, Clone)] //can't derive Copy because of NonEmptyVec
 pub struct TransformKey {
     ephemeral_public_key: PublicKey,
     to_public_key: PublicKey,
@@ -581,6 +605,17 @@ impl TransformKey {
             payload: new_internal,
             ..self._internal_key
         })
+    }
+}
+
+impl PartialEq for TransformKey {
+    fn eq(&self, other: &TransformKey) -> bool {
+        self.ephemeral_public_key == other.ephemeral_public_key
+            && self.to_public_key == other.to_public_key
+            && self.encrypted_temp_key == other.encrypted_temp_key
+            && self.hashed_temp_key == other.hashed_temp_key
+            && self.public_signing_key == other.public_signing_key
+            && self.signature == other.signature
     }
 }
 
@@ -896,21 +931,6 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp480> {
 #[derive(Clone, Copy)]
 struct SixtyBytes([u8; Fp480::ENCODED_SIZE_BYTES]);
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
-pub struct PublicKey {
-    x: SixtyBytes,
-    y: SixtyBytes,
-    _internal_key: internal::PublicKey<Fp480>,
-}
-
-impl PartialEq for SixtyBytes {
-    fn eq(&self, other: &SixtyBytes) -> bool {
-        self.0[..] == other.0[..]
-    }
-}
-
-impl Eq for SixtyBytes {}
-
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.0.to_vec())
@@ -927,6 +947,19 @@ impl Default for SixtyBytes {
     fn default() -> Self {
         SixtyBytes([0u8; 60])
     }
+}
+
+impl PartialEq for SixtyBytes {
+    fn eq(&self, other: &SixtyBytes) -> bool {
+        self.0[..] == other.0[..]
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct PublicKey {
+    x: SixtyBytes,
+    y: SixtyBytes,
+    _internal_key: internal::PublicKey<Fp480>,
 }
 
 impl Hashable for PublicKey {
@@ -996,7 +1029,15 @@ impl PublicKey {
     }
 }
 
-#[derive(Eq, PartialEq, Default, Debug)]
+impl PartialEq for PublicKey {
+    fn eq(&self, other: &PublicKey) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
+#[derive(Default, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
+// If you are looking for PartialEq for PrivateKey, see PartialEq for Revealed<PrivateKey>
 pub struct PrivateKey {
     bytes: SixtyBytes,
     _internal_key: internal::PrivateKey<Fp480>,
@@ -1019,6 +1060,13 @@ impl PrivateKey {
 
     new_from_slice!(PrivateKey);
 }
+
+impl PartialEq for Revealed<PrivateKey> {
+    fn eq(&self, other: &Revealed<PrivateKey>) -> bool {
+        self.0.bytes == other.0.bytes
+    }
+}
+
 impl Hashable60 for PrivateKey {
     fn to_bytes_60(&self) -> [u8; 60] {
         self.bytes.0

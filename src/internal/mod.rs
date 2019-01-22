@@ -59,7 +59,8 @@ quick_error! {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct PublicKey<T: Field> {
     pub value: HomogeneousPoint<T>,
 }
@@ -96,7 +97,8 @@ impl<T: Field + Hashable> Hashable for PublicKey<T> {
     }
 }
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct PrivateKey<T> {
     pub value: T,
 }
@@ -153,7 +155,8 @@ where
     }
 }
 
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct SignedValue<T> {
     pub public_signing_key: PublicSigningKey,
     pub signature: Ed25519Signature,
@@ -168,6 +171,8 @@ impl<T: Hashable> Hashable for SignedValue<T> {
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
 /// It is a hash of the plaintext.
+///
+/// PartialEq/Eq are not constant time, but AuthHash is not secret and we need equality for checking hashes.
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct AuthHash {
     pub bytes: [u8; 32],
@@ -187,7 +192,8 @@ impl AuthHash {
     }
 }
 
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub enum EncryptedValue<T: Field + Hashable> {
     EncryptedOnce(EncryptedOnceValue<T>),
     Reencrypted(ReencryptedValue<T>),
@@ -201,7 +207,8 @@ pub enum EncryptedValue<T: Field + Hashable> {
 /// encryptedMessage - the encrypted value.
 /// authHash - Authentication hash for the plaintext.
 /// encryptionBlocks - A vector of blocks which describes how to transform the encrypted data to be decrypted by another party.
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct ReencryptedValue<T: Field> {
     pub ephemeral_public_key: PublicKey<T>,
     pub encrypted_message: Fp12Elem<T>,
@@ -235,7 +242,8 @@ impl<FP: Field + Hashable> ReencryptedValue<FP> {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct ReencryptionBlock<T: Field> {
     pub public_key: PublicKey<T>,
     pub encrypted_temp_key: Fp12Elem<T>,
@@ -273,7 +281,8 @@ impl<FP: Field + Hashable> Hashable for ReencryptionBlock<FP> {
 /// `ephemeral_public_key`  - public key of the private key that was used to encrypt
 /// `encrypted_message`     - the encrypted value.
 /// `auth_hash`             - Authentication hash for the plaintext.
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct EncryptedOnceValue<T: Field> {
     pub ephemeral_public_key: PublicKey<T>,
     pub encrypted_message: Fp12Elem<T>,
@@ -838,7 +847,8 @@ where
 ///                   successive levels of multi-hop transform encryption
 /// `hashed_k`      - a combination of the hash of K and the secret key of the delegator,
 ///                   used to recover `K` from `encrypted_k`
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct ReencryptionKey<FP: ExtensionField> {
     pub re_public_key: PublicKey<FP>,
     pub to_public_key: PublicKey<FP>,

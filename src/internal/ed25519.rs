@@ -2,6 +2,7 @@ use crate::api_common::ApiErr;
 use crate::internal::array_split_64;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
+use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use ed25519_dalek;
 use ed25519_dalek::PublicKey;
@@ -51,13 +52,6 @@ pub struct SigningKeypair {
     pub(crate) bytes: [u8; 64],
 }
 bytes_only_debug!(SigningKeypair);
-impl PartialEq for SigningKeypair {
-    fn eq(&self, other: &SigningKeypair) -> bool {
-        self.bytes[..] == other.bytes[..]
-    }
-}
-
-impl Eq for SigningKeypair {}
 
 impl SigningKeypair {
     const ENCODED_SIZE_BYTES: usize = 64;
@@ -121,6 +115,12 @@ impl SigningKeypair {
     ///
     pub fn sign<A: Hashable>(&self, message: &A) -> Ed25519Signature {
         Ed25519.sign(message, self)
+    }
+}
+
+impl PartialEq for Revealed<SigningKeypair> {
+    fn eq(&self, other: &Revealed<SigningKeypair>) -> bool {
+        self.0.bytes[..] == other.0.bytes[..]
     }
 }
 

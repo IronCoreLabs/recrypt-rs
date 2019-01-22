@@ -16,6 +16,8 @@ use std::marker::PhantomData;
 /// `r` - the x coordinate for a point on the elliptic curve.
 /// `s` - the signature.
 /// These names are chosen because it's common terminology when working in `EC-Schnorr` algorithms.
+///
+/// PartialEq/Eq are not constant time, but SchnorrSignature is not secret
 #[derive(Debug, PartialEq, Eq)]
 pub struct SchnorrSignature<T> {
     r: T,
@@ -120,7 +122,7 @@ where
         let v = self.g * signature.s + unaugmented_key * h;
         let normalized = v.normalize();
         normalized
-            .map(|(x, _)| FR::from(x) == signature.r)
+            .map(|(x, _)| FR::from(x) == signature.r) // `x` and `signature.r` revealed, but they are not secret
             .unwrap_or_else(|| false)
     }
 }

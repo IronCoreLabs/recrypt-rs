@@ -16,6 +16,7 @@ use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
+use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use rand;
@@ -55,7 +56,14 @@ impl<CR: rand::CryptoRng + rand::RngCore> Api<Sha256, Ed25519, RandomBytes<CR>> 
 }
 
 /// Hashed but not encrypted Plaintext used for envelope encryption
-new_bytes_type!(DerivedSymmetricKey, 32);
+/// If you are looking for PartialEq for DerivedSymmetricKey, see PartialEq for Revealed<DerivedSymmetricKey>
+new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
+
+impl PartialEq for Revealed<DerivedSymmetricKey> {
+    fn eq(&self, other: &Revealed<DerivedSymmetricKey>) -> bool {
+        self.0.bytes == other.0.bytes
+    }
+}
 
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
@@ -99,6 +107,14 @@ impl Plaintext {
 
 bytes_only_debug!(Plaintext);
 
+impl PartialEq for Revealed<Plaintext> {
+    fn eq(&self, other: &Revealed<Plaintext>) -> bool {
+        self.0.bytes[..] == other.0.bytes[..]
+    }
+}
+
+/// If you are looking for PartialEq for Plaintext, see PartialEq for Revealed<Plaintext>
+#[cfg(test)]
 impl PartialEq for Plaintext {
     fn eq(&self, other: &Plaintext) -> bool {
         self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
@@ -201,9 +217,18 @@ impl TransformBlock {
         })
     }
 }
+
+impl PartialEq for TransformBlock {
+    fn eq(&self, other: &TransformBlock) -> bool {
+        self.public_key == other.public_key
+            && self.encrypted_temp_key == other.encrypted_temp_key
+            && self.random_transform_public_key == other.random_transform_public_key
+            && self.encrypted_random_transform_temp_key == other.encrypted_random_transform_temp_key
+    }
+}
 /// Encrypted value that is either initially encrypted or one that has been
 /// transformed one or more times
-#[derive(Debug, Clone)] //cannot derive Copy because of NonEmptyVec
+#[derive(Debug, Clone, PartialEq)] //cannot derive Copy because of NonEmptyVec
 pub enum EncryptedValue {
     /// Value which has been encrypted, but not transformed
     /// `ephemeral_public_key`  - public key of the ephemeral private key that was used to encrypt
@@ -399,7 +424,7 @@ bytes_only_debug!(EncryptedTempKey);
 
 impl PartialEq for EncryptedTempKey {
     fn eq(&self, other: &EncryptedTempKey) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+        self.bytes[..] == other.bytes[..]
     }
 }
 
@@ -446,10 +471,9 @@ impl HashedValue {
 }
 
 bytes_only_debug!(HashedValue);
-
 impl PartialEq for HashedValue {
     fn eq(&self, other: &HashedValue) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_value == other._internal_value
+        self.bytes[..] == other.bytes[..]
     }
 }
 
@@ -477,7 +501,7 @@ impl From<TwistedHPoint<Fp256>> for HashedValue {
 /// `to_public_key`         - public key of the delagatee
 /// `encrypted_k`           - random value K, encrypted to the delegatee; used to un-roll successive levels of multi-hop transform encryption
 /// `hashed_k`              - combination of the hash of K and the secret key of the delegator; used to recover K from `encrypted_k`
-#[derive(Debug, Clone, PartialEq)] //can't derive Copy because of NonEmptyVec
+#[derive(Debug, Clone)] //can't derive Copy because of NonEmptyVec
 pub struct TransformKey {
     ephemeral_public_key: PublicKey,
     to_public_key: PublicKey,
@@ -580,6 +604,17 @@ impl TransformKey {
             payload: new_internal,
             ..self._internal_key
         })
+    }
+}
+
+impl PartialEq for TransformKey {
+    fn eq(&self, other: &TransformKey) -> bool {
+        self.ephemeral_public_key == other.ephemeral_public_key
+            && self.to_public_key == other.to_public_key
+            && self.encrypted_temp_key == other.encrypted_temp_key
+            && self.hashed_temp_key == other.hashed_temp_key
+            && self.public_signing_key == other.public_signing_key
+            && self.signature == other.signature
     }
 }
 
@@ -891,7 +926,7 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp256> {
     )
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct PublicKey {
     x: [u8; 32],
     y: [u8; 32],
@@ -960,7 +995,15 @@ impl PublicKey {
     }
 }
 
-#[derive(Eq, PartialEq, Default, Debug)]
+impl PartialEq for PublicKey {
+    fn eq(&self, other: &PublicKey) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
+#[derive(Default, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
+// If you are looking for PartialEq for PrivateKey, see PartialEq for Revealed<PrivateKey>
 pub struct PrivateKey {
     bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES],
     _internal_key: internal::PrivateKey<Fp256>,
@@ -982,6 +1025,12 @@ impl PrivateKey {
     }
 
     new_from_slice!(PrivateKey);
+}
+
+impl PartialEq for Revealed<PrivateKey> {
+    fn eq(&self, other: &Revealed<PrivateKey>) -> bool {
+        self.0.bytes[..] == other.0.bytes
+    }
 }
 
 impl Hashable32 for PrivateKey {
@@ -1273,7 +1322,7 @@ pub(crate) mod test {
         dest.copy_from_slice(src);
         let expected_result = DerivedSymmetricKey::new(dest);
         let result = Api::new().derive_symmetric_key(&pt);
-        assert_eq!(expected_result, result)
+        assert_eq!(Revealed(expected_result), Revealed(result))
     }
 
     use std::default::Default;
@@ -1387,24 +1436,24 @@ pub(crate) mod test {
     fn generate_ed25519_key_pair() {
         use rand::SeedableRng;
         let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
-        let signing_keypair = api.generate_ed25519_key_pair();
-        let expected_signing_keypair = SigningKeypair::new_unchecked([
+        let signing_keypair = Revealed(api.generate_ed25519_key_pair());
+        let expected_signing_keypair = Revealed(SigningKeypair::new_unchecked([
             118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
             25, 184, 160, 141, 237, 26, 168, 54, 239, 204, 139, 119, 13, 199, 32, 253, 186, 201,
             177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150, 215, 30, 78, 212,
             76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
-        ]);
+        ]));
         let expected_pub = PublicSigningKey::new([
             32, 253, 186, 201, 177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150,
             215, 30, 78, 212, 76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
         ]);
         assert_eq!(signing_keypair, expected_signing_keypair);
-        assert_eq!(signing_keypair.public_key(), expected_pub);
+        assert_eq!(signing_keypair.0.public_key(), expected_pub);
 
         //Assert that the generation doesn't just return the same value.
-        let keypair_two = api.generate_ed25519_key_pair();
+        let keypair_two = Revealed(api.generate_ed25519_key_pair());
         assert_ne!(keypair_two, expected_signing_keypair);
-        assert_ne!(keypair_two.public_key(), expected_pub);
+        assert_ne!(keypair_two.0.public_key(), expected_pub);
     }
     #[test]
     //written against AuthHash, but valid for all types generated from that macro
