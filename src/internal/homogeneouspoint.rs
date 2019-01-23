@@ -7,6 +7,7 @@ use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
+use gridiron::fp_256;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
@@ -36,6 +37,16 @@ pub struct HomogeneousPoint<T> {
     pub z: T,
 }
 
+impl<T> HomogeneousPoint<T> {
+    pub fn map<U, F: Fn(T) -> U>(self, op: F) -> HomogeneousPoint<U> {
+        HomogeneousPoint {
+            x: op(self.x),
+            y: op(self.y),
+            z: op(self.z),
+        }
+    }
+}
+
 impl<T: One + Field + From<u32> + Hashable> HomogeneousPoint<T> {
     pub fn from_x_y((x, y): (T, T)) -> Result<HomogeneousPoint<T>, PointErr> {
         if x.pow(3) + T::from(3) == y.pow(2) {
@@ -46,6 +57,16 @@ impl<T: One + Field + From<u32> + Hashable> HomogeneousPoint<T> {
             })
         } else {
             Err(PointErr::PointNotOnCurve(x.to_bytes(), y.to_bytes()))
+        }
+    }
+}
+
+impl HomogeneousPoint<fp_256::Monty> {
+    pub fn to_norm(&self) -> HomogeneousPoint<fp_256::Fp256> {
+        HomogeneousPoint {
+            x: self.x.to_norm(),
+            y: self.y.to_norm(),
+            z: self.z.to_norm(),
         }
     }
 }
@@ -209,6 +230,16 @@ pub struct TwistedHPoint<T> {
     pub x: Fp2Elem<T>,
     pub y: Fp2Elem<T>,
     pub z: Fp2Elem<T>,
+}
+
+impl<T> TwistedHPoint<T> {
+    pub fn map<U, F: Fn(T) -> U>(self, op: &F) -> TwistedHPoint<U> {
+        TwistedHPoint {
+            x: self.x.map(op),
+            y: self.y.map(op),
+            z: self.z.map(op),
+        }
+    }
 }
 
 impl<T: ConstantSwap> ConstantSwap for TwistedHPoint<T> {
@@ -441,7 +472,9 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
+    use crate::internal::curve::{
+        FP_256_CURVE_POINTS, FP_256_MONTY_CURVE_POINTS, FP_480_CURVE_POINTS,
+    };
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::test::{arb_fp256, arb_fp480};
     use gridiron::fp_256::Fp256;
@@ -589,6 +622,28 @@ pub mod test {
         let result = FP_256_CURVE_POINTS.g1 + FP_256_CURVE_POINTS.g1;
         let double_result = FP_256_CURVE_POINTS.g1.double();
         assert_eq!(result, double_result);
+    }
+
+    #[test]
+    fn double_matches_monty() {
+        use gridiron::fp_256;
+        println!("xi{:?}", fp_256::Monty::xi());
+        println!("const inv{:?}", fp_256::Monty::xi_inv_times_9());
+
+        let TwistedHPoint {
+            x: monty_x,
+            y: monty_y,
+            z: monty_z,
+        } = FP_256_MONTY_CURVE_POINTS.g1.double();
+        let double_result = FP_256_CURVE_POINTS.g1.double();
+        assert_eq!(
+            TwistedHPoint {
+                x: monty_x.to_norm(),
+                y: monty_y.to_norm(),
+                z: monty_z.to_norm()
+            },
+            double_result
+        );
     }
 
     // macro to produce property-based tests for each FP type

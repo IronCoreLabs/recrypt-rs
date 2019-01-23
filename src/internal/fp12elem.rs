@@ -312,6 +312,13 @@ impl<T> Fp12Elem<T> {
             elem2: Fp6Elem::create(seven, eight, nine, ten, eleven, twelve),
         }
     }
+
+    pub fn map<U, F: Fn(T) -> U>(self, op: &F) -> Fp12Elem<U> {
+        Fp12Elem {
+            elem1: self.elem1.map(op),
+            elem2: self.elem2.map(op),
+        }
+    }
 }
 
 impl<T> Fp12Elem<T>
@@ -347,7 +354,7 @@ where
     }
 }
 
-impl Fp12Elem<Fp256> {
+impl Fp12Elem<gridiron::fp_256::Monty> {
     pub fn to_bytes_fp256(&self) -> [u8; Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES] {
         let hashable = &self.to_bytes()[..];
         let mut dest = [0u8; Fp12Elem::<Fp256>::ENCODED_SIZE_BYTES];
@@ -396,12 +403,12 @@ where
 pub mod test {
     use super::*;
     use crate::internal::fp6elem::test::{arb_fp6, arb_fp6_480};
-    use gridiron::fp_256::Fp256;
+    use gridiron::fp_256;
     use gridiron::fp_480::Fp480;
     use proptest::prelude::*;
 
     prop_compose! {
-        [pub] fn arb_fp12()(e1 in arb_fp6(), e2 in arb_fp6()) -> Fp12Elem<Fp256> {
+        [pub] fn arb_fp12()(e1 in arb_fp6(), e2 in arb_fp6()) -> Fp12Elem<fp_256::Monty> {
             Fp12Elem {
                 elem1: e1,
                 elem2: e2

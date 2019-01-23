@@ -3,14 +3,17 @@ use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::Square;
+use gridiron::fp_256;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use num_traits::{Inv, Pow};
 use num_traits::{One, Zero};
+use std::fmt::Debug;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 pub trait Field:
     One
+    + Debug
     + Zero
     + Copy
     + Eq
@@ -103,6 +106,7 @@ pub trait Field:
     }
 }
 
+impl Field for fp_256::Monty {}
 impl Field for Fp256 {}
 impl Field for Fr256 {}
 impl Field for Fp480 {}
@@ -211,6 +215,102 @@ impl ExtensionField for Fp256 {
                 223094440, 382877345, 511765441, 618638984, 1337480992, 1694576735, 638506791,
                 457086189, 44,
             ]),
+        }
+    }
+}
+
+impl ExtensionField for fp_256::Monty {
+    fn xi() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: fp_256::Monty::new([
+                1368961080, 1174866893, 1632604085, 2004383869, 1511972380, 1964912876, 1176826515,
+                403865604, 70,
+            ]),
+            elem2: fp_256::Monty::new([
+                381778497, 559663760, 555210920, 1938629360, 1980684343, 291306425, 697096529,
+                1840680552, 66,
+            ]),
+        }
+    }
+    //precalculate this since it's used in every double and add operation in the extension field.
+    // Fp256::xi().inv() * 9
+    fn xi_inv_times_9() -> Fp2Elem<Self> {
+        Fp2Elem {
+            //19500164908693981119838931622707971722847607432286901071563143508059255221534.str
+            elem1: fp_256::Monty::new([
+                2050346385, 731299471, 959575992, 34915099, 1787054046, 707674376, 1189605443,
+                44293910, 138,
+            ]),
+            //6500054969564660373279643874235990574282535810762300357187714502686418407181
+            elem2: fp_256::Monty::new([
+                729307778, 258461402, 1559141440, 1381403208, 157052610, 1802371594, 636365429,
+                127350700, 17,
+            ]),
+        }
+    }
+    #[inline]
+    fn frobenius_factor_1() -> Fp2Elem<Self> {
+        Fp2Elem {
+            // 26098034838977895781559542626833399156321265654106457577426020397262786167059
+            // num.digits(2^31) in sage gives the array
+            elem1: Fp256::new([
+                516587795, 432442066, 2081743774, 272481278, 216868981, 2047188942, 766684017,
+                1501260986, 57,
+            ])
+            .to_monty(),
+            // 15931493369629630809226283458085260090334794394361662678240713231519278691715
+            elem2: Fp256::new([
+                1018688899, 285125916, 381469398, 738635315, 809814760, 1686808322, 473749512,
+                477359611, 35,
+            ])
+            .to_monty(),
+        }
+    }
+    #[inline]
+    fn frobenius_factor_2() -> Fp2Elem<Self> {
+        Fp2Elem {
+            // 19885131339612776214803633203834694332692106372356013117629940868870585019582
+            elem1: Fp256::new([
+                272985278, 337458509, 1511734401, 44257531, 567886726, 95238613, 670462112,
+                2068509020, 43,
+            ])
+            .to_monty(),
+            // 21645619881471562101905880913352894726728173167203616652430647841922248593627
+            elem2: Fp256::new([
+                129224923, 1627709782, 1853228136, 1045486385, 137170065, 710273374, 1587423245,
+                1836993535, 47,
+            ])
+            .to_monty(),
+        }
+    }
+    #[inline]
+    fn frobenius_factor_fp12() -> Fp2Elem<Self> {
+        Fp2Elem {
+            // 8669379979083712429711189836753509758585994370025260553045152614783263110636
+            elem1: Fp256::new([
+                940766700, 726957870, 1193934117, 1012163387, 1658028813, 1288872574, 1205874830,
+                358153140, 19,
+            ])
+            .to_monty(),
+            // 19998038925833620163537568958541907098007303196759855091367510456613536016040
+            elem2: Fp256::new([
+                223094440, 382877345, 511765441, 618638984, 1337480992, 1694576735, 638506791,
+                457086189, 44,
+            ])
+            .to_monty(),
+        }
+    }
+
+    ///v is the thing that cubes to xi
+    ///v^3 = u+3, because by definition it is a solution to the equation y^3 - (u + 3)
+    fn v() -> Fp6Elem<Self> {
+        Fp6Elem {
+            elem1: Zero::zero(),
+            elem2: Fp2Elem {
+                elem1: Zero::zero(),
+                elem2: Fp256::one().to_monty(),
+            },
+            elem3: Zero::zero(),
         }
     }
 }

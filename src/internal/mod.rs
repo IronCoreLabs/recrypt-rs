@@ -17,6 +17,7 @@ use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
+use gridiron::fp_256;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use num_traits::{One, Zero};
@@ -75,7 +76,7 @@ impl<T: Field + From<u32> + Hashable> PublicKey<T> {
     }
 }
 
-impl PublicKey<Fp256> {
+impl PublicKey<fp_256::Monty> {
     pub fn to_byte_vectors_32(&self) -> Option<([u8; 32], [u8; 32])> {
         self.value
             .normalize()
@@ -102,25 +103,27 @@ impl<T: Field + Hashable> Hashable for PublicKey<T> {
 pub struct PrivateKey<T> {
     pub value: T,
 }
-impl From<api::PrivateKey> for PrivateKey<Fp256> {
+impl From<api::PrivateKey> for PrivateKey<fp_256::Monty> {
     fn from(api_pk: api::PrivateKey) -> Self {
         PrivateKey {
-            value: Fp256::from(api_pk.to_bytes_32()),
+            value: Fp256::from(api_pk.to_bytes_32()).to_monty(),
         }
     }
 }
 
-impl<'a> From<&'a api::PrivateKey> for PrivateKey<Fp256> {
+impl<'a> From<&'a api::PrivateKey> for PrivateKey<fp_256::Monty> {
     fn from(api_pk: &'a api::PrivateKey) -> Self {
         PrivateKey {
-            value: Fp256::from(api_pk.to_bytes_32()),
+            value: Fp256::from(api_pk.to_bytes_32()).to_monty(),
         }
     }
 }
 
 impl PrivateKey<Fp256> {
-    pub fn from_fp256(fp256: Fp256) -> PrivateKey<Fp256> {
-        PrivateKey { value: fp256 }
+    pub fn from_fp256(fp256: Fp256) -> PrivateKey<fp_256::Monty> {
+        PrivateKey {
+            value: fp256.to_monty(),
+        }
     }
 }
 
@@ -325,6 +328,12 @@ pub trait Square {
 impl Square for Fp256 {
     fn square(&self) -> Self {
         self.square()
+    }
+}
+
+impl Square for fp_256::Monty {
+    fn square(&self) -> Self {
+        *self * *self
     }
 }
 
@@ -799,7 +808,7 @@ where
     }
 }
 
-impl From<api::Plaintext> for KValue<Fp256> {
+impl From<api::Plaintext> for KValue<fp_256::Monty> {
     fn from(pt: api::Plaintext) -> Self {
         KValue(*pt.internal_fp12())
     }
@@ -1097,13 +1106,13 @@ mod test {
     use proptest::arbitrary::any;
     use proptest::prelude::*;
     prop_compose! {
-        [pub] fn arb_fp256()(seed in any::<u32>()) -> Fp256 {
+        [pub] fn arb_fp256()(seed in any::<u32>()) -> fp_256::Monty {
             if seed == 0 {
-                Fp256::zero()
+                fp_256::Monty::zero()
             } else if seed == 1 {
-                Fp256::one()
+                fp_256::Monty::one()
             } else {
-                Fp256::from(seed).pow(seed).pow(seed)
+                fp_256::Monty::from(seed).pow(seed).pow(seed)
             }
         }
     }
@@ -1161,23 +1170,25 @@ mod test {
     }
 
     //copied from API as it's private there
-    fn gen_random_fp12<R: rand_bytes::RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp256> {
+    fn gen_random_fp12<R: rand_bytes::RandomBytesGen>(
+        random_bytes: &mut R,
+    ) -> Fp12Elem<fp_256::Monty> {
         // generate 12 random Fp values
         gen_rth_root(
             &pairing::Pairing::new(),
             Fp12Elem::create_from_t(
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
             ),
         )
     }
@@ -1340,7 +1351,8 @@ mod test {
             Fp256::from(10u8),
             Fp256::from(11u8),
             Fp256::from(12u8),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let salt_fp12 = Fp12Elem::create_from_t(
             Fp256::from(11u8),
             Fp256::from(12u8),
@@ -1354,7 +1366,8 @@ mod test {
             Fp256::from(110u8),
             Fp256::from(111u8),
             Fp256::from(112u8),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let rand_re_k_fp12 = Fp12Elem::create_from_t(
             Fp256::from(21u8),
             Fp256::from(22u8),
@@ -1368,10 +1381,11 @@ mod test {
             Fp256::from(210u8),
             Fp256::from(211u8),
             Fp256::from(212u8),
-        );
+        )
+        .map(&|fp| fp.to_monty());
 
         let pairing = pairing::Pairing::new();
-        let ref curve_points = *curve::FP_256_CURVE_POINTS;
+        let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
         let salt = KValue(gen_rth_root(&pairing, salt_fp12));
@@ -1446,7 +1460,7 @@ mod test {
     #[test]
     fn fail_when_verify_fails() {
         let pairing = pairing::Pairing::new();
-        let ref curve_points = *curve::FP_256_CURVE_POINTS;
+        let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let salt1 = gen_rth_root(&pairing, gen_random_fp12(&mut DummyRandomBytes));
         let signing_keypair = ed25519::test::good_signing_keypair();
@@ -1487,7 +1501,7 @@ mod test {
     #[test]
     fn fail_when_auth_hash_does_not_match_wrong_priv_key() {
         let pairing = pairing::Pairing::new();
-        let ref curve_points = *curve::FP_256_CURVE_POINTS;
+        let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let salt1 = gen_rth_root(&pairing, gen_random_fp12(&mut DummyRandomBytes));
         let signing_keypair = ed25519::test::good_signing_keypair();
@@ -1542,7 +1556,8 @@ mod test {
             Fp256::from(10u32),
             Fp256::from(11u32),
             Fp256::from(12u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let salt_1_fp12 = Fp12Elem::create_from_t(
             Fp256::from(11u32),
             Fp256::from(12u32),
@@ -1556,7 +1571,8 @@ mod test {
             Fp256::from(110u32),
             Fp256::from(111u32),
             Fp256::from(112u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let rand_re_k_1_fp12 = Fp12Elem::create_from_t(
             Fp256::from(21u32),
             Fp256::from(22u32),
@@ -1570,7 +1586,8 @@ mod test {
             Fp256::from(210u32),
             Fp256::from(211u32),
             Fp256::from(212u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let salt_2_fp12 = Fp12Elem::create_from_t(
             Fp256::from(31u32),
             Fp256::from(32u32),
@@ -1584,7 +1601,8 @@ mod test {
             Fp256::from(310u32),
             Fp256::from(311u32),
             Fp256::from(312u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let rand_re_k_2_fp12 = Fp12Elem::create_from_t(
             Fp256::from(41u32),
             Fp256::from(42u32),
@@ -1598,10 +1616,11 @@ mod test {
             Fp256::from(410u32),
             Fp256::from(411u32),
             Fp256::from(412u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
 
         let pairing = pairing::Pairing::new();
-        let ref curve_points = *curve::FP_256_CURVE_POINTS;
+        let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
         let salt1 = KValue(gen_rth_root(&pairing, salt_1_fp12));
@@ -1761,12 +1780,12 @@ mod test {
             prop_assert!(verified.is_some())
         }
         #[test]
-        fn encrypt_decrypt_roundtrip(priv_key in arb_priv_key(), plaintext in arb_fp12().prop_filter("", |a| !(*a == Fp12Elem::<Fp256>::zero()))) {
-            let pub_key = public_keygen(priv_key, curve::FP_256_CURVE_POINTS.generator);
+        fn encrypt_decrypt_roundtrip(priv_key in arb_priv_key(), plaintext in arb_fp12().prop_filter("", |a| !(*a == Fp12Elem::<fp_256::Monty>::zero()))) {
+            let pub_key = public_keygen(priv_key, curve::FP_256_MONTY_CURVE_POINTS.generator);
             let ephem_secret_key = PrivateKey::from_fp256(Fp256::from(42u8));
             let priv_signing_key = good_signing_keys();
             let pairing = pairing::Pairing::new();
-            let curve_points = &*curve::FP_256_CURVE_POINTS;
+            let curve_points = &*curve::FP_256_MONTY_CURVE_POINTS;
             let encrypt_result = encrypt(
                 pub_key,
                 plaintext,
@@ -1805,9 +1824,9 @@ mod test {
             fp in arb_fp256()
             ) {
 
-            let cpoints = &*curve::FP_256_CURVE_POINTS;
+            let cpoints = &*curve::FP_256_MONTY_CURVE_POINTS;
             let new_hashed_k = cpoints.g1 * fp;
-            let re_key: ReencryptionKey<Fp256> = signed_re_key.payload.clone();
+            let re_key: ReencryptionKey<fp_256::Monty> = signed_re_key.payload.clone();
 
             // clone the ReencryptionKey, replacing the hashed_k with the arb one
             let re_key_copy = ReencryptionKey {
@@ -1823,13 +1842,13 @@ mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
-            PublicKey { value: *hpoint }
+        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<fp_256::Monty> {
+            PublicKey { value: (*hpoint).map(&|fp:Fp256| fp.to_monty()) }
         }
     }
 
     prop_compose! {
-        [pub] fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<Fp256> {
+        [pub] fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<fp_256::Monty> {
             PrivateKey { value: fp256 }
         }
     }
@@ -1840,9 +1859,9 @@ mod test {
          ref new_k in arb_fp12(),
          to_public_key in arb_pub_key(),
          from_private_key in arb_priv_key())
-         -> SignedValue<ReencryptionKey<Fp256>> {
+         -> SignedValue<ReencryptionKey<fp_256::Monty>> {
             let pairing = pairing::Pairing::new();
-            let curve_points = &*curve::FP_256_CURVE_POINTS;
+            let curve_points = &*curve::FP_256_MONTY_CURVE_POINTS;
 
             generate_reencryption_key(
                 from_private_key,

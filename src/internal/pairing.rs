@@ -6,6 +6,7 @@ use crate::internal::homogeneouspoint::Double;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::Square;
+use gridiron::fp_256;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use num_traits::{Inv, One, Zero};
@@ -296,6 +297,33 @@ impl PairingConfig for Fp256 {
     }
 }
 
+impl PairingConfig for fp_256::Monty {
+    fn bn_pow(fp12: Fp12Elem<Self>) -> Fp12Elem<Self> {
+        //This is a hardcode of the square and multiply for bnPow
+        let mut x = fp12;
+        let mut res = x;
+        (0..8).for_each(|_| x = x.square());
+        res = res * x;
+        (0..7).for_each(|_| x = x.square());
+        res = res * x;
+        (0..3).for_each(|_| x = x.square());
+        res = res * x.conjugate();
+        (0..3).for_each(|_| x = x.square());
+        res * x
+    }
+    //NAF of 6*BNParam + 2
+    fn naf_for_loop() -> Vec<i8> {
+        // if comparing to recrypt-scala, the last two elements were left off manually
+        let mut r = vec![
+            0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0,
+            0, 0, -1, 0, 1, 0, 0, 0, 1, 0, -1, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0,
+            -1, 0, 0, 0, 0, 1, 0, 0, 0,
+        ];
+        r.reverse();
+        r
+    }
+}
+
 impl PairingConfig for Fp480 {
     fn bn_pow(fp12: Fp12Elem<Self>) -> Fp12Elem<Self> {
         //This is a hardcode of the square and multiply for bnPow
@@ -344,7 +372,9 @@ impl PairingConfig for Fp480 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
+    use crate::internal::curve::{
+        FP_256_CURVE_POINTS, FP_256_MONTY_CURVE_POINTS, FP_480_CURVE_POINTS,
+    };
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::homogeneouspoint::Double;
     use lazy_static::lazy_static;
@@ -376,6 +406,33 @@ mod test {
                 //20317563273514500379895253969863230147776170908243485486513578790623697384796
                 elem2:
                 fp256_unsafe_from("2ceb55529c6b0ca59139f2ec721870634e164523d1ed9b0d60049e29c4f3355c")
+            }
+        };
+
+                static ref GOOD_TWISTED_HPOINT_MONTY: TwistedHPoint<fp_256::Monty> = TwistedHPoint {
+            x: Fp2Elem {
+                //39898887170429929807040143276261848585078991568615066857293752634765338134660
+                elem1:
+                fp256_unsafe_from("5835f848fb3e6f2a741a589fe85710c64272355f3186de77f84770c28eaac884").to_monty(),
+                //4145079839513126747718408015399244712098849008922890496895080944648891367549
+                elem2:
+                fp256_unsafe_from("92a08345bae17b654f089e235b54b4f41de5e358d5183e4c2c6d1498a3f807d").to_monty()
+            },
+            y: Fp2Elem {
+                //54517427188233403272140512636254575372766895942651963572804557077716421872651
+                elem1:
+                fp256_unsafe_from("7887c5327665bd5a2b27552a06cd04a027021fbf7379c760eb426e26862c8c0b").to_monty(),
+                //29928198841033477396304275898313889635561368630804063259494165651195801046334
+                elem2:
+                fp256_unsafe_from("422ac2a0339a70746983c121f37b9931adc7423b39864fe675b0f0ec882f0d3e").to_monty()
+            },
+            z: Fp2Elem {
+                //25757029117904574834370194644693146689936696995375576562303493881177613755324
+                elem1:
+                fp256_unsafe_from("38f1f63c4692158b7830dfa45533f08119bb5f01bfcccc004b820adf2b8763bc").to_monty(),
+                //20317563273514500379895253969863230147776170908243485486513578790623697384796
+                elem2:
+                fp256_unsafe_from("2ceb55529c6b0ca59139f2ec721870634e164523d1ed9b0d60049e29c4f3355c").to_monty()
             }
         };
         static ref BASE_POINT: HomogeneousPoint<Fp256> = FP_256_CURVE_POINTS.generator;
@@ -416,6 +473,59 @@ mod test {
         let pairing: Pairing<Fp256> = Pairing::new();
 
         let result = pairing.pair(FP_256_CURVE_POINTS.generator, GOOD_TWISTED_HPOINT.clone());
+
+        assert_eq!(expected_good_result, result);
+    }
+
+    #[test]
+    fn monty_pair_match_known_good_value() {
+        println!("{:?}", fp_256::Monty::one());
+        // matches values verified by recrypt-scala
+        let expected_good_result = Fp12Elem::create_from_t(
+            //20621517740542501009268492188240231175004875885443969425948886451683622135253
+            fp256_unsafe_from("2d975d8c65b577810297bc5b7193691a6892cefacbee2544fb16f67ba7c825d5")
+                .to_monty(),
+            //34374877744619883729582518521480375735530540362125629015072222432427068254516
+            fp256_unsafe_from("4bff7dc7983fb830ec19f39e78268d8191d96ec9974ac41ef8100acca66e6934")
+                .to_monty(),
+            //3061516916225902041514148805993070634368655849312514173666756917317148753791
+            fp256_unsafe_from("6c4c1d5c2d00bbfc5eac19626b1967ce3ca5a60bce0122626d0662f53463f7f")
+                .to_monty(),
+            //36462333850830053304472867079357777410712443208968594405185610332940263631144
+            fp256_unsafe_from("509cf319e11149b9f03c5c442efecb02c3fd98c4034490c505c6983f4f862928")
+                .to_monty(),
+            //61512103449194136219283269928242996434577060883392017268158197606945715641345
+            fp256_unsafe_from("87fe9de48e020614a01af0a1ae62a44b47342ead7d99af4c6a0f1eec6cbfdc01")
+                .to_monty(),
+            //6400685679296646713554926627062187315936943674688629293503755450503276487519
+            fp256_unsafe_from("e26a8e2e7136d4027e2ff75226d1c456767129d1232fa257503f6cf34cb635f")
+                .to_monty(),
+            //53751186939356616119935218564341196608994152768328518524478036628068165341835
+            fp256_unsafe_from("76d617fc05a8f85acff827a14f3ffdc99be13ac7bb0b823d30d8752bf205d28b")
+                .to_monty(),
+            //24086990466602794093787211540995552936111869178774386613517233502609109093865
+            fp256_unsafe_from("3540c0e3e718e5cd7d1153d3d392e246a251d8f4a5d7490b4fa18d369a270de9")
+                .to_monty(),
+            //61396452992397102589850224464045014903468298857108669606429537125544948220026
+            fp256_unsafe_from("87bd2932b2a9e20f9b51b8b1adfeda2b434985710e73bb335d5b568eb8c1407a")
+                .to_monty(),
+            //15909384434160564083979503677021998800821775569159782381560100961841901513229
+            fp256_unsafe_from("232c6479f7e8768b2e85a025cb9e7162315ff7ebeef6bd73ef896bb14748aa0d")
+                .to_monty(),
+            //60608834117224548548490931258722195552088501100182383267798941700183023164589
+            fp256_unsafe_from("85ff626aef9f9cef0310f93a9541ef9ce2207eb9b57077db4572531a879c1cad")
+                .to_monty(),
+            //17433339776741835027827317970122814431745024562995872600925458287403992082321
+            fp256_unsafe_from("268aebaf44e6ae76c70f48aed806180ced89dfc17f962de209f2a3437b4fe791")
+                .to_monty(),
+        );
+
+        let pairing: Pairing<fp_256::Monty> = Pairing::new();
+
+        let result = pairing.pair(
+            FP_256_MONTY_CURVE_POINTS.generator,
+            GOOD_TWISTED_HPOINT_MONTY.clone(),
+        );
 
         assert_eq!(expected_good_result, result);
     }
@@ -472,6 +582,74 @@ mod test {
             BASE_POINT_Y.clone(),
             GOOD_TWISTED_HPOINT.clone(),
             GOOD_TWISTED_HPOINT.double(),
+        );
+        //Normalize the values so that we don't have to care about _how_ we got to the result. Different * and double algorithms will
+        //give different values here, but when you normalize it should come out to the same.
+        let result = result_num * result_denom.inv();
+        let expected_good_result = expected_good_result_num * expected_good_result_denom.inv();
+        assert_eq!(expected_good_result, result);
+    }
+
+    #[test]
+    fn add_line_match_known_good_value_1_monty() {
+        // matches values verified by recrypt-scala
+        let (expected_good_result_num, expected_good_result_denom) = (
+            Fp12Elem::create_from_t(
+                Fp256::zero().to_monty(),
+                Fp256::zero().to_monty(),
+                //10225613897589023975141864306784331698114333350322193013849355029116866989558
+                fp256_unsafe_from(
+                    "169b7e0ba28a1b3a3198f1b8e8c40a12383437d8040e85e12da4061bed8b0df6",
+                )
+                .to_monty(),
+                //23874417408544625227955020078213054360178217578435813388951341839988775845640
+                fp256_unsafe_from(
+                    "34c870fef561f0f82b0ae70d91bfb3ae26f15709c0a571af8aac0c95e0fdff08",
+                )
+                .to_monty(),
+                //19583696538442210257421816149687930861898894457540838395018829873613832108851
+                fp256_unsafe_from(
+                    "2b4bfabc892dff021f3620b8fde6007c2f41febce7687baed860c7a694d6bb33",
+                )
+                .to_monty(),
+                //22526875801371184821181570246816236576448644880717020355432045498197577562711
+                fp256_unsafe_from(
+                    "31cdc286c83cb54c22871911cd15467f5fc78af17532baf07dd720772d27fa57",
+                )
+                .to_monty(),
+                Fp256::zero().to_monty(),
+                Fp256::zero().to_monty(),
+                Fp256::zero().to_monty(),
+                Fp256::zero().to_monty(),
+                //51350284864274176077585216690595295345910970011195603140224124332586682398734
+                fp256_unsafe_from(
+                    "71873b3494c78a1f2caf34cb82c4a87f15fd7d0f9394cab1675ec5b01935b80e",
+                )
+                .to_monty(),
+                //9195404449948098526566482694993850148148550213325878247570491211174099400997
+                fp256_unsafe_from(
+                    "14546a1b7024ae87029745ae7a9cdf77311a6c727920e7d36c0166d64cedb925",
+                )
+                .to_monty(),
+            ),
+            Fp2Elem {
+                //25675142432137088038792608345297647672955485005597801570112062166293341199367
+                elem1: fp256_unsafe_from(
+                    "38c39d9a4a63c50f96579a65c162543f8afebe87c9ca6558b3af62d80c9adc07",
+                )
+                .to_monty(),
+                //37097977072797351129681460718676877945486954160474440909723818119019141736390
+                elem2: fp256_unsafe_from(
+                    "5204b5ff5d641b40568399336e10ddcc8fbafaa1cceb4eb8c22f09a1557b27c6",
+                )
+                .to_monty(),
+            },
+        );
+        let (result_num, result_denom) = Pairing::new().add_line_eval(
+            BASE_POINT_X.clone().to_monty(),
+            BASE_POINT_Y.clone().to_monty(),
+            GOOD_TWISTED_HPOINT_MONTY.clone(),
+            GOOD_TWISTED_HPOINT_MONTY.double(),
         );
         //Normalize the values so that we don't have to care about _how_ we got to the result. Different * and double algorithms will
         //give different values here, but when you normalize it should come out to the same.

@@ -213,7 +213,7 @@ macro_rules! recrypt_bench {
     };
 }
 
-recrypt_bench! {api = Api480; suite_desc = criterion_benchmark_fp480; bits = "480"}
+// recrypt_bench! {api = Api480; suite_desc = criterion_benchmark_fp480; bits = "480"}
 recrypt_bench! {api = Api256; suite_desc = criterion_benchmark_fp256; bits = "256"}
 
 criterion_group! {

@@ -7,6 +7,7 @@ use crate::internal::Square;
 use core::fmt;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
+use gridiron::fp_256;
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::result::Result;
@@ -126,6 +127,33 @@ where
         Fp2Elem {
             elem1: z1 - z2 - z0,
             elem2: z0 - z2,
+        }
+    }
+}
+
+impl<T> Fp2Elem<T> {
+    pub fn map<U, F: Fn(T) -> U>(self, op: &F) -> Fp2Elem<U> {
+        Fp2Elem {
+            elem1: op(self.elem1),
+            elem2: op(self.elem2),
+        }
+    }
+}
+
+impl Fp2Elem<fp_256::Monty> {
+    pub fn to_norm(&self) -> Fp2Elem<fp_256::Fp256> {
+        Fp2Elem {
+            elem1: self.elem1.to_norm(),
+            elem2: self.elem2.to_norm(),
+        }
+    }
+}
+
+impl Fp2Elem<fp_256::Fp256> {
+    pub fn to_monty(&self) -> Fp2Elem<fp_256::Monty> {
+        Fp2Elem {
+            elem1: self.elem1.to_monty(),
+            elem2: self.elem2.to_monty(),
         }
     }
 }
@@ -331,8 +359,44 @@ pub mod test {
         assert_eq!(fp2.pow(five), five_times);
     }
 
+    #[test]
+    fn mul_same_monty() {
+        let five = 5;
+        let fp2 = Fp2Elem {
+            elem1: Fp256::from(4u32),
+            elem2: Fp256::from(2u32),
+        };
+        let fp2_monty = fp2.to_monty();
+        let five_times = fp2 * fp2 * fp2 * fp2 * fp2;
+        let five_times_monty = fp2_monty * fp2_monty * fp2_monty * fp2_monty * fp2_monty;
+        assert_eq!(five_times_monty.to_norm(), five_times);
+    }
+
+    #[test]
+    fn pow_by_five_should_be_same_monty() {
+        let five = 5;
+        let fp2 = Fp2Elem {
+            elem1: Fp256::from(4u32),
+            elem2: Fp256::from(2u32),
+        };
+        let fp2_monty = fp2.to_monty();
+        let five_times_monty = fp2_monty * fp2_monty * fp2_monty * fp2_monty * fp2_monty;
+        assert_eq!(five_times_monty.to_norm(), fp2_monty.pow(five).to_norm());
+    }
+
+    #[test]
+    fn inv_time_9_monty() {
+        let xi = Fp2Elem {
+            elem1: Fp256::from(1u8),
+            elem2: Fp256::from(3u8),
+        };
+        let expected_result = xi.inv() * 9;
+        let result = xi.to_monty().inv() * 9;
+        assert_eq!(result.to_norm(), expected_result);
+    }
+
     prop_compose! {
-        [pub] fn arb_fp2()(e1 in arb_fp256(), e2 in arb_fp256()) -> Fp2Elem<Fp256> {
+        [pub] fn arb_fp2()(e1 in arb_fp256(), e2 in arb_fp256()) -> Fp2Elem<fp_256::Monty> {
             Fp2Elem {
                 elem1: e1,
                 elem2: e2

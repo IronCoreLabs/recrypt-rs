@@ -1,6 +1,6 @@
 use crate::internal::array_concat_32;
 use crate::internal::bit_repr::BitRepr;
-use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
+use crate::internal::curve::{FP_256_MONTY_CURVE_POINTS, FP_480_CURVE_POINTS};
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::fp::fr_480::Fr480;
 use crate::internal::hashable::Hashable;
@@ -9,7 +9,7 @@ use crate::internal::sha256::Sha256;
 use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
 use gridiron::digits::constant_time_primitives::ConstantSwap;
-use gridiron::fp_256::Fp256;
+use gridiron::fp_256;
 use gridiron::fp_480::Fp480;
 use std::marker::PhantomData;
 
@@ -44,11 +44,11 @@ pub struct SchnorrSign<FP, FR, H> {
     phantom: PhantomData<FR>,
 }
 
-impl SchnorrSign<Fp256, Fr256, Sha256> {
-    pub fn new_256() -> SchnorrSign<Fp256, Fr256, Sha256> {
+impl SchnorrSign<fp_256::Monty, Fr256, Sha256> {
+    pub fn new_256() -> SchnorrSign<fp_256::Monty, Fr256, Sha256> {
         SchnorrSign {
             sha256: Sha256,
-            g: FP_256_CURVE_POINTS.generator,
+            g: FP_256_MONTY_CURVE_POINTS.generator,
             phantom: PhantomData::<Fr256>,
         }
     }
@@ -185,7 +185,7 @@ mod test {
             priv_key in arb_priv_key().prop_filter("", |a| !a.value.is_zero()),
             fr in arb_fr256().prop_filter("", |a| !a.is_zero()),
             aug_priv_key in arb_priv_key().prop_filter("", |a| !a.value.is_zero())) {
-            let g = FP_256_CURVE_POINTS.generator;
+            let g = FP_256_MONTY_CURVE_POINTS.generator;
             let message = 1u8;
             let signing = SchnorrSign::new_256();
             let aug_pub_key = PublicKey::new(g * aug_priv_key);
@@ -203,10 +203,12 @@ mod test {
             HomogeneousPoint::from_x_y((
                 fp256_unsafe_from(
                     "1410bb708e0e14396243ca3cfa0e4907397abaf8ac6523e7b5e4c00740c9fc93",
-                ),
+                )
+                .to_monty(),
                 fp256_unsafe_from(
                     "67c71804fc824e10ffe0383425492a83642433ef8c75a869ef30f5856573711f",
-                ),
+                )
+                .to_monty(),
             ))
             .unwrap(),
         );
