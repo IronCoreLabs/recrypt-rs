@@ -121,12 +121,6 @@ impl<T: Hashable32> Hashable for T {
     }
 }
 
-impl Hashable32 for Fp256 {
-    fn to_bytes_32(&self) -> [u8; fp_256::PRIMEBYTES] {
-        self.to_bytes_array()
-    }
-}
-
 impl Hashable32 for gridiron::fp_256::Monty {
     fn to_bytes_32(&self) -> [u8; fp_256::PRIMEBYTES] {
         self.to_norm().to_bytes_array()
