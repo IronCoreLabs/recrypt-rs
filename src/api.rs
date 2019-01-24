@@ -762,7 +762,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H
             &self.pairing,
             &self.sha_256,
             &self.ed25519,
-        );
+        )?;
 
         TransformKey::try_from_internal(reencryption_key)
     }
@@ -862,7 +862,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H
             &self.curve_points,
             &self.sha_256,
             &self.ed25519,
-        );
+        )?;
 
         EncryptedValue::try_from(encrypted_value_internal)
     }
