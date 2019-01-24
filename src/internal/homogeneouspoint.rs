@@ -602,18 +602,18 @@ pub mod test {
     fn roundtrip_known_bytes() {
         let hashed_value_bytes = hex::decode("4a40fc771f0c5625d2ef6783013c52eece1697e71c6f82c3aa58396485c2a6c1713527192c3a7ed9103aca79a39f08a154723602bb768655fdd499f8062b461a5752395183b7743fb6ed688a856ef42aae259df29f52678ef0fccb91adb5374d10820c4e85917c4a1906cb06f537158c0556ecfaa55c874f388823ab9270a536").unwrap();
 
-        let hpoint = TwistedHPoint::<Fp256>::decode(hashed_value_bytes.clone()).unwrap();
+        let hpoint = TwistedHPoint::<fp_256::Monty>::decode(hashed_value_bytes.clone()).unwrap();
 
         assert_eq!(hashed_value_bytes, hpoint.to_bytes())
     }
 
     #[test]
     fn double_zero_is_zero() {
-        let zero_fp256 = HomogeneousPoint::<Fp256>::zero();
+        let zero_fp256 = HomogeneousPoint::<fp_256::Monty>::zero();
         let double = zero_fp256.double();
         assert_eq!(zero_fp256, double);
 
-        let zero_fp2: HomogeneousPoint<Fp2Elem<Fp256>> = zero();
+        let zero_fp2: HomogeneousPoint<Fp2Elem<fp_256::Monty>> = zero();
         assert_eq!(zero_fp2, zero_fp2.double());
     }
 

@@ -454,7 +454,7 @@ impl Hashable for HashedValue {
 }
 
 impl HashedValue {
-    const ENCODED_SIZE_BYTES: usize = TwistedHPoint::<Fp256>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = TwistedHPoint::<fp_256::Monty>::ENCODED_SIZE_BYTES;
 
     pub fn new(bytes: [u8; HashedValue::ENCODED_SIZE_BYTES]) -> Result<Self> {
         Ok(
@@ -1195,7 +1195,7 @@ pub(crate) mod test {
         let api = &mut Api::new();
         //37777967648492203239675772600961898148040325589588086812374811831221462604944
         let parsed_priv_key =
-            fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90");
+            fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90").to_monty();
         let private_key = &PrivateKey::new(parsed_priv_key.to_bytes_32());
 
         //56377452267431283559088187378398270325210563762492926393848580098576649271541

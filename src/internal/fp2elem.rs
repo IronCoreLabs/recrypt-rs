@@ -283,8 +283,8 @@ pub mod test {
     #[cfg_attr(rustfmt, rustfmt_skip)]
     fn hashable() {
         let fp2 = Fp2Elem {
-            elem1: Fp256::from(256u32),
-            elem2: Fp256::from(255u32),
+            elem1: fp_256::Monty::from(256u32),
+            elem2: fp_256::Monty::from(255u32),
         };
 
         let bytes = fp2.to_bytes();
@@ -305,8 +305,8 @@ pub mod test {
     #[test]
     fn round_trip_bytes() {
         let fp2 = Fp2Elem {
-            elem1: Fp256::from(256u32),
-            elem2: Fp256::from(255u32),
+            elem1: fp_256::Monty::from(256u32),
+            elem2: fp_256::Monty::from(255u32),
         };
 
         let bytes = fp2.to_bytes();

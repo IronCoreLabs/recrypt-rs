@@ -416,7 +416,7 @@ pub mod test {
                      Fp256::from(2u64.pow(16) - 1),
                      Fp256::from(2u64.pow(32)),
                      Fp256::from(2u64.pow(32) - 1),
-                );
+                ).map(&|fp| fp.to_monty());
                 let bytes = fp6.to_bytes();
 
                 assert_eq!(bytes, vec![
