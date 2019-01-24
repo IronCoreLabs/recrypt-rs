@@ -472,12 +472,11 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use crate::internal::curve::{
-        FP_256_CURVE_POINTS, FP_256_MONTY_CURVE_POINTS, FP_480_CURVE_POINTS,
-    };
+    use crate::internal::curve::{FP_256_MONTY_CURVE_POINTS, FP_480_CURVE_POINTS};
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::test::{arb_fp256, arb_fp480};
     use gridiron::fp_256::Fp256;
+    use gridiron::fp_256::Monty as Fp256Monty;
     use gridiron::fp_480::Fp480;
     use hex;
     use proptest::prelude::*;
@@ -550,7 +549,7 @@ pub mod test {
     }
     #[test]
     fn generator_times_order_is_reasonable() {
-        let point = FP_256_CURVE_POINTS.generator;
+        let point = FP_256_MONTY_CURVE_POINTS.generator;
         assert_eq!(point * order(), zero());
         assert!((point * order()).is_zero());
         assert_eq!(point, point * order() + point);
@@ -558,7 +557,7 @@ pub mod test {
 
     #[test]
     fn g1_times_order_is_reasonable() {
-        let point = FP_256_CURVE_POINTS.g1;
+        let point = FP_256_MONTY_CURVE_POINTS.g1;
         assert_eq!(point * order(), zero());
         assert!((point * order()).is_zero());
         assert_eq!(point, point * order() + point);
@@ -579,21 +578,22 @@ pub mod test {
             z: fp256_unsafe_from(
                 "0000000000000000000000000000000000000000000000000000000000000040",
             ),
-        };
+        }
+        .map(&|fp: fp_256::Fp256| fp.to_monty());;
 
-        let computed_g2 = FP_256_CURVE_POINTS.generator + FP_256_CURVE_POINTS.generator;
+        let computed_g2 = FP_256_MONTY_CURVE_POINTS.generator + FP_256_MONTY_CURVE_POINTS.generator;
         assert_eq!(g2, computed_g2);
         assert_eq!(
-            FP_256_CURVE_POINTS.generator * Fp256::from(2u8),
+            FP_256_MONTY_CURVE_POINTS.generator * Fp256::from(2u8),
             computed_g2
         );
-        assert_eq!(FP_256_CURVE_POINTS.generator.double(), computed_g2);
+        assert_eq!(FP_256_MONTY_CURVE_POINTS.generator.double(), computed_g2);
     }
 
     #[test]
     fn point_minus_self_is_zero() {
         assert_eq!(
-            FP_256_CURVE_POINTS.generator - FP_256_CURVE_POINTS.generator,
+            FP_256_MONTY_CURVE_POINTS.generator - FP_256_MONTY_CURVE_POINTS.generator,
             zero()
         );
     }
@@ -619,31 +619,9 @@ pub mod test {
 
     #[test]
     fn double_same_as_add() {
-        let result = FP_256_CURVE_POINTS.g1 + FP_256_CURVE_POINTS.g1;
-        let double_result = FP_256_CURVE_POINTS.g1.double();
+        let result = FP_256_MONTY_CURVE_POINTS.g1 + FP_256_MONTY_CURVE_POINTS.g1;
+        let double_result = FP_256_MONTY_CURVE_POINTS.g1.double();
         assert_eq!(result, double_result);
-    }
-
-    #[test]
-    fn double_matches_monty() {
-        use gridiron::fp_256;
-        println!("xi{:?}", fp_256::Monty::xi());
-        println!("const inv{:?}", fp_256::Monty::xi_inv_times_9());
-
-        let TwistedHPoint {
-            x: monty_x,
-            y: monty_y,
-            z: monty_z,
-        } = FP_256_MONTY_CURVE_POINTS.g1.double();
-        let double_result = FP_256_CURVE_POINTS.g1.double();
-        assert_eq!(
-            TwistedHPoint {
-                x: monty_x.to_norm(),
-                y: monty_y.to_norm(),
-                z: monty_z.to_norm()
-            },
-            double_result
-        );
     }
 
     // macro to produce property-based tests for each FP type
@@ -771,7 +749,7 @@ pub mod test {
     } // end fp_proptest!
 
     fp_proptest!(
-        Fp256,
+        Fp256Monty,
         arb_fp256,
         arb_homogeneous_256,
         arb_homogeneous_fp2_256,
@@ -786,25 +764,25 @@ pub mod test {
     );
 
     prop_compose! {
-        [pub] fn arb_homogeneous_fp2_256()(seed in any::<u64>()) -> TwistedHPoint<Fp256> {
+        [pub] fn arb_homogeneous_fp2_256()(seed in any::<u32>()) -> TwistedHPoint<fp_256::Monty> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
-                FP_256_CURVE_POINTS.g1
+                FP_256_MONTY_CURVE_POINTS.g1
             } else {
-                FP_256_CURVE_POINTS.g1 * Fp256::from(seed)
+                FP_256_MONTY_CURVE_POINTS.g1 * fp_256::Monty::from(seed)
             }
         }
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_256()(seed in any::<u64>()) -> HomogeneousPoint<Fp256> {
+        [pub] fn arb_homogeneous_256()(seed in any::<u32>()) -> HomogeneousPoint<fp_256::Monty> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
-                FP_256_CURVE_POINTS.generator
+                FP_256_MONTY_CURVE_POINTS.generator
             } else {
-                FP_256_CURVE_POINTS.generator * Fp256::from(seed)
+                FP_256_MONTY_CURVE_POINTS.generator * fp_256::Monty::from(seed)
             }
         }
     }

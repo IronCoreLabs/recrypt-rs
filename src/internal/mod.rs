@@ -1223,35 +1223,34 @@ mod test {
         #[cfg_attr(rustfmt, rustfmt_skip)]
         fn create_transform_key_known_value() {
             let pairing = pairing::Pairing::new();
-            let ref curve_points = *curve::FP_256_CURVE_POINTS;
+            let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
             let ref sha256 = sha256::Sha256;
             let ref ed25519 = api::test::DummyEd25519;
             let signing_keypair = ed25519::test::good_signing_keypair();
 
             //37777967648492203239675772600961898148040325589588086812374811831221462604944
             let private_key = PrivateKey {
-                value: fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90")
+                value: fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90").to_monty()
             };
 
             //22002131259228303741090495322318969764532178674829148099822698556219881568451
             let re_private_key = PrivateKey {
-                value: fp256_unsafe_from("30a4c3d5f31a096db20eed892919e542427341d7aec1e1494275831bbca638c3")
+                value: fp256_unsafe_from("30a4c3d5f31a096db20eed892919e542427341d7aec1e1494275831bbca638c3").to_monty()
             };
 
             //56377452267431283559088187378398270325210563762492926393848580098576649271541
-            let parsed_pub_key_x = fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5");
+            let parsed_pub_key_x = fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5").to_monty();
             //46643694276241842996939080253335644316475473619096522181405937227991761798154
-            let parsed_pub_key_y = fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a");
+            let parsed_pub_key_y = fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a").to_monty();
             let public_key = PublicKey::from_x_y(parsed_pub_key_x, parsed_pub_key_y).unwrap();
 
             let salt = KValue(Fp12Elem::create_from_t(
                 //20621517740542501009268492188240231175004875885443969425948886451683622135253
-                fp256_unsafe_from("2d975d8c65b577810297bc5b7193691a6892cefacbee2544fb16f67ba7c825d5")
-                ,
+                fp256_unsafe_from("2d975d8c65b577810297bc5b7193691a6892cefacbee2544fb16f67ba7c825d5"),
                 //34374877744619883729582518521480375735530540362125629015072222432427068254516
-                              fp256_unsafe_from("4bff7dc7983fb830ec19f39e78268d8191d96ec9974ac41ef8100acca66e6934"),
+                fp256_unsafe_from("4bff7dc7983fb830ec19f39e78268d8191d96ec9974ac41ef8100acca66e6934"),
                 //3061516916225902041514148805993070634368655849312514173666756917317148753791
-            fp256_unsafe_from("6c4c1d5c2d00bbfc5eac19626b1967ce3ca5a60bce0122626d0662f53463f7f"),
+                fp256_unsafe_from("6c4c1d5c2d00bbfc5eac19626b1967ce3ca5a60bce0122626d0662f53463f7f"),
                 //36462333850830053304472867079357777410712443208968594405185610332940263631144
                 fp256_unsafe_from("509cf319e11149b9f03c5c442efecb02c3fd98c4034490c505c6983f4f862928"),
                 //61512103449194136219283269928242996434577060883392017268158197606945715641345
@@ -1270,7 +1269,7 @@ mod test {
                 fp256_unsafe_from("85ff626aef9f9cef0310f93a9541ef9ce2207eb9b57077db4572531a879c1cad"),
                 //17433339776741835027827317970122814431745024562995872600925458287403992082321
                 fp256_unsafe_from("268aebaf44e6ae76c70f48aed806180ced89dfc17f962de209f2a3437b4fe791")
-            ));
+            ) .map(&|fp| fp.to_monty()));
 
             let re_key = generate_reencryption_key(
                 private_key,
@@ -1309,7 +1308,7 @@ mod test {
                 fp256_unsafe_from("5404b493123a5b087cb6cc363116a9fc393c27dac3efa3df778ec974b8bdfa76"),
                 //49941783284737700171954796486309114156831309184207470337019703077683277143423
                 fp256_unsafe_from("6e6a0c315c47fa2990268bc2010eeda17b78cc32e7ab6f093bf1aa2234491d7f")
-            );
+            ) .map(&|fp| fp.to_monty());;
 
             let good_hashed_k = TwistedHPoint {
                 x: fp2elem::Fp2Elem {
@@ -1330,7 +1329,7 @@ mod test {
                     //18358874287282838450918898019272385250887285769392485811015731318886010089831
                     elem2: fp256_unsafe_from("2896c12e42c82648d4e553e82b32abe95618f0e5ad7f8ba14d6180b78ae67167")
                 }
-            };
+            } .map(&|fp| fp.to_monty());;
 
             assert_eq!(good_encrypted_k, re_key.encrypted_k);
             assert_eq!(good_hashed_k, re_key.hashed_k)
@@ -1843,7 +1842,7 @@ mod test {
 
     prop_compose! {
         [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<fp_256::Monty> {
-            PublicKey { value: (*hpoint).map(&|fp:Fp256| fp.to_monty()) }
+            PublicKey { value: (*hpoint) }
         }
     }
 
