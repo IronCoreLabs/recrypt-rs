@@ -1195,7 +1195,8 @@ pub(crate) mod test {
         let api = &mut Api::new();
         //37777967648492203239675772600961898148040325589588086812374811831221462604944
         let parsed_priv_key =
-            fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90").to_monty();
+            fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90")
+                .to_monty();
         let private_key = &PrivateKey::new(parsed_priv_key.to_bytes_32());
 
         //56377452267431283559088187378398270325210563762492926393848580098576649271541
