@@ -119,6 +119,7 @@ impl<T: Hashable32> Hashable for T {
         self.to_bytes_32().to_vec()
     }
 }
+
 ///This definition is a bit strange, but is required to maintain compatibility with our current idea of what an `fp256`
 ///hashable needs to look like. Note that this costs a multiplication of Montgomery form so it's more expensive than normal
 /// but that's acceptable because of the amount of time we save overall.
@@ -140,6 +141,18 @@ impl Hashable60 for Fp480 {
 }
 
 impl Hashable for Fp480 {
+    fn to_bytes(&self) -> Vec<u8> {
+        self.to_bytes_60().to_vec()
+    }
+}
+//COLT: duplicate code here with hashable60.
+impl Hashable60 for fp_480::Monty {
+    fn to_bytes_60(&self) -> [u8; fp_480::PRIMEBYTES] {
+        self.to_norm().to_bytes_array()
+    }
+}
+
+impl Hashable for fp_480::Monty {
     fn to_bytes(&self) -> Vec<u8> {
         self.to_bytes_60().to_vec()
     }

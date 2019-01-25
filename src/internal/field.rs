@@ -4,6 +4,7 @@ use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::Square;
 use gridiron::fp_256;
+use gridiron::fp_480;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use num_traits::{Inv, Pow};
@@ -116,6 +117,7 @@ pub trait Field:
 }
 
 impl Field for fp_256::Monty {}
+impl Field for fp_480::Monty {}
 impl Field for Fp256 {}
 impl Field for Fr256 {}
 impl Field for Fp480 {}
@@ -158,72 +160,6 @@ where
             elem1: Zero::zero(),
             elem2: One::one(),
             elem3: Zero::zero(),
-        }
-    }
-}
-
-impl ExtensionField for Fp256 {
-    //precalculate this since it's used in every double and add operation in the extension field.
-    // Fp256::xi().inv() * 9
-    #[inline]
-    fn xi_inv_times_9() -> Fp2Elem<Self> {
-        Fp2Elem {
-            //19500164908693981119838931622707971722847607432286901071563143508059255221534.str
-            elem1: Fp256::new([
-                0x29c2d1e, 0x41d13441, 0x2740738a, 0x2275485c, 0x74a8709, 0x30ff46ea, 0x7f76ff86,
-                0xe59e217, 0x2b,
-            ]),
-            //6500054969564660373279643874235990574282535810762300357187714502686418407181
-            elem2: Fp256::new([
-                0x56340f0d, 0x6b45bc15, 0xd157bd8, 0xb7c6d74, 0x26e2d03, 0x3affc24e, 0x2a7cffd7,
-                0x2f734b5d, 0xe,
-            ]),
-        }
-    }
-    #[inline]
-    fn frobenius_factor_1() -> Fp2Elem<Self> {
-        Fp2Elem {
-            // 26098034838977895781559542626833399156321265654106457577426020397262786167059
-            // num.digits(2^31) in sage gives the array
-            elem1: Fp256::new([
-                516587795, 432442066, 2081743774, 272481278, 216868981, 2047188942, 766684017,
-                1501260986, 57,
-            ]),
-            // 15931493369629630809226283458085260090334794394361662678240713231519278691715
-            elem2: Fp256::new([
-                1018688899, 285125916, 381469398, 738635315, 809814760, 1686808322, 473749512,
-                477359611, 35,
-            ]),
-        }
-    }
-    #[inline]
-    fn frobenius_factor_2() -> Fp2Elem<Self> {
-        Fp2Elem {
-            // 19885131339612776214803633203834694332692106372356013117629940868870585019582
-            elem1: Fp256::new([
-                272985278, 337458509, 1511734401, 44257531, 567886726, 95238613, 670462112,
-                2068509020, 43,
-            ]),
-            // 21645619881471562101905880913352894726728173167203616652430647841922248593627
-            elem2: Fp256::new([
-                129224923, 1627709782, 1853228136, 1045486385, 137170065, 710273374, 1587423245,
-                1836993535, 47,
-            ]),
-        }
-    }
-    #[inline]
-    fn frobenius_factor_fp12() -> Fp2Elem<Self> {
-        Fp2Elem {
-            // 8669379979083712429711189836753509758585994370025260553045152614783263110636
-            elem1: Fp256::new([
-                940766700, 726957870, 1193934117, 1012163387, 1658028813, 1288872574, 1205874830,
-                358153140, 19,
-            ]),
-            // 19998038925833620163537568958541907098007303196759855091367510456613536016040
-            elem2: Fp256::new([
-                223094440, 382877345, 511765441, 618638984, 1337480992, 1694576735, 638506791,
-                457086189, 44,
-            ]),
         }
     }
 }
@@ -323,8 +259,8 @@ impl ExtensionField for fp_256::Monty {
         }
     }
 }
-
-impl ExtensionField for Fp480 {
+//COLT: This can be optimized
+impl ExtensionField for fp_480::Monty {
     // precalculate this since it's used in every double and add operation in the extension field.
     // Fp480::xi().inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self> {
@@ -339,7 +275,7 @@ impl ExtensionField for Fp480 {
                 0x35e3e48, 0x5abc1036, 0x782b9c4, 0x563cb07a, 0x4e204a9a, 0x5e21db45, 0xec52f4a,
                 0x4f5c19f4, 0xccc,
             ]),
-        }
+        }.map(&|fp| fp.to_monty())
     }
     fn frobenius_factor_1() -> Fp2Elem<Self> {
         Fp2Elem {
@@ -355,7 +291,7 @@ impl ExtensionField for Fp480 {
                 550173476, 897981975, 1628932098, 587901015, 969156276, 1317419705, 1782565297,
                 1670845724, 17336,
             ]),
-        }
+        }.map(&|fp| fp.to_monty())
     }
 
     fn frobenius_factor_2() -> Fp2Elem<Self> {
@@ -372,7 +308,7 @@ impl ExtensionField for Fp480 {
                 1282579346, 996132666, 1551423827, 390948370, 1787987376, 668506041, 2046466517,
                 1181867369, 28348,
             ]),
-        }
+        }.map(&|fp| fp.to_monty())
     }
 
     fn frobenius_factor_fp12() -> Fp2Elem<Self> {
@@ -389,6 +325,6 @@ impl ExtensionField for Fp480 {
                 1072168795, 1348910927, 2067945986, 585062688, 570324324, 868980721, 996048971,
                 1688016050, 4317,
             ]),
-        }
+        }.map(&|fp| fp.to_monty())
     }
 }

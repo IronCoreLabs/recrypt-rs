@@ -348,6 +348,12 @@ impl Square for gridiron::fp_480::Fp480 {
     }
 }
 
+impl Square for gridiron::fp_480::Monty {
+    fn square(&self) -> Self {
+        *self * *self
+    }
+}
+
 impl Square for Fr480 {
     fn square(&self) -> Self {
         self.square()

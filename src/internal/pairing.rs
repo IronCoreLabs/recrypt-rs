@@ -8,7 +8,7 @@ use crate::internal::homogeneouspoint::PointErr;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::Square;
 use gridiron::fp_256;
-use gridiron::fp_480::Fp480;
+use gridiron::fp_480;
 use num_traits::{Inv, One, Zero};
 
 #[derive(Debug)]
@@ -301,7 +301,7 @@ impl PairingConfig for fp_256::Monty {
     }
 }
 
-impl PairingConfig for Fp480 {
+impl PairingConfig for fp_480::Monty {
     fn bn_pow(fp12: Fp12Elem<Self>) -> Fp12Elem<Self> {
         //This is a hardcode of the square and multiply for bnPow
         let mut x = fp12;

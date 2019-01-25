@@ -7,6 +7,8 @@ use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
+use gridiron::fp_256;
+use gridiron::fp_480;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
@@ -788,25 +790,25 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_fp2_480()(seed in any::<u64>()) -> TwistedHPoint<Fp480> {
+        [pub] fn arb_homogeneous_fp2_480()(seed in any::<u64>()) -> TwistedHPoint<fp_480::Monty> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
                 FP_480_CURVE_POINTS.g1
             } else {
-                FP_480_CURVE_POINTS.g1 * Fp480::from(seed)
+                FP_480_CURVE_POINTS.g1 * fp_480::Monty::from(seed)
             }
         }
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_480()(seed in any::<u64>()) -> HomogeneousPoint<Fp480> {
+        [pub] fn arb_homogeneous_480()(seed in any::<u64>()) -> HomogeneousPoint<fp_480::Monty> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
                 FP_480_CURVE_POINTS.generator
             } else {
-                FP_480_CURVE_POINTS.generator * Fp480::from(seed)
+                FP_480_CURVE_POINTS.generator * fp_480::Monty::from(seed)
             }
         }
     }

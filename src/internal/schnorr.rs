@@ -10,6 +10,7 @@ use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
 use gridiron::digits::constant_time_primitives::ConstantSwap;
 use gridiron::fp_256;
+use gridiron::fp_480;
 use gridiron::fp_480::Fp480;
 use std::marker::PhantomData;
 
@@ -55,7 +56,7 @@ impl SchnorrSign<fp_256::Monty, Fr256, Sha256> {
 }
 
 impl SchnorrSign<Fp480, Fr480, Sha256> {
-    pub fn new_480() -> SchnorrSign<Fp480, Fr480, Sha256> {
+    pub fn new_480() -> SchnorrSign<fp_480::Monty, Fr480, Sha256> {
         SchnorrSign {
             sha256: Sha256,
             g: FP_480_CURVE_POINTS.generator,
