@@ -1223,7 +1223,7 @@ mod test {
         #[cfg_attr(rustfmt, rustfmt_skip)]
         fn create_transform_key_known_value() {
             let pairing = pairing::Pairing::new();
-            let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
+            let ref curve_points = *curve::FP_256_CURVE_POINTS;
             let ref sha256 = sha256::Sha256;
             let ref ed25519 = api::test::DummyEd25519;
             let signing_keypair = ed25519::test::good_signing_keypair();
@@ -1384,7 +1384,7 @@ mod test {
         .map(&|fp| fp.to_monty());
 
         let pairing = pairing::Pairing::new();
-        let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
+        let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
         let salt = KValue(gen_rth_root(&pairing, salt_fp12));
@@ -1459,7 +1459,7 @@ mod test {
     #[test]
     fn fail_when_verify_fails() {
         let pairing = pairing::Pairing::new();
-        let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
+        let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let salt1 = gen_rth_root(&pairing, gen_random_fp12(&mut DummyRandomBytes));
         let signing_keypair = ed25519::test::good_signing_keypair();
@@ -1500,7 +1500,7 @@ mod test {
     #[test]
     fn fail_when_auth_hash_does_not_match_wrong_priv_key() {
         let pairing = pairing::Pairing::new();
-        let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
+        let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let salt1 = gen_rth_root(&pairing, gen_random_fp12(&mut DummyRandomBytes));
         let signing_keypair = ed25519::test::good_signing_keypair();
@@ -1619,7 +1619,7 @@ mod test {
         .map(&|fp| fp.to_monty());
 
         let pairing = pairing::Pairing::new();
-        let ref curve_points = *curve::FP_256_MONTY_CURVE_POINTS;
+        let ref curve_points = *curve::FP_256_CURVE_POINTS;
         let ref sha256 = sha256::Sha256;
         let ref ed25519 = api::test::DummyEd25519;
         let salt1 = KValue(gen_rth_root(&pairing, salt_1_fp12));
@@ -1780,11 +1780,11 @@ mod test {
         }
         #[test]
         fn encrypt_decrypt_roundtrip(priv_key in arb_priv_key(), plaintext in arb_fp12().prop_filter("", |a| !(*a == Fp12Elem::<fp_256::Monty>::zero()))) {
-            let pub_key = public_keygen(priv_key, curve::FP_256_MONTY_CURVE_POINTS.generator);
+            let pub_key = public_keygen(priv_key, curve::FP_256_CURVE_POINTS.generator);
             let ephem_secret_key = PrivateKey::from_fp256(Fp256::from(42u8));
             let priv_signing_key = good_signing_keys();
             let pairing = pairing::Pairing::new();
-            let curve_points = &*curve::FP_256_MONTY_CURVE_POINTS;
+            let curve_points = &*curve::FP_256_CURVE_POINTS;
             let encrypt_result = encrypt(
                 pub_key,
                 plaintext,
@@ -1823,7 +1823,7 @@ mod test {
             fp in arb_fp256()
             ) {
 
-            let cpoints = &*curve::FP_256_MONTY_CURVE_POINTS;
+            let cpoints = &*curve::FP_256_CURVE_POINTS;
             let new_hashed_k = cpoints.g1 * fp;
             let re_key: ReencryptionKey<fp_256::Monty> = signed_re_key.payload.clone();
 
@@ -1860,7 +1860,7 @@ mod test {
          from_private_key in arb_priv_key())
          -> SignedValue<ReencryptionKey<fp_256::Monty>> {
             let pairing = pairing::Pairing::new();
-            let curve_points = &*curve::FP_256_MONTY_CURVE_POINTS;
+            let curve_points = &*curve::FP_256_CURVE_POINTS;
 
             generate_reencryption_key(
                 from_private_key,

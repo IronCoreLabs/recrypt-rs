@@ -1,6 +1,6 @@
 use crate::internal::array_concat_32;
 use crate::internal::bit_repr::BitRepr;
-use crate::internal::curve::{FP_256_MONTY_CURVE_POINTS, FP_480_CURVE_POINTS};
+use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::fp::fr_480::Fr480;
 use crate::internal::hashable::Hashable;
@@ -48,7 +48,7 @@ impl SchnorrSign<fp_256::Monty, Fr256, Sha256> {
     pub fn new_256() -> SchnorrSign<fp_256::Monty, Fr256, Sha256> {
         SchnorrSign {
             sha256: Sha256,
-            g: FP_256_MONTY_CURVE_POINTS.generator,
+            g: FP_256_CURVE_POINTS.generator,
             phantom: PhantomData::<Fr256>,
         }
     }
@@ -185,7 +185,7 @@ mod test {
             priv_key in arb_priv_key().prop_filter("", |a| !a.value.is_zero()),
             fr in arb_fr256().prop_filter("", |a| !a.is_zero()),
             aug_priv_key in arb_priv_key().prop_filter("", |a| !a.value.is_zero())) {
-            let g = FP_256_MONTY_CURVE_POINTS.generator;
+            let g = FP_256_CURVE_POINTS.generator;
             let message = 1u8;
             let signing = SchnorrSign::new_256();
             let aug_pub_key = PublicKey::new(g * aug_priv_key);

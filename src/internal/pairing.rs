@@ -344,7 +344,7 @@ impl PairingConfig for Fp480 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::internal::curve::{FP_256_MONTY_CURVE_POINTS, FP_480_CURVE_POINTS};
+    use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::homogeneouspoint::Double;
     use lazy_static::lazy_static;
@@ -380,7 +380,7 @@ mod test {
         };
 
         static ref GOOD_TWISTED_HPOINT_MONTY: TwistedHPoint<fp_256::Monty> = GOOD_TWISTED_HPOINT.map(&|fp| fp.to_monty());
-        static ref BASE_POINT: HomogeneousPoint<fp_256::Monty> = FP_256_MONTY_CURVE_POINTS.generator;
+        static ref BASE_POINT: HomogeneousPoint<fp_256::Monty> = FP_256_CURVE_POINTS.generator;
         static ref BASE_POINT_X: fp_256::Monty = BASE_POINT.x;
         static ref BASE_POINT_Y: fp_256::Monty = BASE_POINT.y;
     }
@@ -418,7 +418,7 @@ mod test {
         let pairing: Pairing<fp_256::Monty> = Pairing::new();
 
         let result = pairing.pair(
-            FP_256_MONTY_CURVE_POINTS.generator,
+            FP_256_CURVE_POINTS.generator,
             GOOD_TWISTED_HPOINT_MONTY.clone(),
         );
 
@@ -471,7 +471,7 @@ mod test {
         let pairing: Pairing<fp_256::Monty> = Pairing::new();
 
         let result = pairing.pair(
-            FP_256_MONTY_CURVE_POINTS.generator,
+            FP_256_CURVE_POINTS.generator,
             GOOD_TWISTED_HPOINT_MONTY.clone(),
         );
 
@@ -762,12 +762,12 @@ mod test {
       #[test]
       fn law_bilinearity(a in any::<u32>().prop_filter("", |a| !(*a == 0))) {
         let pairing: Pairing<fp_256::Monty> = Pairing::new();
-        let p = FP_256_MONTY_CURVE_POINTS.generator;
+        let p = FP_256_CURVE_POINTS.generator;
         let a_sqr = fp_256::Monty::from(a).pow(2);
         let a_fp256 = fp_256::Monty::from(a);
         let a_times_p = p * a_fp256;
         let a_sqr_times_p = p * a_sqr;
-        let q = FP_256_MONTY_CURVE_POINTS.g1;
+        let q = FP_256_CURVE_POINTS.g1;
         let a_times_q = q * a_fp256;
         let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q);
 

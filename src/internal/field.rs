@@ -8,12 +8,10 @@ use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use num_traits::{Inv, Pow};
 use num_traits::{One, Zero};
-use std::fmt::Debug;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 pub trait Field:
     One
-    + Debug
     + Zero
     + Copy
     + Eq

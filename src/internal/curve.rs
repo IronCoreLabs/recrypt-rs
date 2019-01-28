@@ -23,7 +23,7 @@ pub struct CurvePoints<FP> {
 }
 
 lazy_static! {
-    pub static ref FP_256_MONTY_CURVE_POINTS: CurvePoints<fp_256::Monty> = CurvePoints {
+    pub static ref FP_256_CURVE_POINTS: CurvePoints<fp_256::Monty> = CurvePoints {
         // Fixed point in cyclic group G1 (the trace zero subgroup).
         // Start with a point that is on the twisted curve y^2 = x^3 + (3 / (u + 3)).
         // Turns out u + 1 is a valid x, with y = sqrt(x^3 + (3 / (u + 3)).
@@ -139,7 +139,7 @@ mod test {
         //37777967648492203239675772600961898148040325589588086812374811831221462604944
         let fp256 =
             fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90");
-        let result = FP_256_MONTY_CURVE_POINTS.generator * fp256.to_monty();
+        let result = FP_256_CURVE_POINTS.generator * fp256.to_monty();
         let expected_result = HomogeneousPoint::new(
             //56377452267431283559088187378398270325210563762492926393848580098576649271541
             fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5"),

@@ -7,7 +7,6 @@ use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
-use gridiron::fp_256;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
@@ -37,16 +36,6 @@ pub struct HomogeneousPoint<T> {
     pub z: T,
 }
 
-impl<T> HomogeneousPoint<T> {
-    pub fn map<U, F: Fn(T) -> U>(self, op: F) -> HomogeneousPoint<U> {
-        HomogeneousPoint {
-            x: op(self.x),
-            y: op(self.y),
-            z: op(self.z),
-        }
-    }
-}
-
 impl<T: One + Field + From<u32> + Hashable> HomogeneousPoint<T> {
     pub fn from_x_y((x, y): (T, T)) -> Result<HomogeneousPoint<T>, PointErr> {
         if x.pow(3) + T::from(3) == y.pow(2) {
@@ -57,16 +46,6 @@ impl<T: One + Field + From<u32> + Hashable> HomogeneousPoint<T> {
             })
         } else {
             Err(PointErr::PointNotOnCurve(x.to_bytes(), y.to_bytes()))
-        }
-    }
-}
-
-impl HomogeneousPoint<fp_256::Monty> {
-    pub fn to_norm(&self) -> HomogeneousPoint<fp_256::Fp256> {
-        HomogeneousPoint {
-            x: self.x.to_norm(),
-            y: self.y.to_norm(),
-            z: self.z.to_norm(),
         }
     }
 }
@@ -472,14 +451,25 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use crate::internal::curve::{FP_256_MONTY_CURVE_POINTS, FP_480_CURVE_POINTS};
+    use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::test::{arb_fp256, arb_fp480};
+    use gridiron::fp_256;
     use gridiron::fp_256::Fp256;
     use gridiron::fp_256::Monty as Fp256Monty;
     use gridiron::fp_480::Fp480;
     use hex;
     use proptest::prelude::*;
+
+    impl<T> HomogeneousPoint<T> {
+        pub fn map<U, F: Fn(T) -> U>(self, op: F) -> HomogeneousPoint<U> {
+            HomogeneousPoint {
+                x: op(self.x),
+                y: op(self.y),
+                z: op(self.z),
+            }
+        }
+    }
 
     impl<T> PartialEq for HomogeneousPoint<T>
     where
@@ -549,7 +539,7 @@ pub mod test {
     }
     #[test]
     fn generator_times_order_is_reasonable() {
-        let point = FP_256_MONTY_CURVE_POINTS.generator;
+        let point = FP_256_CURVE_POINTS.generator;
         assert_eq!(point * order(), zero());
         assert!((point * order()).is_zero());
         assert_eq!(point, point * order() + point);
@@ -557,7 +547,7 @@ pub mod test {
 
     #[test]
     fn g1_times_order_is_reasonable() {
-        let point = FP_256_MONTY_CURVE_POINTS.g1;
+        let point = FP_256_CURVE_POINTS.g1;
         assert_eq!(point * order(), zero());
         assert!((point * order()).is_zero());
         assert_eq!(point, point * order() + point);
@@ -581,19 +571,19 @@ pub mod test {
         }
         .map(&|fp: fp_256::Fp256| fp.to_monty());;
 
-        let computed_g2 = FP_256_MONTY_CURVE_POINTS.generator + FP_256_MONTY_CURVE_POINTS.generator;
+        let computed_g2 = FP_256_CURVE_POINTS.generator + FP_256_CURVE_POINTS.generator;
         assert_eq!(g2, computed_g2);
         assert_eq!(
-            FP_256_MONTY_CURVE_POINTS.generator * Fp256::from(2u8),
+            FP_256_CURVE_POINTS.generator * Fp256::from(2u8),
             computed_g2
         );
-        assert_eq!(FP_256_MONTY_CURVE_POINTS.generator.double(), computed_g2);
+        assert_eq!(FP_256_CURVE_POINTS.generator.double(), computed_g2);
     }
 
     #[test]
     fn point_minus_self_is_zero() {
         assert_eq!(
-            FP_256_MONTY_CURVE_POINTS.generator - FP_256_MONTY_CURVE_POINTS.generator,
+            FP_256_CURVE_POINTS.generator - FP_256_CURVE_POINTS.generator,
             zero()
         );
     }
@@ -619,8 +609,8 @@ pub mod test {
 
     #[test]
     fn double_same_as_add() {
-        let result = FP_256_MONTY_CURVE_POINTS.g1 + FP_256_MONTY_CURVE_POINTS.g1;
-        let double_result = FP_256_MONTY_CURVE_POINTS.g1.double();
+        let result = FP_256_CURVE_POINTS.g1 + FP_256_CURVE_POINTS.g1;
+        let double_result = FP_256_CURVE_POINTS.g1.double();
         assert_eq!(result, double_result);
     }
 
@@ -768,9 +758,9 @@ pub mod test {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
-                FP_256_MONTY_CURVE_POINTS.g1
+                FP_256_CURVE_POINTS.g1
             } else {
-                FP_256_MONTY_CURVE_POINTS.g1 * fp_256::Monty::from(seed)
+                FP_256_CURVE_POINTS.g1 * fp_256::Monty::from(seed)
             }
         }
     }
@@ -780,9 +770,9 @@ pub mod test {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
-                FP_256_MONTY_CURVE_POINTS.generator
+                FP_256_CURVE_POINTS.generator
             } else {
-                FP_256_MONTY_CURVE_POINTS.generator * fp_256::Monty::from(seed)
+                FP_256_CURVE_POINTS.generator * fp_256::Monty::from(seed)
             }
         }
     }

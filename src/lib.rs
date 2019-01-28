@@ -88,7 +88,7 @@
 extern crate proptest; // shouldn't be needed in Rust 2018, but hoping proptest will better document how to import
 
 #[macro_use] // this is still required in Rust 2018
-pub mod internal; // this needs to come before `api` as api relies on macros defined in `internal`
+mod internal; // this needs to come before `api` as api relies on macros defined in `internal`
 pub mod api;
 pub mod api_480;
 mod api_common;
