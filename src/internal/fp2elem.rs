@@ -270,7 +270,7 @@ pub mod test {
     use proptest::proptest;
 
     #[test]
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     fn hashable() {
         let fp2 = Fp2Elem {
             elem1: Fp256::from(256u32),

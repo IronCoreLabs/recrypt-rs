@@ -66,7 +66,7 @@ where
         let mut last_bit = ConstantBool::new_false();
         bits.iter().rev().for_each(|&bit| {
             x0.swap_if(&mut x1, bit ^ last_bit);
-            x1 = x1 + x0;
+            x1 += x0;
             x0 = x0.double();
             last_bit = bit;
         });
@@ -240,7 +240,7 @@ where
         let mut last_bit = ConstantBool::new_false();
         bits.iter().rev().for_each(|&bit| {
             x0.swap_if(&mut x1, bit ^ last_bit);
-            x1 = x1 + x0;
+            x1 += x0;
             x0 = x0.double();
             last_bit = bit;
         });

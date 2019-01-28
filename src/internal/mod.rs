@@ -1210,7 +1210,7 @@ mod test {
         assert_eq!(result2, v.pow(5));
     }
     #[test]
-        #[cfg_attr(rustfmt, rustfmt_skip)]
+        #[rustfmt::skip]
         fn create_transform_key_known_value() {
             let pairing = pairing::Pairing::new();
             let ref curve_points = *curve::FP_256_CURVE_POINTS;

@@ -39,6 +39,13 @@ impl Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
         Api::new_with_rand(rand::thread_rng())
     }
 }
+
+impl Default for Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<CR: rand::CryptoRng + rand::RngCore> Api<Sha256, Ed25519, RandomBytes<CR>> {
     pub fn new_with_rand(r: CR) -> Api<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = pairing::Pairing::new();
