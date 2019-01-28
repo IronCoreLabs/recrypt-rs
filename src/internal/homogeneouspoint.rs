@@ -188,7 +188,12 @@ impl<T> HomogeneousPoint<T>
 where
     T: Field,
 {
-    ///Divide out by the z we've been carrying around.
+    /// Divide out by the z we've been carrying around.
+    ///
+    /// Constant Time Evaluation:
+    /// This function is not constant time and may reveal the `z` coordinate of this point since `is_zero`
+    /// is not constant time.
+    /// No secret values should ever be represented as HomogeneousPoint in our implementation.
     pub fn normalize(&self) -> Option<(T, T)> {
         if self.is_zero() {
             Option::None
@@ -379,7 +384,12 @@ impl<T> TwistedHPoint<T>
 where
     T: ExtensionField,
 {
-    ///Divide out by the z we've been carrying around.
+    /// Divide out by the z we've been carrying around.
+    ///
+    /// Constant Time Evaluation:
+    /// This function is not constant time and may reveal the `z` coordinate of this point since `is_zero`
+    /// is not constant time.
+    /// No secret values should ever be represented as TwistedHPoint in our implementation.
     pub fn normalize(&self) -> Option<(Fp2Elem<T>, Fp2Elem<T>)> {
         if self.is_zero() {
             Option::None
