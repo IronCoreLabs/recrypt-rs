@@ -501,7 +501,7 @@ pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     curve_points: &CurvePoints<T>,
     hash: &F,
     sign: &G,
-) -> SignedValue<EncryptedValue<T>>
+) -> ErrorOr<SignedValue<EncryptedValue<T>>>
 where
     T: ExtensionField + PairingConfig + BitRepr + Hashable + ConstantSwap,
 {
@@ -509,9 +509,9 @@ where
         value: curve_points.generator * encrypting_key,
     };
     let encrypted_message =
-        pairing.pair(to_public_key.value * encrypting_key, curve_points.g1) * plaintext;
+        pairing.pair(to_public_key.value * encrypting_key, curve_points.g1)? * plaintext;
     let auth_hash = AuthHash::create(hash, &(&ephem_pub_key, &plaintext));
-    sign_value(
+    Ok(sign_value(
         EncryptedValue::EncryptedOnce(EncryptedOnceValue {
             ephemeral_public_key: ephem_pub_key,
             encrypted_message,
@@ -519,7 +519,7 @@ where
         }),
         signing_keypair,
         sign,
-    )
+    ))
 }
 
 /// Decrypt the signed_encrypted_value, verifying that the embedded public signing key matches the
@@ -563,7 +563,7 @@ where
                     &encrypted_once_value,
                     &pairing,
                     curve_points,
-                );
+                )?;
                 compute_and_compare_auth_hash(
                     encrypted_once_value.auth_hash,
                     encrypted_once_value.ephemeral_public_key,
@@ -573,7 +573,7 @@ where
             }
             EncryptedValue::Reencrypted(re_value) => {
                 let unverified_plaintext =
-                    decrypt_reencrypted_value(private_key, &re_value, curve_points, pairing, hash);
+                    decrypt_reencrypted_value(private_key, &re_value, curve_points, pairing, hash)?;
                 compute_and_compare_auth_hash(
                     re_value.auth_hash,
                     re_value.ephemeral_public_key,
@@ -618,7 +618,7 @@ fn decrypt_encrypted_once<T>(
     encrypted_value: &EncryptedOnceValue<T>,
     pairing: &Pairing<T>,
     curve_points: &CurvePoints<T>,
-) -> Fp12Elem<T>
+) -> ErrorOr<Fp12Elem<T>>
 where
     T: ExtensionField + PairingConfig + BitRepr + ConstantSwap,
 {
@@ -631,7 +631,7 @@ where
 
     //This is because:
     // m*pair(P,Q)*pair(P,-Q) = m*pair(P,Q)*pair(P,Q)^(-1) = m
-    *encrypted_message * pairing.pair(-(ephemeral_public_key.value * private_key.value), g1)
+    Ok(*encrypted_message * pairing.pair(-(ephemeral_public_key.value * private_key.value), g1)?)
 }
 /// Decrypt a reencryptedValue using the provided privateKey.
 ///
@@ -647,7 +647,7 @@ fn decrypt_reencrypted_value<FP, H>(
     curve_points: &CurvePoints<FP>,
     pairing: &Pairing<FP>,
     sha256: &H,
-) -> Fp12Elem<FP>
+) -> ErrorOr<Fp12Elem<FP>>
 where
     FP: Hashable
         + ExtensionField
@@ -670,19 +670,19 @@ where
 
     let sec_to_last_k = KValue(
         *encrypted_k_last
-            * pairing.pair(-re_pub_key_last.value * private_key.value, curve_points.g1),
+            * pairing.pair(-re_pub_key_last.value * private_key.value, curve_points.g1)?,
     );
     let sec_to_last_rand_re_k = KValue(
         *enc_rand_re_k_last
             * pairing.pair(
                 -rand_re_pub_key_last.value * private_key.value,
                 curve_points.g1,
-            ),
+            )?,
     );
     //We're going through the list backwards because we unravel the reencryption blocks from last to first, the last one is special so it's done first.
-    let (first_k, first_rand_re_k) = re_blocks.to_vec().iter().rev().skip(1).fold(
+    let (first_k, first_rand_re_k) = re_blocks.to_vec().iter().rev().skip(1).try_fold(
         (sec_to_last_k, sec_to_last_rand_re_k),
-        |(curr_k, curr_rand_re_k), curr_re_block| {
+        |(curr_k, curr_rand_re_k), curr_re_block| -> Result<_, PointErr> {
             let ReencryptionBlock {
                 public_key: next_re_pub_key,
                 encrypted_temp_key: next_enc_k,
@@ -690,22 +690,22 @@ where
                 encrypted_rand_re_temp_key: next_enc_rand_re_k,
             } = curr_re_block;
             let curr_k_hash = hash2(curr_k, curve_points, sha256);
-            let new_k = KValue(*next_enc_k * pairing.pair(-next_re_pub_key.value, curr_k_hash));
+            let new_k = KValue(*next_enc_k * pairing.pair(-next_re_pub_key.value, curr_k_hash)?);
             let new_rand_re_k = KValue(
                 *next_enc_rand_re_k
                     * pairing.pair(
                         -next_rand_re_pub_key.value,
                         hash2(curr_rand_re_k, curve_points, sha256) + curr_k_hash,
-                    ),
+                    )?,
             );
-            (new_k, new_rand_re_k)
+            Ok((new_k, new_rand_re_k))
         },
-    );
-    reencrypted_value.encrypted_message
+    )?;
+    Ok(reencrypted_value.encrypted_message
         * pairing.pair(
             reencrypted_value.ephemeral_public_key.value.neg(),
             hash2(first_k, curve_points, sha256) + hash2(first_rand_re_k, curve_points, sha256),
-        )
+        )?)
 }
 
 /// Verifies the Ed25519 signature on a signed value.
@@ -760,7 +760,7 @@ pub fn generate_reencryption_key<FP, H, S>(
     pairing: &Pairing<FP>,
     sha256: &H,
     ed25519: &S,
-) -> SignedValue<ReencryptionKey<FP>>
+) -> ErrorOr<SignedValue<ReencryptionKey<FP>>>
 where
     FP: ExtensionField
         + PairingConfig
@@ -776,7 +776,7 @@ where
 
     let re_public_key = public_keygen(reencryption_private_key, curve_points.generator);
     let p = to_public_key.value * reencryption_private_key.value;
-    let encrypted_k = pairing.pair(p, g1) * new_k.0;
+    let encrypted_k = pairing.pair(p, g1)? * new_k.0;
     let hashed_k = hash2(new_k, &curve_points, sha256) + (g1.neg() * from_private_key);
     let reencryption_key = ReencryptionKey {
         re_public_key,
@@ -785,7 +785,7 @@ where
         hashed_k,
     };
 
-    sign_value(reencryption_key, signing_keypair, ed25519)
+    Ok(sign_value(reencryption_key, signing_keypair, ed25519))
 }
 
 /// Fp12Elem that is private and is used in the transform/decrypt algorithms
@@ -938,7 +938,7 @@ where
                 curve_points,
                 pairing,
                 sha256,
-            )),
+            )?),
             signing_keypair,
             ed25519,
         )),
@@ -952,7 +952,7 @@ where
                 curve_points,
                 pairing,
                 sha256,
-            )),
+            )?),
             signing_keypair,
             ed25519,
         )),
@@ -986,7 +986,7 @@ fn reencrypt_encrypted_once<FP, H>(
     curve_points: &CurvePoints<FP>,
     pairing: &Pairing<FP>,
     sha256: &H,
-) -> ReencryptedValue<FP>
+) -> ErrorOr<ReencryptedValue<FP>>
 where
     FP: Hashable
         + ExtensionField
@@ -1001,13 +1001,13 @@ where
     let rand_re_public_key = public_keygen(rand_re_priv_key, curve_points.generator);
 
     let encrypted_rand_re_temp_key =
-        pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1) * rand_re_temp_key.0;
+        pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1)? * rand_re_temp_key.0;
     // Because this is the first reencryption, modify the encrypted_message using rand_re_temp_key
     // Note that this can be decrypted using the reencryption key
     let encrypted_msg_prime = pairing.pair(
         ephemeral_public_key.value,
         hashed_k + hash2(rand_re_temp_key, curve_points, sha256),
-    ) * encrypted_message;
+    )? * encrypted_message;
     let new_encypted_data = EncryptedOnceValue {
         ephemeral_public_key,
         encrypted_message: encrypted_msg_prime,
@@ -1019,10 +1019,10 @@ where
         rand_re_public_key,
         encrypted_rand_re_temp_key,
     };
-    ReencryptedValue::from_encrypted_once(
+    Ok(ReencryptedValue::from_encrypted_once(
         &new_encypted_data,
         NonEmptyVec::new_first(reencryption_block),
-    )
+    ))
 }
 
 /**
@@ -1045,7 +1045,7 @@ fn reencrypt_reencrypted_value<FP, H>(
     curve_points: &CurvePoints<FP>,
     pairing: &Pairing<FP>,
     sha256: &H,
-) -> ReencryptedValue<FP>
+) -> ErrorOr<ReencryptedValue<FP>>
 where
     FP: Hashable
         + ExtensionField
@@ -1065,16 +1065,17 @@ where
         rand_re_public_key: rand_re_pub_key_last,
         encrypted_rand_re_temp_key: enc_rand_re_k_last,
     } = re_blocks_last;
-    let encrypted_k_prime_last = *encrypted_k_last * pairing.pair(re_pub_key_last.value, hashed_k); // re-encrypted K
+    let encrypted_k_prime_last =
+        *encrypted_k_last * pairing.pair(re_pub_key_last.value, hashed_k)?; // re-encrypted K
     let rand_re_pub_key = public_keygen(rand_re_priv_key, curve_points.generator);
     let enc_rand_re_temp_key =
-        pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1) * rand_re_temp_key.0;
+        pairing.pair(to_public_key.value * rand_re_priv_key, curve_points.g1)? * rand_re_temp_key.0;
     // Modify the enc_rand_re_temp_key of the last block with the new random reencryption K
     let rand_re_k_last_prime = *enc_rand_re_k_last
         * pairing.pair(
             rand_re_pub_key_last.value,
             hash2(rand_re_temp_key, curve_points, sha256) + hashed_k,
-        );
+        )?;
     let re_block_last_prime =
         re_blocks_last.with_temp_key(encrypted_k_prime_last, rand_re_k_last_prime);
     let new_re_block = ReencryptionBlock {
@@ -1089,7 +1090,7 @@ where
         &re_blocks.to_vec()[..new_len],
         NonEmptyVec::new(re_block_last_prime, vec![new_re_block]),
     );
-    reencrypted_value.with_new_re_blocks(new_blocks_vec)
+    Ok(reencrypted_value.with_new_re_blocks(new_blocks_vec))
 }
 
 #[cfg(test)]
@@ -1220,7 +1221,7 @@ mod test {
         assert_eq!(result2, v.pow(5));
     }
     #[test]
-        #[cfg_attr(rustfmt, rustfmt_skip)]
+        #[rustfmt::skip]
         fn create_transform_key_known_value() {
             let pairing = pairing::Pairing::new();
             let ref curve_points = *curve::FP_256_CURVE_POINTS;
@@ -1280,7 +1281,7 @@ mod test {
                 curve_points,
                 &pairing,
                 sha256,
-                ed25519).payload;
+                ed25519).unwrap().payload;
 
 
             let good_encrypted_k = Fp12Elem::create_from_t(
@@ -1413,7 +1414,8 @@ mod test {
             curve_points,
             sha256,
             ed25519,
-        );
+        )
+        .unwrap();
         let rand_re_priv_key = PrivateKey::from_fp256(
             //17561965855055966875289582496525889116201409974621952158489640859240156546764
             fp256_unsafe_from("26d3b86dad678314ca9532ff4046e372802d175cd5e1ad63aacdcc968552c6cc"),
@@ -1429,7 +1431,8 @@ mod test {
             &pairing,
             sha256,
             ed25519,
-        );
+        )
+        .unwrap();
 
         let reencrypted_value = reencrypt(
             re_key,
@@ -1481,7 +1484,8 @@ mod test {
             curve_points,
             sha256,
             &AlwaysFailVerifyEd25519Signing,
-        );
+        )
+        .unwrap();
         let decrypt_result = decrypt(
             priv_key,
             encrypted_value,
@@ -1522,7 +1526,8 @@ mod test {
             curve_points,
             sha256,
             &Mocks,
-        );
+        )
+        .unwrap();
 
         let diff_priv_key = PrivateKey::from_fp256(Fp256::from(42u8));
         let decrypt_result = decrypt(
@@ -1661,7 +1666,8 @@ mod test {
             curve_points,
             sha256,
             ed25519,
-        );
+        )
+        .unwrap();
         let rand_re_priv_key = PrivateKey::from_fp256(
             //17561965855055966875289582496525889116201409974621952158489640859240156546764
             fp256_unsafe_from("26d3b86dad678314ca9532ff4046e372802d175cd5e1ad63aacdcc968552c6cc"),
@@ -1677,7 +1683,8 @@ mod test {
             &pairing,
             sha256,
             ed25519,
-        );
+        )
+        .unwrap();
 
         //first level of REencryption
         let reencrypted_value = reencrypt(
@@ -1714,7 +1721,8 @@ mod test {
             &pairing,
             sha256,
             ed25519,
-        );
+        )
+        .unwrap();
 
         let reencrypted_value_2 = reencrypt(
             reencryption_key_2,
@@ -1794,7 +1802,7 @@ mod test {
                 curve_points,
                 &Sha256,
                 &Ed25519
-            );
+            ).unwrap();
             let decrypt_result = decrypt(
                 priv_key,
                 encrypt_result,
@@ -1872,7 +1880,7 @@ mod test {
                 &pairing,
                 &Mocks,
                 &Mocks
-            )
+            ).unwrap()
         }
     }
 }

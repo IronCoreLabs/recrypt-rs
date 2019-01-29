@@ -10,6 +10,92 @@ use num_traits::{Inv, Pow};
 use num_traits::{One, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+#[cfg(test)]
+macro_rules! field_props {
+    () => {
+        #[cfg(test)]
+        fn prop_semigroup(a: Self, b: Self, c: Self) -> bool {
+            a + (b + c) == (a + b) + c
+        }
+
+        fn prop_monoid_identity(a: Self) -> bool {
+            a + Zero::zero() == <Self as Zero>::zero() + a && a + Zero::zero() == a
+        }
+
+        fn prop_inv(a: Self, b: Self) -> bool {
+            a == a * (b.inv() * b) && a == a * (b * b.inv())
+        }
+
+        fn prop_one_is_mul_identity(a: Self) -> bool {
+            <Self as One>::one() * a == a && a == a * <Self as One>::one()
+        }
+
+        fn prop_zero_is_add_identity(a: Self) -> bool {
+            <Self as Zero>::zero() + a == a && a == a + <Self as Zero>::zero()
+        }
+
+        fn prop_eq_reflexive(a: Self, b: Self) -> bool {
+            if a == b {
+                b == a
+            } else {
+                b != a
+            }
+        }
+
+        fn prop_sub_same_as_neg_add(a: Self, b: Self) -> bool {
+            a + -b == a - b
+        }
+
+        fn prop_mul_distributive(a: Self, b: Self, c: Self) -> bool {
+            a * (b + c) == a * b + a * c
+        }
+
+        fn prop_mul_assoc(a: Self, b: Self, c: Self) -> bool {
+            a * (b * c) == a * b * c
+        }
+
+        #[allow(clippy::eq_op)] // necessary for commutative props
+        fn prop_mul_commutative(a: Self, b: Self, c: Self) -> bool {
+            b * a * c == a * b * c
+        }
+
+        fn prop_add_assoc(a: Self, b: Self, c: Self) -> bool {
+            a + (b + c) == a + b + c
+        }
+
+        #[allow(clippy::eq_op)] // necessary for commutative props
+        fn prop_add_commutative(a: Self, b: Self, c: Self) -> bool {
+            b + a + c == a + b + c
+        }
+
+        fn prop_pow_is_mul(a: Self) -> bool {
+            a * a == a.pow(2) && a * a * a == a.pow(3)
+        }
+
+        fn prop_x_sub_y_eq_x_plus_y_mul_neg1(x: Self, y: Self) -> bool {
+            // x - y == x + y * (-1)
+            let expected = x - y;
+            let result = x + y * -<Self as One>::one();
+
+            expected == result
+        }
+
+        fn prop_square_same_as_mul_self(a: Self) -> bool {
+            let expected = a * a;
+            let result = a.square();
+
+            expected == result
+        }
+
+        fn prop_square2_same_as_pow4(a: Self) -> bool {
+            let expected = a.square().square();
+            let result = a.pow(4);
+
+            expected == result
+        }
+    };
+}
+
 pub trait Field:
     One
     + Zero
@@ -25,83 +111,8 @@ pub trait Field:
     + Pow<u32, Output = Self>
     + Sub<Output = Self>
 {
-    fn prop_semigroup(a: Self, b: Self, c: Self) -> bool {
-        a + (b + c) == (a + b) + c
-    }
-
-    fn prop_monoid_identity(a: Self) -> bool {
-        a + Zero::zero() == <Self as Zero>::zero() + a && a + Zero::zero() == a
-    }
-
-    fn prop_inv(a: Self, b: Self) -> bool {
-        a == a * (b.inv() * b) && a == a * (b * b.inv())
-    }
-
-    fn prop_one_is_mul_identity(a: Self) -> bool {
-        <Self as One>::one() * a == a && a == a * <Self as One>::one()
-    }
-
-    fn prop_zero_is_add_identity(a: Self) -> bool {
-        <Self as Zero>::zero() + a == a && a == a + <Self as Zero>::zero()
-    }
-
-    fn prop_eq_reflexive(a: Self, b: Self) -> bool {
-        if a == b {
-            b == a
-        } else {
-            b != a
-        }
-    }
-
-    fn prop_sub_same_as_neg_add(a: Self, b: Self) -> bool {
-        a + -b == a - b
-    }
-
-    fn prop_mul_distributive(a: Self, b: Self, c: Self) -> bool {
-        a * (b + c) == a * b + a * c
-    }
-
-    fn prop_mul_assoc(a: Self, b: Self, c: Self) -> bool {
-        a * (b * c) == a * b * c
-    }
-
-    fn prop_mul_commutative(a: Self, b: Self, c: Self) -> bool {
-        b * a * c == a * b * c
-    }
-
-    fn prop_add_assoc(a: Self, b: Self, c: Self) -> bool {
-        a + (b + c) == a + b + c
-    }
-
-    fn prop_add_commutative(a: Self, b: Self, c: Self) -> bool {
-        b + a + c == a + b + c
-    }
-
-    fn prop_pow_is_mul(a: Self) -> bool {
-        a * a == a.pow(2) && a * a * a == a.pow(3)
-    }
-
-    fn prop_x_sub_y_eq_x_plus_y_mul_neg1(x: Self, y: Self) -> bool {
-        // x - y == x + y * (-1)
-        let expected = x - y;
-        let result = x + y * -<Self as One>::one();
-
-        expected == result
-    }
-
-    fn prop_square_same_as_mul_self(a: Self) -> bool {
-        let expected = a * a;
-        let result = a.square();
-
-        expected == result
-    }
-
-    fn prop_square2_same_as_pow4(a: Self) -> bool {
-        let expected = a.square().square();
-        let result = a.pow(4);
-
-        expected == result
-    }
+    #[cfg(test)]
+    field_props!();
 }
 
 impl Field for fp_256::Monty {}
@@ -381,25 +392,3 @@ impl ExtensionField for Fp480 {
         }
     }
 }
-
-/*
-//Additive laws permit all elements.
-  implicit def pred[A]: Predicate[A] = Predicate.const(true)
-  implicit def fp6Arb = Arbitrary(fp6Gen[Fp])
-  implicit val fp480Arb = Arbitrary(nonZeroFp480Gen)
-  implicit val fpArb = Arbitrary(nonZeroFpGen)
-
-  implicit def fp6Arb480 = Arbitrary(fp6Gen[Fp480])
-  checkAll("Fp256", RingLaws[Fp].field)
-  checkAll("FP2Elem256", RingLaws[FP2Elem[Fp]].field)
-  checkAll("FP6Elem256", RingLaws[FP6Elem[Fp]].field)
-  checkAll("FP12Elem256", RingLaws[FP12Elem[Fp]].field)
-  checkAll("HomogeneousPoint256", RingLaws[HomogeneousPoint[Fp]].additiveGroup)
-  //Tests on the field instance for Fp480
-  checkAll("Fp480", RingLaws[Fp480].field)
-  checkAll("FP2Elem480", RingLaws[FP2Elem[Fp480]].field)
-  checkAll("FP6Elem480", RingLaws[FP6Elem[Fp480]].field)
-  checkAll("FP12Elem480", RingLaws[FP12Elem[Fp480]].field)
-  checkAll("HomogeneousPoint480", RingLaws[HomogeneousPoint[Fp480]].additiveGroup)
-  checkAll("HomogeneousPointFP2Elem480", RingLaws[HomogeneousPoint[FP2Elem[Fp480]]].additiveGroup)
-*/

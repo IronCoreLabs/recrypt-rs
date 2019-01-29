@@ -4,6 +4,7 @@ use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::homogeneouspoint::Double;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
+use crate::internal::homogeneouspoint::PointErr;
 use crate::internal::homogeneouspoint::TwistedHPoint;
 use crate::internal::Square;
 use gridiron::fp_256;
@@ -38,61 +39,65 @@ where
     /// Hess, et al., from 2006. Our implementation is based on the paper "High-Speed Software
     /// Implementation of the Optimal Ate Pairing over Barreto-Naehrig Curves" by Beuchat et al,
     /// from 2010.
-    pub fn pair(&self, point_p: HomogeneousPoint<T>, point_q: TwistedHPoint<T>) -> Fp12Elem<T> {
-        let (px, py) = point_p
+    pub fn pair(
+        &self,
+        point_p: HomogeneousPoint<T>,
+        point_q: TwistedHPoint<T>,
+    ) -> Result<Fp12Elem<T>, PointErr> {
+        point_p
             .normalize()
-            .unwrap_or_else(|| panic!("Pairing is undefined on the zero point."));
-        let mut f1: Fp12Elem<T> = One::one();
-        let mut f2: Fp2Elem<T> = One::one();
-        let neg_q = -point_q;
-        let point_result: TwistedHPoint<T> =
-            <T as PairingConfig>::naf_for_loop()
-                .iter()
-                .fold(point_q, |acc, naf_value| {
-                    let mut point_r = acc;
-                    let mut point_s = point_r.double();
-                    let (ell1, ell2) = self.double_line_eval(px, py, point_r);
-                    f1 = ell1 * f1.square();
-                    f2 = ell2 * f2.square();
-                    point_r = point_s;
-                    if *naf_value == -1 {
-                        point_s = neg_q + point_r;
-                        let (ell1, ell2) = self.add_line_eval(px, py, neg_q, point_r);
-                        f1 = f1 * ell1;
-                        f2 = f2 * ell2;
+            .map_or(Err(PointErr::ZeroPoint), |(px, py)| {
+                let mut f1: Fp12Elem<T> = One::one();
+                let mut f2: Fp2Elem<T> = One::one();
+                let neg_q = -point_q;
+                let point_result: TwistedHPoint<T> = <T as PairingConfig>::naf_for_loop()
+                    .iter()
+                    .fold(point_q, |acc, naf_value| {
+                        let mut point_r = acc;
+                        let mut point_s = point_r.double();
+                        let (ell1, ell2) = self.double_line_eval(px, py, point_r);
+                        f1 = ell1 * f1.square();
+                        f2 = ell2 * f2.square();
                         point_r = point_s;
-                        point_r
-                    } else if *naf_value == 1 {
-                        point_s = point_q + point_r;
-                        let (ell1, ell2) = self.add_line_eval(px, py, point_q, point_r);
-                        f1 = f1 * ell1;
-                        f2 = f2 * ell2;
-                        point_r = point_s;
-                        point_r
-                    } else {
-                        point_r
-                    }
-                });
-        let point_q1 = self.frobenius(point_q);
-        let point_q2 = self.frobenius(point_q1);
-        let point_s = point_q1 + point_result;
-        let (ell1, ell2) = self.add_line_eval(px, py, point_q1, point_result);
-        f1 = f1 * ell1;
-        f2 = f2 * ell2;
-        let point_r = point_s;
-        let (ell3, ell4) = self.add_line_eval(px, py, -point_q2, point_r);
-        f1 = f1 * ell3;
-        f2 = f2 * ell4;
-        let f = f1
-            * Fp12Elem {
-                elem1: Zero::zero(),
-                elem2: Fp6Elem {
-                    elem1: Zero::zero(),
-                    elem2: Zero::zero(),
-                    elem3: f2.inv(),
-                },
-            };
-        self.final_exp(f)
+                        if *naf_value == -1 {
+                            point_s = neg_q + point_r;
+                            let (ell1, ell2) = self.add_line_eval(px, py, neg_q, point_r);
+                            f1 = f1 * ell1;
+                            f2 = f2 * ell2;
+                            point_r = point_s;
+                            point_r
+                        } else if *naf_value == 1 {
+                            point_s = point_q + point_r;
+                            let (ell1, ell2) = self.add_line_eval(px, py, point_q, point_r);
+                            f1 = f1 * ell1;
+                            f2 = f2 * ell2;
+                            point_r = point_s;
+                            point_r
+                        } else {
+                            point_r
+                        }
+                    });
+                let point_q1 = self.frobenius(point_q);
+                let point_q2 = self.frobenius(point_q1);
+                let point_s = point_q1 + point_result;
+                let (ell1, ell2) = self.add_line_eval(px, py, point_q1, point_result);
+                f1 = f1 * ell1;
+                f2 = f2 * ell2;
+                let point_r = point_s;
+                let (ell3, ell4) = self.add_line_eval(px, py, -point_q2, point_r);
+                f1 = f1 * ell3;
+                f2 = f2 * ell4;
+                let f = f1
+                    * Fp12Elem {
+                        elem1: Zero::zero(),
+                        elem2: Fp6Elem {
+                            elem1: Zero::zero(),
+                            elem2: Zero::zero(),
+                            elem3: f2.inv(),
+                        },
+                    };
+                Ok(self.final_exp(f))
+            })
     }
 
     /// Returns the value at p of the function whose zero-set is the line through q and r.
@@ -421,7 +426,6 @@ mod test {
             FP_256_CURVE_POINTS.generator,
             GOOD_TWISTED_HPOINT_MONTY.clone(),
         );
-
         assert_eq!(expected_good_result, result.map(&|monty| monty.to_norm()));
     }
 
@@ -769,14 +773,14 @@ mod test {
         let a_sqr_times_p = p * a_sqr;
         let q = FP_256_CURVE_POINTS.g1;
         let a_times_q = q * a_fp256;
-        let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q);
+        let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q).unwrap();
 
         // pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
-        prop_assert_eq!(pairing.pair(p, a_times_q), pairing.pair(a_times_p, q));
-        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q));
+        prop_assert_eq!(pairing.pair(p, a_times_q).unwrap(), pairing.pair(a_times_p, q).unwrap());
+        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q).unwrap());
 
         // pair(a * P, a * Q) == pair(P, Q) ^ (a^2)
-        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).pow(a).pow(a));
+        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).unwrap().pow(a).pow(a));
       }
 
       //"follow the law pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
@@ -792,14 +796,14 @@ mod test {
         let a_sqr_times_p = p * a_sqr;
         let q = FP_480_CURVE_POINTS.g1;
         let a_times_q = q * a_fp480;
-        let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q);
+        let pair_a_times_p_and_a_times_q  = pairing.pair(a_times_p, a_times_q).unwrap();
 
         // pair(a * P, a * Q) == pair(a^2 * P, Q) == pair(P,a^2 * Q)"
-        prop_assert_eq!(pairing.pair(p, a_times_q), pairing.pair(a_times_p, q));
-        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q));
+        prop_assert_eq!(pairing.pair(p, a_times_q).unwrap(), pairing.pair(a_times_p, q).unwrap());
+        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(a_sqr_times_p, q).unwrap());
 
         // pair(a * P, a * Q) == pair(P, Q) ^ (a^2)
-        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).pow(a).pow(a));
+        prop_assert_eq!(pair_a_times_p_and_a_times_q, pairing.pair(p, q).unwrap().pow(a).pow(a));
       }
     }
 }

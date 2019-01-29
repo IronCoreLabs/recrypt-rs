@@ -117,7 +117,7 @@ where
         )));
         let augmenting_pub_key = augmenting_key
             .map(|key| self.g * key.value)
-            .unwrap_or_else(|| HomogeneousPoint::zero());
+            .unwrap_or_else(HomogeneousPoint::zero);
         let unaugmented_key = pub_key.value - augmenting_pub_key;
         let v = self.g * signature.s + unaugmented_key * h;
         let normalized = v.normalize();

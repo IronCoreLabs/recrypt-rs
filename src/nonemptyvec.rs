@@ -15,6 +15,7 @@ quick_error! {
     }
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl<T> NonEmptyVec<T>
 where
     T: Clone,

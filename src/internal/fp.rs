@@ -177,7 +177,7 @@ pub fn fp256_unsafe_from(hex_str: &str) -> fp_256::Fp256 {
     };
 
     let slice = &hex::decode(&even_hex_str)
-        .expect(&format!("hex_str '{}' cannot be decoded", &even_hex_str));
+        .unwrap_or_else(|_| panic!("hex_str '{}' cannot be decoded", &even_hex_str));
     if slice.len() == fp_256::PRIMEBYTES {
         let mut target = [0u8; fp_256::PRIMEBYTES];
         target.copy_from_slice(slice);
@@ -200,7 +200,7 @@ pub fn fp480_unsafe_from(hex_str: &str) -> fp_480::Fp480 {
     };
 
     let slice = &hex::decode(&even_hex_str)
-        .expect(&format!("hex_str '{}' cannot be decoded", &even_hex_str));
+        .unwrap_or_else(|_| panic!("hex_str '{}' cannot be decoded", &even_hex_str));
     if slice.len() == fp_480::PRIMEBYTES {
         let mut target = [0u8; fp_480::PRIMEBYTES];
         target.copy_from_slice(slice);

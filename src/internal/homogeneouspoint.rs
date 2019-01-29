@@ -66,7 +66,7 @@ where
         let mut last_bit = ConstantBool::new_false();
         bits.iter().rev().for_each(|&bit| {
             x0.swap_if(&mut x1, bit ^ last_bit);
-            x1 = x1 + x0;
+            x1 += x0;
             x0 = x0.double();
             last_bit = bit;
         });
@@ -188,7 +188,12 @@ impl<T> HomogeneousPoint<T>
 where
     T: Field,
 {
-    ///Divide out by the z we've been carrying around.
+    /// Divide out by the z we've been carrying around.
+    ///
+    /// Constant Time Evaluation:
+    /// This function is not constant time and may reveal the `z` coordinate of this point since `is_zero`
+    /// is not constant time.
+    /// No secret values should ever be represented as HomogeneousPoint in our implementation.
     pub fn normalize(&self) -> Option<(T, T)> {
         if self.is_zero() {
             Option::None
@@ -245,7 +250,7 @@ where
         let mut last_bit = ConstantBool::new_false();
         bits.iter().rev().for_each(|&bit| {
             x0.swap_if(&mut x1, bit ^ last_bit);
-            x1 = x1 + x0;
+            x1 += x0;
             x0 = x0.double();
             last_bit = bit;
         });
@@ -389,7 +394,12 @@ impl<T> TwistedHPoint<T>
 where
     T: ExtensionField,
 {
-    ///Divide out by the z we've been carrying around.
+    /// Divide out by the z we've been carrying around.
+    ///
+    /// Constant Time Evaluation:
+    /// This function is not constant time and may reveal the `z` coordinate of this point since `is_zero`
+    /// is not constant time.
+    /// No secret values should ever be represented as TwistedHPoint in our implementation.
     pub fn normalize(&self) -> Option<(Fp2Elem<T>, Fp2Elem<T>)> {
         if self.is_zero() {
             Option::None

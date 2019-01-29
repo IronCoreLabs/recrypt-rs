@@ -104,7 +104,6 @@ macro_rules! new_bytes_type_no_eq {
 }
 
 // macro to produce property-based tests for each FP type
-#[allow(unused_macros)]
 #[cfg(test)]
 macro_rules! field_proptest {
         ($arb_fp_type:ident, $base_fp_mod:ident, $fp_mod:ident) => {

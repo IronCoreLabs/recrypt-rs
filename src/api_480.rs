@@ -40,6 +40,13 @@ impl Api480<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
         Api480::new_with_rand(rand::thread_rng())
     }
 }
+
+impl Default for Api480<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<CR: rand::CryptoRng + rand::RngCore> Api480<Sha256, Ed25519, RandomBytes<CR>> {
     pub fn new_with_rand(r: CR) -> Api480<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = pairing::Pairing::new();
@@ -763,7 +770,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api48
             &self.pairing,
             &self.sha_256,
             &self.ed25519,
-        );
+        )?;
 
         TransformKey::try_from_internal(reencryption_key)
     }
@@ -863,7 +870,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api48
             &self.curve_points,
             &self.sha_256,
             &self.ed25519,
-        );
+        )?;
 
         EncryptedValue::try_from(encrypted_value_internal)
     }
