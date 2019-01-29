@@ -9,9 +9,8 @@ use crate::internal::sha256::Sha256;
 use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
 use gridiron::digits::constant_time_primitives::ConstantSwap;
-use gridiron::fp_256;
-use gridiron::fp_480;
-use gridiron::fp_480::Fp480;
+use gridiron::fp_256::Monty as Monty256;
+use gridiron::fp_480::Monty as Monty480;
 use std::marker::PhantomData;
 
 /// `r` - the x coordinate for a point on the elliptic curve.
@@ -45,8 +44,8 @@ pub struct SchnorrSign<FP, FR, H> {
     phantom: PhantomData<FR>,
 }
 
-impl SchnorrSign<fp_256::Monty, Fr256, Sha256> {
-    pub fn new_256() -> SchnorrSign<fp_256::Monty, Fr256, Sha256> {
+impl SchnorrSign<Monty256, Fr256, Sha256> {
+    pub fn new_256() -> SchnorrSign<Monty256, Fr256, Sha256> {
         SchnorrSign {
             sha256: Sha256,
             g: FP_256_CURVE_POINTS.generator,
@@ -55,8 +54,8 @@ impl SchnorrSign<fp_256::Monty, Fr256, Sha256> {
     }
 }
 
-impl SchnorrSign<fp_480::Monty, Fr480, Sha256> {
-    pub fn new_480() -> SchnorrSign<fp_480::Monty, Fr480, Sha256> {
+impl SchnorrSign<Monty480, Fr480, Sha256> {
+    pub fn new_480() -> SchnorrSign<Monty480, Fr480, Sha256> {
         SchnorrSign {
             sha256: Sha256,
             g: FP_480_CURVE_POINTS.generator,

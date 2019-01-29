@@ -276,7 +276,6 @@ pub mod test {
     use gridiron::fp_256;
     use gridiron::fp_256::Fp256;
     use gridiron::fp_480;
-    use gridiron::fp_480::Fp480;
     use proptest::prop_compose;
     use proptest::proptest;
 
