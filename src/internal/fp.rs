@@ -144,9 +144,9 @@ impl From<[u8; 64]> for fr_480::Fr480 {
         fr_480::Fr480::new(fr_480::Fr480::reduce_barrett(&limbs))
     }
 }
-impl From<fp_256::Fp256> for fr_256::Fr256 {
-    fn from(src: fp_256::Fp256) -> Self {
-        From::from(src.to_bytes_array())
+impl From<fp_256::Monty> for fr_256::Fr256 {
+    fn from(src: fp_256::Monty) -> Self {
+        From::from(src.to_norm().to_bytes_array())
     }
 }
 

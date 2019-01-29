@@ -17,6 +17,7 @@ use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
+use gridiron::fp_256;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480::Fp480;
 use num_traits::{One, Zero};
@@ -75,7 +76,7 @@ impl<T: Field + From<u32> + Hashable> PublicKey<T> {
     }
 }
 
-impl PublicKey<Fp256> {
+impl PublicKey<fp_256::Monty> {
     pub fn to_byte_vectors_32(&self) -> Option<([u8; 32], [u8; 32])> {
         self.value
             .normalize()
@@ -102,25 +103,27 @@ impl<T: Field + Hashable> Hashable for PublicKey<T> {
 pub struct PrivateKey<T> {
     pub value: T,
 }
-impl From<api::PrivateKey> for PrivateKey<Fp256> {
+impl From<api::PrivateKey> for PrivateKey<fp_256::Monty> {
     fn from(api_pk: api::PrivateKey) -> Self {
         PrivateKey {
-            value: Fp256::from(api_pk.to_bytes_32()),
+            value: Fp256::from(api_pk.to_bytes_32()).to_monty(),
         }
     }
 }
 
-impl<'a> From<&'a api::PrivateKey> for PrivateKey<Fp256> {
+impl<'a> From<&'a api::PrivateKey> for PrivateKey<fp_256::Monty> {
     fn from(api_pk: &'a api::PrivateKey) -> Self {
         PrivateKey {
-            value: Fp256::from(api_pk.to_bytes_32()),
+            value: Fp256::from(api_pk.to_bytes_32()).to_monty(),
         }
     }
 }
 
 impl PrivateKey<Fp256> {
-    pub fn from_fp256(fp256: Fp256) -> PrivateKey<Fp256> {
-        PrivateKey { value: fp256 }
+    pub fn from_fp256(fp256: Fp256) -> PrivateKey<fp_256::Monty> {
+        PrivateKey {
+            value: fp256.to_monty(),
+        }
     }
 }
 
@@ -325,6 +328,12 @@ pub trait Square {
 impl Square for Fp256 {
     fn square(&self) -> Self {
         self.square()
+    }
+}
+
+impl Square for fp_256::Monty {
+    fn square(&self) -> Self {
+        *self * *self
     }
 }
 
@@ -799,7 +808,7 @@ where
     }
 }
 
-impl From<api::Plaintext> for KValue<Fp256> {
+impl From<api::Plaintext> for KValue<fp_256::Monty> {
     fn from(pt: api::Plaintext) -> Self {
         KValue(*pt.internal_fp12())
     }
@@ -1098,13 +1107,13 @@ mod test {
     use proptest::arbitrary::any;
     use proptest::prelude::*;
     prop_compose! {
-        [pub] fn arb_fp256()(seed in any::<u32>()) -> Fp256 {
+        [pub] fn arb_fp256()(seed in any::<u32>()) -> fp_256::Monty {
             if seed == 0 {
-                Fp256::zero()
+                fp_256::Monty::zero()
             } else if seed == 1 {
-                Fp256::one()
+                fp_256::Monty::one()
             } else {
-                Fp256::from(seed).pow(seed).pow(seed)
+                fp_256::Monty::from(seed).pow(seed).pow(seed)
             }
         }
     }
@@ -1162,23 +1171,25 @@ mod test {
     }
 
     //copied from API as it's private there
-    fn gen_random_fp12<R: rand_bytes::RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp256> {
+    fn gen_random_fp12<R: rand_bytes::RandomBytesGen>(
+        random_bytes: &mut R,
+    ) -> Fp12Elem<fp_256::Monty> {
         // generate 12 random Fp values
         gen_rth_root(
             &pairing::Pairing::new(),
             Fp12Elem::create_from_t(
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
-                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
+                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
             ),
         )
     }
@@ -1220,28 +1231,27 @@ mod test {
 
             //37777967648492203239675772600961898148040325589588086812374811831221462604944
             let private_key = PrivateKey {
-                value: fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90")
+                value: fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90").to_monty()
             };
 
             //22002131259228303741090495322318969764532178674829148099822698556219881568451
             let re_private_key = PrivateKey {
-                value: fp256_unsafe_from("30a4c3d5f31a096db20eed892919e542427341d7aec1e1494275831bbca638c3")
+                value: fp256_unsafe_from("30a4c3d5f31a096db20eed892919e542427341d7aec1e1494275831bbca638c3").to_monty()
             };
 
             //56377452267431283559088187378398270325210563762492926393848580098576649271541
-            let parsed_pub_key_x = fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5");
+            let parsed_pub_key_x = fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5").to_monty();
             //46643694276241842996939080253335644316475473619096522181405937227991761798154
-            let parsed_pub_key_y = fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a");
+            let parsed_pub_key_y = fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a").to_monty();
             let public_key = PublicKey::from_x_y(parsed_pub_key_x, parsed_pub_key_y).unwrap();
 
             let salt = KValue(Fp12Elem::create_from_t(
                 //20621517740542501009268492188240231175004875885443969425948886451683622135253
-                fp256_unsafe_from("2d975d8c65b577810297bc5b7193691a6892cefacbee2544fb16f67ba7c825d5")
-                ,
+                fp256_unsafe_from("2d975d8c65b577810297bc5b7193691a6892cefacbee2544fb16f67ba7c825d5"),
                 //34374877744619883729582518521480375735530540362125629015072222432427068254516
-                              fp256_unsafe_from("4bff7dc7983fb830ec19f39e78268d8191d96ec9974ac41ef8100acca66e6934"),
+                fp256_unsafe_from("4bff7dc7983fb830ec19f39e78268d8191d96ec9974ac41ef8100acca66e6934"),
                 //3061516916225902041514148805993070634368655849312514173666756917317148753791
-            fp256_unsafe_from("6c4c1d5c2d00bbfc5eac19626b1967ce3ca5a60bce0122626d0662f53463f7f"),
+                fp256_unsafe_from("6c4c1d5c2d00bbfc5eac19626b1967ce3ca5a60bce0122626d0662f53463f7f"),
                 //36462333850830053304472867079357777410712443208968594405185610332940263631144
                 fp256_unsafe_from("509cf319e11149b9f03c5c442efecb02c3fd98c4034490c505c6983f4f862928"),
                 //61512103449194136219283269928242996434577060883392017268158197606945715641345
@@ -1260,7 +1270,7 @@ mod test {
                 fp256_unsafe_from("85ff626aef9f9cef0310f93a9541ef9ce2207eb9b57077db4572531a879c1cad"),
                 //17433339776741835027827317970122814431745024562995872600925458287403992082321
                 fp256_unsafe_from("268aebaf44e6ae76c70f48aed806180ced89dfc17f962de209f2a3437b4fe791")
-            ));
+            ) .map(&|fp| fp.to_monty()));
 
             let re_key = generate_reencryption_key(
                 private_key,
@@ -1299,7 +1309,7 @@ mod test {
                 fp256_unsafe_from("5404b493123a5b087cb6cc363116a9fc393c27dac3efa3df778ec974b8bdfa76"),
                 //49941783284737700171954796486309114156831309184207470337019703077683277143423
                 fp256_unsafe_from("6e6a0c315c47fa2990268bc2010eeda17b78cc32e7ab6f093bf1aa2234491d7f")
-            );
+            ) .map(&|fp| fp.to_monty());;
 
             let good_hashed_k = TwistedHPoint {
                 x: fp2elem::Fp2Elem {
@@ -1320,7 +1330,7 @@ mod test {
                     //18358874287282838450918898019272385250887285769392485811015731318886010089831
                     elem2: fp256_unsafe_from("2896c12e42c82648d4e553e82b32abe95618f0e5ad7f8ba14d6180b78ae67167")
                 }
-            };
+            } .map(&|fp| fp.to_monty());;
 
             assert_eq!(good_encrypted_k, re_key.encrypted_k);
             assert_eq!(good_hashed_k, re_key.hashed_k)
@@ -1341,7 +1351,8 @@ mod test {
             Fp256::from(10u8),
             Fp256::from(11u8),
             Fp256::from(12u8),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let salt_fp12 = Fp12Elem::create_from_t(
             Fp256::from(11u8),
             Fp256::from(12u8),
@@ -1355,7 +1366,8 @@ mod test {
             Fp256::from(110u8),
             Fp256::from(111u8),
             Fp256::from(112u8),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let rand_re_k_fp12 = Fp12Elem::create_from_t(
             Fp256::from(21u8),
             Fp256::from(22u8),
@@ -1369,7 +1381,8 @@ mod test {
             Fp256::from(210u8),
             Fp256::from(211u8),
             Fp256::from(212u8),
-        );
+        )
+        .map(&|fp| fp.to_monty());
 
         let pairing = pairing::Pairing::new();
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
@@ -1547,7 +1560,8 @@ mod test {
             Fp256::from(10u32),
             Fp256::from(11u32),
             Fp256::from(12u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let salt_1_fp12 = Fp12Elem::create_from_t(
             Fp256::from(11u32),
             Fp256::from(12u32),
@@ -1561,7 +1575,8 @@ mod test {
             Fp256::from(110u32),
             Fp256::from(111u32),
             Fp256::from(112u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let rand_re_k_1_fp12 = Fp12Elem::create_from_t(
             Fp256::from(21u32),
             Fp256::from(22u32),
@@ -1575,7 +1590,8 @@ mod test {
             Fp256::from(210u32),
             Fp256::from(211u32),
             Fp256::from(212u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let salt_2_fp12 = Fp12Elem::create_from_t(
             Fp256::from(31u32),
             Fp256::from(32u32),
@@ -1589,7 +1605,8 @@ mod test {
             Fp256::from(310u32),
             Fp256::from(311u32),
             Fp256::from(312u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
         let rand_re_k_2_fp12 = Fp12Elem::create_from_t(
             Fp256::from(41u32),
             Fp256::from(42u32),
@@ -1603,7 +1620,8 @@ mod test {
             Fp256::from(410u32),
             Fp256::from(411u32),
             Fp256::from(412u32),
-        );
+        )
+        .map(&|fp| fp.to_monty());
 
         let pairing = pairing::Pairing::new();
         let ref curve_points = *curve::FP_256_CURVE_POINTS;
@@ -1769,7 +1787,7 @@ mod test {
             prop_assert!(verified.is_some())
         }
         #[test]
-        fn encrypt_decrypt_roundtrip(priv_key in arb_priv_key(), plaintext in arb_fp12().prop_filter("", |a| !(*a == Fp12Elem::<Fp256>::zero()))) {
+        fn encrypt_decrypt_roundtrip(priv_key in arb_priv_key(), plaintext in arb_fp12().prop_filter("", |a| !(*a == Fp12Elem::<fp_256::Monty>::zero()))) {
             let pub_key = public_keygen(priv_key, curve::FP_256_CURVE_POINTS.generator);
             let ephem_secret_key = PrivateKey::from_fp256(Fp256::from(42u8));
             let priv_signing_key = good_signing_keys();
@@ -1815,7 +1833,7 @@ mod test {
 
             let cpoints = &*curve::FP_256_CURVE_POINTS;
             let new_hashed_k = cpoints.g1 * fp;
-            let re_key: ReencryptionKey<Fp256> = signed_re_key.payload.clone();
+            let re_key: ReencryptionKey<fp_256::Monty> = signed_re_key.payload.clone();
 
             // clone the ReencryptionKey, replacing the hashed_k with the arb one
             let re_key_copy = ReencryptionKey {
@@ -1831,13 +1849,13 @@ mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<Fp256> {
-            PublicKey { value: *hpoint }
+        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<fp_256::Monty> {
+            PublicKey { value: (*hpoint) }
         }
     }
 
     prop_compose! {
-        [pub] fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<Fp256> {
+        [pub] fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<fp_256::Monty> {
             PrivateKey { value: fp256 }
         }
     }
@@ -1848,7 +1866,7 @@ mod test {
          ref new_k in arb_fp12(),
          to_public_key in arb_pub_key(),
          from_private_key in arb_priv_key())
-         -> SignedValue<ReencryptionKey<Fp256>> {
+         -> SignedValue<ReencryptionKey<fp_256::Monty>> {
             let pairing = pairing::Pairing::new();
             let curve_points = &*curve::FP_256_CURVE_POINTS;
 

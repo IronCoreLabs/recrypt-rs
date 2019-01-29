@@ -20,20 +20,12 @@ where
     fn decode(bytes: ByteVector) -> Result<Self, DecodeErr>;
 }
 
-impl BytesDecoder for Fp256 {
+impl BytesDecoder for gridiron::fp_256::Monty {
     const ENCODED_SIZE_BYTES: usize = 32;
-
     fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
-        if bytes.len() == Self::ENCODED_SIZE_BYTES {
-            let byte_arr: ArrayVec<[u8; Self::ENCODED_SIZE_BYTES]> = bytes.into_iter().collect();
-            let byte_arr: [u8; Self::ENCODED_SIZE_BYTES] = byte_arr.into_inner()?;
-            Result::Ok(Fp256::from(byte_arr))
-        } else {
-            Result::Err(DecodeErr::BytesNotCorrectLength {
-                required_length: Self::ENCODED_SIZE_BYTES,
-                bad_bytes: bytes,
-            })
-        }
+        let byte_arr: ArrayVec<[u8; Self::ENCODED_SIZE_BYTES]> = bytes.into_iter().collect();
+        let byte_arr: [u8; Self::ENCODED_SIZE_BYTES] = byte_arr.into_inner()?;
+        Result::Ok(Fp256::from(byte_arr).to_monty())
     }
 }
 

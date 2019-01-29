@@ -130,6 +130,15 @@ where
     }
 }
 
+impl<T> Fp2Elem<T> {
+    pub fn map<U, F: Fn(T) -> U>(self, op: &F) -> Fp2Elem<U> {
+        Fp2Elem {
+            elem1: op(self.elem1),
+            elem2: op(self.elem2),
+        }
+    }
+}
+
 impl<T> Zero for Fp2Elem<T>
 where
     T: Add<Output = T> + Zero + PartialEq,
@@ -264,6 +273,7 @@ pub mod test {
     use super::*;
     use crate::internal::test::arb_fp256;
     use crate::internal::test::arb_fp480;
+    use gridiron::fp_256;
     use gridiron::fp_256::Fp256;
     use gridiron::fp_480::Fp480;
     use proptest::prop_compose;
@@ -273,8 +283,8 @@ pub mod test {
     #[rustfmt::skip]
     fn hashable() {
         let fp2 = Fp2Elem {
-            elem1: Fp256::from(256u32),
-            elem2: Fp256::from(255u32),
+            elem1: fp_256::Monty::from(256u32),
+            elem2: fp_256::Monty::from(255u32),
         };
 
         let bytes = fp2.to_bytes();
@@ -295,8 +305,8 @@ pub mod test {
     #[test]
     fn round_trip_bytes() {
         let fp2 = Fp2Elem {
-            elem1: Fp256::from(256u32),
-            elem2: Fp256::from(255u32),
+            elem1: fp_256::Monty::from(256u32),
+            elem2: fp_256::Monty::from(255u32),
         };
 
         let bytes = fp2.to_bytes();
@@ -331,8 +341,32 @@ pub mod test {
         assert_eq!(fp2.pow(five), five_times);
     }
 
+    #[test]
+    fn mul_same_monty() {
+        let fp2 = Fp2Elem {
+            elem1: Fp256::from(4u32),
+            elem2: Fp256::from(2u32),
+        };
+        let fp2_monty = fp2.map(&|fp| fp.to_monty());;
+        let five_times = fp2 * fp2 * fp2 * fp2 * fp2;
+        let five_times_monty = fp2_monty * fp2_monty * fp2_monty * fp2_monty * fp2_monty;
+        assert_eq!(five_times_monty, five_times.map(&|fp| fp.to_monty()));
+    }
+
+    #[test]
+    fn pow_by_five_should_be_same_monty() {
+        let five = 5;
+        let fp2 = Fp2Elem {
+            elem1: Fp256::from(4u32),
+            elem2: Fp256::from(2u32),
+        };
+        let fp2_monty = fp2.map(&|fp| fp.to_monty());;
+        let five_times_monty = fp2_monty * fp2_monty * fp2_monty * fp2_monty * fp2_monty;
+        assert_eq!(five_times_monty, fp2_monty.pow(five));
+    }
+
     prop_compose! {
-        [pub] fn arb_fp2()(e1 in arb_fp256(), e2 in arb_fp256()) -> Fp2Elem<Fp256> {
+        [pub] fn arb_fp2()(e1 in arb_fp256(), e2 in arb_fp256()) -> Fp2Elem<fp_256::Monty> {
             Fp2Elem {
                 elem1: e1,
                 elem2: e2

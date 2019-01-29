@@ -216,6 +216,16 @@ pub struct TwistedHPoint<T> {
     pub z: Fp2Elem<T>,
 }
 
+impl<T> TwistedHPoint<T> {
+    pub fn map<U, F: Fn(T) -> U>(self, op: &F) -> TwistedHPoint<U> {
+        TwistedHPoint {
+            x: self.x.map(op),
+            y: self.y.map(op),
+            z: self.z.map(op),
+        }
+    }
+}
+
 impl<T: ConstantSwap> ConstantSwap for TwistedHPoint<T> {
     fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<u32>) {
         self.x.swap_if(&mut other.x, swap);
@@ -454,10 +464,22 @@ pub mod test {
     use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::test::{arb_fp256, arb_fp480};
+    use gridiron::fp_256;
     use gridiron::fp_256::Fp256;
+    use gridiron::fp_256::Monty as Fp256Monty;
     use gridiron::fp_480::Fp480;
     use hex;
     use proptest::prelude::*;
+
+    impl<T> HomogeneousPoint<T> {
+        pub fn map<U, F: Fn(T) -> U>(self, op: F) -> HomogeneousPoint<U> {
+            HomogeneousPoint {
+                x: op(self.x),
+                y: op(self.y),
+                z: op(self.z),
+            }
+        }
+    }
 
     impl<T> PartialEq for HomogeneousPoint<T>
     where
@@ -556,7 +578,8 @@ pub mod test {
             z: fp256_unsafe_from(
                 "0000000000000000000000000000000000000000000000000000000000000040",
             ),
-        };
+        }
+        .map(&|fp: fp_256::Fp256| fp.to_monty());;
 
         let computed_g2 = FP_256_CURVE_POINTS.generator + FP_256_CURVE_POINTS.generator;
         assert_eq!(g2, computed_g2);
@@ -579,18 +602,18 @@ pub mod test {
     fn roundtrip_known_bytes() {
         let hashed_value_bytes = hex::decode("4a40fc771f0c5625d2ef6783013c52eece1697e71c6f82c3aa58396485c2a6c1713527192c3a7ed9103aca79a39f08a154723602bb768655fdd499f8062b461a5752395183b7743fb6ed688a856ef42aae259df29f52678ef0fccb91adb5374d10820c4e85917c4a1906cb06f537158c0556ecfaa55c874f388823ab9270a536").unwrap();
 
-        let hpoint = TwistedHPoint::<Fp256>::decode(hashed_value_bytes.clone()).unwrap();
+        let hpoint = TwistedHPoint::<fp_256::Monty>::decode(hashed_value_bytes.clone()).unwrap();
 
         assert_eq!(hashed_value_bytes, hpoint.to_bytes())
     }
 
     #[test]
     fn double_zero_is_zero() {
-        let zero_fp256 = HomogeneousPoint::<Fp256>::zero();
+        let zero_fp256 = HomogeneousPoint::<fp_256::Monty>::zero();
         let double = zero_fp256.double();
         assert_eq!(zero_fp256, double);
 
-        let zero_fp2: HomogeneousPoint<Fp2Elem<Fp256>> = zero();
+        let zero_fp2: HomogeneousPoint<Fp2Elem<fp_256::Monty>> = zero();
         assert_eq!(zero_fp2, zero_fp2.double());
     }
 
@@ -726,7 +749,7 @@ pub mod test {
     } // end fp_proptest!
 
     fp_proptest!(
-        Fp256,
+        Fp256Monty,
         arb_fp256,
         arb_homogeneous_256,
         arb_homogeneous_fp2_256,
@@ -741,25 +764,25 @@ pub mod test {
     );
 
     prop_compose! {
-        [pub] fn arb_homogeneous_fp2_256()(seed in any::<u64>()) -> TwistedHPoint<Fp256> {
+        [pub] fn arb_homogeneous_fp2_256()(seed in any::<u32>()) -> TwistedHPoint<fp_256::Monty> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
                 FP_256_CURVE_POINTS.g1
             } else {
-                FP_256_CURVE_POINTS.g1 * Fp256::from(seed)
+                FP_256_CURVE_POINTS.g1 * fp_256::Monty::from(seed)
             }
         }
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_256()(seed in any::<u64>()) -> HomogeneousPoint<Fp256> {
+        [pub] fn arb_homogeneous_256()(seed in any::<u32>()) -> HomogeneousPoint<fp_256::Monty> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
                 FP_256_CURVE_POINTS.generator
             } else {
-                FP_256_CURVE_POINTS.generator * Fp256::from(seed)
+                FP_256_CURVE_POINTS.generator * fp_256::Monty::from(seed)
             }
         }
     }

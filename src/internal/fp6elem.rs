@@ -25,6 +25,16 @@ pub struct Fp6Elem<T> {
     pub elem3: Fp2Elem<T>,
 }
 
+impl<T> Fp6Elem<T> {
+    pub fn map<U, F: Fn(T) -> U>(self, op: &F) -> Fp6Elem<U> {
+        Fp6Elem {
+            elem1: self.elem1.map(op),
+            elem2: self.elem2.map(op),
+            elem3: self.elem3.map(op),
+        }
+    }
+}
+
 impl<T> fmt::Debug for Fp6Elem<T>
 where
     T: fmt::Debug,
@@ -391,6 +401,7 @@ where
 pub mod test {
     use super::*;
     use crate::internal::fp2elem::test::{arb_fp2, arb_fp2_480};
+    use gridiron::fp_256;
     use gridiron::fp_256::Fp256;
     use gridiron::fp_480::Fp480;
     use proptest::prelude::*;
@@ -405,7 +416,7 @@ pub mod test {
              Fp256::from(2u64.pow(16) - 1),
              Fp256::from(2u64.pow(32)),
              Fp256::from(2u64.pow(32) - 1),
-        );
+        ).map(&|fp| fp.to_monty());
         let bytes = fp6.to_bytes();
 
         assert_eq!(bytes, vec![
@@ -442,7 +453,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_fp6()(e4 in arb_fp2(), e5 in arb_fp2(), e6 in arb_fp2()) -> Fp6Elem<Fp256> {
+        [pub] fn arb_fp6()(e4 in arb_fp2(), e5 in arb_fp2(), e6 in arb_fp2()) -> Fp6Elem<fp_256::Monty> {
             Fp6Elem {
                 elem1: e4,
                 elem2: e5,

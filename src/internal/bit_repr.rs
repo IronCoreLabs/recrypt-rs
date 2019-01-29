@@ -15,6 +15,12 @@ impl BitRepr for Fp256 {
     }
 }
 
+impl BitRepr for gridiron::fp_256::Monty {
+    fn to_bits(&self) -> Vec<ConstantBool<u32>> {
+        (*self).to_norm().iter_bit().collect()
+    }
+}
+
 impl BitRepr for Fr256 {
     fn to_bits(&self) -> Vec<ConstantBool<u32>> {
         (*self).iter_bit().collect()

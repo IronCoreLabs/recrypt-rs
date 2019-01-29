@@ -3,7 +3,6 @@ use crate::internal::fp::fr_480::Fr480;
 use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use gridiron::fp_256;
-use gridiron::fp_256::Fp256;
 use gridiron::fp_480;
 use gridiron::fp_480::Fp480;
 
@@ -120,10 +119,12 @@ impl<T: Hashable32> Hashable for T {
         self.to_bytes_32().to_vec()
     }
 }
-
-impl Hashable32 for Fp256 {
+///This definition is a bit strange, but is required to maintain compatibility with our current idea of what an `fp256`
+///hashable needs to look like. Note that this costs a multiplication of Montgomery form so it's more expensive than normal
+/// but that's acceptable because of the amount of time we save overall.
+impl Hashable32 for gridiron::fp_256::Monty {
     fn to_bytes_32(&self) -> [u8; fp_256::PRIMEBYTES] {
-        self.to_bytes_array()
+        self.to_norm().to_bytes_array()
     }
 }
 
