@@ -418,15 +418,15 @@ mod test {
             fp256_unsafe_from("85ff626aef9f9cef0310f93a9541ef9ce2207eb9b57077db4572531a879c1cad"),
             //17433339776741835027827317970122814431745024562995872600925458287403992082321
             fp256_unsafe_from("268aebaf44e6ae76c70f48aed806180ced89dfc17f962de209f2a3437b4fe791"),
-        );
+        ).map(&|fp| fp.to_monty());
 
         let pairing: Pairing<fp_256::Monty> = Pairing::new();
 
         let result = pairing.pair(
             FP_256_CURVE_POINTS.generator,
             GOOD_TWISTED_HPOINT_MONTY.clone(),
-        );
-        assert_eq!(expected_good_result, result.map(&|monty| monty.to_norm()));
+        ).unwrap();
+        assert_eq!(expected_good_result, result);
     }
 
     #[test]
@@ -477,7 +477,7 @@ mod test {
         let result = pairing.pair(
             FP_256_CURVE_POINTS.generator,
             GOOD_TWISTED_HPOINT_MONTY.clone(),
-        );
+        ).unwrap();
 
         assert_eq!(expected_good_result, result);
     }
