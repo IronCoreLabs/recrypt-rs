@@ -55,7 +55,7 @@ impl SchnorrSign<fp_256::Monty, Fr256, Sha256> {
     }
 }
 
-impl SchnorrSign<Fp480, Fr480, Sha256> {
+impl SchnorrSign<fp_480::Monty, Fr480, Sha256> {
     pub fn new_480() -> SchnorrSign<fp_480::Monty, Fr480, Sha256> {
         SchnorrSign {
             sha256: Sha256,

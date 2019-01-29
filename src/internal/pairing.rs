@@ -793,10 +793,10 @@ mod test {
       #[test]
       fn fp480_law_bilinearity(a in any::<u32>().prop_filter("", |a| !(*a == 0))) {
         let a_u64 = a as u64;
-        let pairing: Pairing<Fp480> = Pairing::new();
+        let pairing: Pairing<fp_480::Monty> = Pairing::new();
         let p = FP_480_CURVE_POINTS.generator;
-        let a_sqr = Fp480::from(a_u64.pow(2));
-        let a_fp480 = Fp480::from(a);
+        let a_sqr = fp_480::Monty::from(a_u64).pow(2);
+        let a_fp480 = fp_480::Monty::from(a);
         let a_times_p = p * a_fp480;
         let a_sqr_times_p = p * a_sqr;
         let q = FP_480_CURVE_POINTS.g1;

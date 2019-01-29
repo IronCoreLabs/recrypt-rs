@@ -275,6 +275,7 @@ pub mod test {
     use crate::internal::test::arb_fp480;
     use gridiron::fp_256;
     use gridiron::fp_256::Fp256;
+    use gridiron::fp_480;
     use gridiron::fp_480::Fp480;
     use proptest::prop_compose;
     use proptest::proptest;
@@ -375,7 +376,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_fp2_480()(e1 in arb_fp480(), e2 in arb_fp480()) -> Fp2Elem<Fp480> {
+        [pub] fn arb_fp2_480()(e1 in arb_fp480(), e2 in arb_fp480()) -> Fp2Elem<fp_480::Monty> {
             Fp2Elem {
                 elem1: e1,
                 elem2: e2

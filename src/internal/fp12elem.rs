@@ -7,7 +7,7 @@ use crate::internal::ByteVector;
 use crate::internal::{pow_for_square, sum_n, Square};
 use core::fmt;
 use gridiron::fp_256::Monty as Monty256;
-use gridiron::fp_480::Fp480;
+use gridiron::fp_480::Monty as Monty480;
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -354,7 +354,7 @@ where
     }
 }
 
-impl Fp12Elem<gridiron::fp_256::Monty> {
+impl Fp12Elem<Monty256> {
     pub fn to_bytes_fp256(&self) -> [u8; Fp12Elem::<Monty256>::ENCODED_SIZE_BYTES] {
         let hashable = &self.to_bytes()[..];
         let mut dest = [0u8; Fp12Elem::<Monty256>::ENCODED_SIZE_BYTES];
@@ -362,10 +362,10 @@ impl Fp12Elem<gridiron::fp_256::Monty> {
         dest
     }
 }
-impl Fp12Elem<Fp480> {
-    pub fn to_bytes_fp480(&self) -> [u8; Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES] {
+impl Fp12Elem<Monty480> {
+    pub fn to_bytes_fp480(&self) -> [u8; Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES] {
         let hashable = &self.to_bytes()[..];
-        let mut dest = [0u8; Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES];
+        let mut dest = [0u8; Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES];
         dest.copy_from_slice(hashable);
         dest
     }
@@ -404,7 +404,7 @@ pub mod test {
     use super::*;
     use crate::internal::fp6elem::test::{arb_fp6, arb_fp6_480};
     use gridiron::fp_256;
-    use gridiron::fp_480::Fp480;
+    use gridiron::fp_480;
     use proptest::prelude::*;
 
     prop_compose! {
@@ -416,7 +416,7 @@ pub mod test {
        }
     }
     prop_compose! {
-        [pub] fn arb_fp12_480()(e1 in arb_fp6_480(), e2 in arb_fp6_480()) -> Fp12Elem<Fp480> {
+        [pub] fn arb_fp12_480()(e1 in arb_fp6_480(), e2 in arb_fp6_480()) -> Fp12Elem<fp_480::Monty> {
             Fp12Elem {
                 elem1: e1,
                 elem2: e2

@@ -19,6 +19,7 @@ use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
 use gridiron::fp_256;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480;
 use gridiron::fp_480::Fp480;
 use num_traits::{One, Zero};
 use quick_error::quick_error;
@@ -84,7 +85,7 @@ impl PublicKey<fp_256::Monty> {
     }
 }
 
-impl PublicKey<Fp480> {
+impl PublicKey<fp_480::Monty> {
     pub fn to_byte_vectors_60(&self) -> Option<([u8; 60], [u8; 60])> {
         self.value
             .normalize()
@@ -127,24 +128,24 @@ impl PrivateKey<Fp256> {
     }
 }
 
-impl From<api_480::PrivateKey> for PrivateKey<Fp480> {
+impl From<api_480::PrivateKey> for PrivateKey<fp_480::Monty> {
     fn from(api_pk: api_480::PrivateKey) -> Self {
         PrivateKey {
-            value: Fp480::from(api_pk.to_bytes_60()),
+            value: Fp480::from(api_pk.to_bytes_60()).to_monty(),
         }
     }
 }
 
-impl<'a> From<&'a api_480::PrivateKey> for PrivateKey<Fp480> {
+impl<'a> From<&'a api_480::PrivateKey> for PrivateKey<fp_480::Monty> {
     fn from(api_pk: &'a api_480::PrivateKey) -> Self {
         PrivateKey {
-            value: Fp480::from(api_pk.to_bytes_60()),
+            value: Fp480::from(api_pk.to_bytes_60()).to_monty(),
         }
     }
 }
 
-impl PrivateKey<Fp480> {
-    pub fn from_fp480(fp480: Fp480) -> PrivateKey<Fp480> {
+impl PrivateKey<fp_480::Monty> {
+    pub fn from_fp480(fp480: fp_480::Monty) -> PrivateKey<fp_480::Monty> {
         PrivateKey { value: fp480 }
     }
 }
@@ -819,7 +820,7 @@ impl From<api::Plaintext> for KValue<fp_256::Monty> {
         KValue(*pt.internal_fp12())
     }
 }
-impl From<api_480::Plaintext> for KValue<Fp480> {
+impl From<api_480::Plaintext> for KValue<fp_480::Monty> {
     fn from(pt: api_480::Plaintext) -> Self {
         KValue(*pt.internal_fp12())
     }
@@ -1124,13 +1125,13 @@ mod test {
         }
     }
     prop_compose! {
-        [pub] fn arb_fp480()(seed in any::<u32>()) -> Fp480 {
+        [pub] fn arb_fp480()(seed in any::<u64>()) -> fp_480::Monty {
             if seed == 0 {
-                Fp480::zero()
+                fp_480::Monty::zero()
             } else if seed == 1 {
-                Fp480::one()
+                fp_480::Monty::one()
             } else {
-                Fp480::from(seed).pow(seed).pow(seed)
+                fp_480::Monty::from(seed).pow(seed as u32).pow(seed as u32)
             }
 
         }

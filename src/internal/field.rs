@@ -4,8 +4,8 @@ use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::Square;
 use gridiron::fp_256;
-use gridiron::fp_480;
 use gridiron::fp_256::Fp256;
+use gridiron::fp_480;
 use gridiron::fp_480::Fp480;
 use num_traits::{Inv, Pow};
 use num_traits::{One, Zero};
@@ -275,7 +275,8 @@ impl ExtensionField for fp_480::Monty {
                 0x35e3e48, 0x5abc1036, 0x782b9c4, 0x563cb07a, 0x4e204a9a, 0x5e21db45, 0xec52f4a,
                 0x4f5c19f4, 0xccc,
             ]),
-        }.map(&|fp| fp.to_monty())
+        }
+        .map(&|fp| fp.to_monty())
     }
     fn frobenius_factor_1() -> Fp2Elem<Self> {
         Fp2Elem {
@@ -291,7 +292,8 @@ impl ExtensionField for fp_480::Monty {
                 550173476, 897981975, 1628932098, 587901015, 969156276, 1317419705, 1782565297,
                 1670845724, 17336,
             ]),
-        }.map(&|fp| fp.to_monty())
+        }
+        .map(&|fp| fp.to_monty())
     }
 
     fn frobenius_factor_2() -> Fp2Elem<Self> {
@@ -308,7 +310,8 @@ impl ExtensionField for fp_480::Monty {
                 1282579346, 996132666, 1551423827, 390948370, 1787987376, 668506041, 2046466517,
                 1181867369, 28348,
             ]),
-        }.map(&|fp| fp.to_monty())
+        }
+        .map(&|fp| fp.to_monty())
     }
 
     fn frobenius_factor_fp12() -> Fp2Elem<Self> {
@@ -325,6 +328,7 @@ impl ExtensionField for fp_480::Monty {
                 1072168795, 1348910927, 2067945986, 585062688, 570324324, 868980721, 996048971,
                 1688016050, 4317,
             ]),
-        }.map(&|fp| fp.to_monty())
+        }
+        .map(&|fp| fp.to_monty())
     }
 }

@@ -7,8 +7,6 @@ use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;
-use gridiron::fp_256;
-use gridiron::fp_480;
 use num_traits::identities::{One, Zero};
 use num_traits::zero;
 use num_traits::Inv;
@@ -469,7 +467,8 @@ pub mod test {
     use gridiron::fp_256;
     use gridiron::fp_256::Fp256;
     use gridiron::fp_256::Monty as Fp256Monty;
-    use gridiron::fp_480::Fp480;
+    use gridiron::fp_480;
+    use gridiron::fp_480::Monty as Monty480;
     use hex;
     use proptest::prelude::*;
 
@@ -758,7 +757,7 @@ pub mod test {
         fp256
     );
     fp_proptest!(
-        Fp480,
+        Monty480,
         arb_fp480,
         arb_homogeneous_480,
         arb_homogeneous_fp2_480,
@@ -790,7 +789,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_fp2_480()(seed in any::<u64>()) -> TwistedHPoint<fp_480::Monty> {
+        [pub] fn arb_homogeneous_fp2_480()(seed in any::<u32>()) -> TwistedHPoint<fp_480::Monty> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
@@ -802,7 +801,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_480()(seed in any::<u64>()) -> HomogeneousPoint<fp_480::Monty> {
+        [pub] fn arb_homogeneous_480()(seed in any::<u32>()) -> HomogeneousPoint<fp_480::Monty> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
