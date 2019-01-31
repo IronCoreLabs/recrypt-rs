@@ -2,10 +2,8 @@ use crate::internal::fp::{fp256_unsafe_from, fp480_unsafe_from};
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::homogeneouspoint::TwistedHPoint;
-use gridiron::fp_256;
-use gridiron::fp_256::Fp256;
-use gridiron::fp_480;
-use gridiron::fp_480::Fp480;
+use gridiron::fp_256::Monty as Monty256;
+use gridiron::fp_480::Monty as Monty480;
 use lazy_static::lazy_static;
 use num_traits::identities::One;
 use num_traits::identities::Zero;
@@ -23,13 +21,13 @@ pub struct CurvePoints<FP> {
 }
 
 lazy_static! {
-    pub static ref FP_256_CURVE_POINTS: CurvePoints<fp_256::Monty> = CurvePoints {
+    pub static ref FP_256_CURVE_POINTS: CurvePoints<Monty256> = CurvePoints {
         // Fixed point in cyclic group G1 (the trace zero subgroup).
         // Start with a point that is on the twisted curve y^2 = x^3 + (3 / (u + 3)).
         // Turns out u + 1 is a valid x, with y = sqrt(x^3 + (3 / (u + 3)).
         // Take (x,y) and multiply by (p + p - r) to get an r-torsion element of the twisted curve over FP2.
         // Compute the anti-trace map of that r-torsion element to get a point in the trace-zero subgroup.
-        generator: HomogeneousPoint::new(Fp256::one().to_monty(), Fp256::from(2u8).to_monty(),),
+        generator: HomogeneousPoint::new(One::one(), Monty256::from(2u8),),
         g1: TwistedHPoint {
             x: Fp2Elem {
                 //"25743265030535080187440590897139396943782163562799308681850377411492232521347",
@@ -75,14 +73,14 @@ lazy_static! {
             }
         }
     };
-    pub static ref FP_480_CURVE_POINTS: CurvePoints<fp_480::Monty> =
+    pub static ref FP_480_CURVE_POINTS: CurvePoints<Monty480> =
     CurvePoints {
         // Fixed point in cyclic group G1 (the trace zero subgroup).
         // Start with a point that is on the twisted curve y^2 = x^3 + (3 / (u + 3)).
         // Turns out u + 1 is a valid x, with y = sqrt(x^3 + (3 / (u + 3)).
         // Take (x,y) and multiply by (p + p - r) to get an r-torsion element of the twisted curve over FP2.
         // Compute the anti-trace map of that r-torsion element to get a point in the trace-zero subgroup.
-        generator: HomogeneousPoint::new(Fp480::from(1u8).to_monty(), Fp480::from(2u8).to_monty(),),
+        generator: HomogeneousPoint::new(Monty480::from(1u8), Monty480::from(2u8),),
         g1: TwistedHPoint {
             x: Fp2Elem {
                 // 2836796539847730496121374298065944583953504150765508351672461175175719456840753019328265331693934514908570706456436537314841014056269083482678066
@@ -98,9 +96,9 @@ lazy_static! {
             },
             z: Fp2Elem {
                 //
-                elem1: Fp480::zero(),
+                elem1: Zero::zero(),
                 //
-                elem2: Fp480::one()
+                elem2: One::one()
             }
         }.map(&|fp| fp.to_monty()),
 

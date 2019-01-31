@@ -252,7 +252,7 @@ impl ExtensionField for fp_256::Monty {
         }
     }
 }
-//COLT: This can be optimized
+
 impl ExtensionField for fp_480::Monty {
     fn xi() -> Fp2Elem<Self> {
         Fp2Elem {

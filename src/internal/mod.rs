@@ -120,11 +120,9 @@ impl<'a> From<&'a api::PrivateKey> for PrivateKey<fp_256::Monty> {
     }
 }
 
-impl PrivateKey<Fp256> {
-    pub fn from_fp256(fp256: Fp256) -> PrivateKey<fp_256::Monty> {
-        PrivateKey {
-            value: fp256.to_monty(),
-        }
+impl PrivateKey<fp_256::Monty> {
+    pub fn from_fp256(fp256: fp_256::Monty) -> PrivateKey<fp_256::Monty> {
+        PrivateKey { value: fp256 }
     }
 }
 
@@ -339,11 +337,6 @@ impl Square for fp_256::Monty {
 }
 
 impl Square for Fr256 {
-    fn square(&self) -> Self {
-        self.square()
-    }
-}
-impl Square for gridiron::fp_480::Fp480 {
     fn square(&self) -> Self {
         self.square()
     }
@@ -1222,7 +1215,7 @@ mod test {
     }
     #[test]
     fn fp480_pow_for_square_works() {
-        let v = Fp480::from(10u8);
+        let v = fp_480::Monty::from(10u8);
         let result = pow_for_square(v, 2);
         assert_eq!(result, v.pow(2));
         let result2 = pow_for_square(v, 5);
@@ -1401,15 +1394,18 @@ mod test {
 
         let re_private = PrivateKey::from_fp256(
             //22002131259228303741090495322318969764532178674829148099822698556219881568451
-            fp256_unsafe_from("30a4c3d5f31a096db20eed892919e542427341d7aec1e1494275831bbca638c3"),
+            fp256_unsafe_from("30a4c3d5f31a096db20eed892919e542427341d7aec1e1494275831bbca638c3")
+                .to_monty(),
         );
         let ephem_priv_key = PrivateKey::from_fp256(
             //24550233719269254106556478663938123459765238883583743938937070753673053032673
-            fp256_unsafe_from("3646f09b1f8ec8c696326e7095a16635d29a5e6d5df5b8c9cd4d15a1ff2550e1"),
+            fp256_unsafe_from("3646f09b1f8ec8c696326e7095a16635d29a5e6d5df5b8c9cd4d15a1ff2550e1")
+                .to_monty(),
         );
         let priv_key = PrivateKey::from_fp256(
             //43966559432365357341903140497410248873099149633601160471165130153973144042658
-            fp256_unsafe_from("613430d6b5ffee80cb971c85f2ea779d2dd0c020dcdd31a93c46e56c5b2f3ca2"),
+            fp256_unsafe_from("613430d6b5ffee80cb971c85f2ea779d2dd0c020dcdd31a93c46e56c5b2f3ca2")
+                .to_monty(),
         );
         let pub_key = public_keygen(priv_key, curve_points.generator);
         let plaintext = pt_fp12;
@@ -1426,7 +1422,8 @@ mod test {
         .unwrap();
         let rand_re_priv_key = PrivateKey::from_fp256(
             //17561965855055966875289582496525889116201409974621952158489640859240156546764
-            fp256_unsafe_from("26d3b86dad678314ca9532ff4046e372802d175cd5e1ad63aacdcc968552c6cc"),
+            fp256_unsafe_from("26d3b86dad678314ca9532ff4046e372802d175cd5e1ad63aacdcc968552c6cc")
+                .to_monty(),
         );
         let rand_re_k = KValue(gen_rth_root(&pairing, rand_re_k_fp12));
         let re_key = generate_reencryption_key(
@@ -1476,11 +1473,13 @@ mod test {
         let signing_keypair = ed25519::test::good_signing_keypair();
         let priv_key = PrivateKey::from_fp256(
             //43966559432365357341903140497410248873099149633601160471165130153973144042658
-            fp256_unsafe_from("613430d6b5ffee80cb971c85f2ea779d2dd0c020dcdd31a93c46e56c5b2f3ca2"),
+            fp256_unsafe_from("613430d6b5ffee80cb971c85f2ea779d2dd0c020dcdd31a93c46e56c5b2f3ca2")
+                .to_monty(),
         );
         let ephem_priv_key = PrivateKey::from_fp256(
             //88866559432365357341903140497410248873099149633601160471165130153973144042888
-            fp256_unsafe_from("c478b0b05e9d5cc4a7aaa3e5f991f6f452fd26a72f5415a93c46e56c5b2f3d88"),
+            fp256_unsafe_from("c478b0b05e9d5cc4a7aaa3e5f991f6f452fd26a72f5415a93c46e56c5b2f3d88")
+                .to_monty(),
         );
         let pub_key = public_keygen(priv_key, curve_points.generator);
         let encrypted_value = encrypt(
@@ -1518,11 +1517,13 @@ mod test {
         let signing_keypair = ed25519::test::good_signing_keypair();
         let priv_key = PrivateKey::from_fp256(
             //43966559432365357341903140497410248873099149633601160471165130153973144042658
-            fp256_unsafe_from("613430d6b5ffee80cb971c85f2ea779d2dd0c020dcdd31a93c46e56c5b2f3ca2"),
+            fp256_unsafe_from("613430d6b5ffee80cb971c85f2ea779d2dd0c020dcdd31a93c46e56c5b2f3ca2")
+                .to_monty(),
         );
         let ephem_priv_key = PrivateKey::from_fp256(
             //88866559432365357341903140497410248873099149633601160471165130153973144042888
-            fp256_unsafe_from("c478b0b05e9d5cc4a7aaa3e5f991f6f452fd26a72f5415a93c46e56c5b2f3d88"),
+            fp256_unsafe_from("c478b0b05e9d5cc4a7aaa3e5f991f6f452fd26a72f5415a93c46e56c5b2f3d88")
+                .to_monty(),
         );
         let pub_key = public_keygen(priv_key, curve_points.generator);
         let encrypted_value = encrypt(
@@ -1537,7 +1538,7 @@ mod test {
         )
         .unwrap();
 
-        let diff_priv_key = PrivateKey::from_fp256(Fp256::from(42u8));
+        let diff_priv_key = PrivateKey::from_fp256(fp_256::Monty::from(42u8));
         let decrypt_result = decrypt(
             diff_priv_key,
             encrypted_value,
@@ -1640,25 +1641,30 @@ mod test {
 
         let re_private = PrivateKey::from_fp256(
             //22002131259228303741090495322318969764532178674829148099822698556219881568451
-            fp256_unsafe_from("30a4c3d5f31a096db20eed892919e542427341d7aec1e1494275831bbca638c3"),
+            fp256_unsafe_from("30a4c3d5f31a096db20eed892919e542427341d7aec1e1494275831bbca638c3")
+                .to_monty(),
         );
         let ephem_priv_key = PrivateKey::from_fp256(
             //24550233719269254106556478663938123459765238883583743938937070753673053032673
-            fp256_unsafe_from("3646f09b1f8ec8c696326e7095a16635d29a5e6d5df5b8c9cd4d15a1ff2550e1"),
+            fp256_unsafe_from("3646f09b1f8ec8c696326e7095a16635d29a5e6d5df5b8c9cd4d15a1ff2550e1")
+                .to_monty(),
         );
         let priv_key = PrivateKey::from_fp256(
             //43966559432365357341903140497410248873099149633601160471165130153973144042658
-            fp256_unsafe_from("613430d6b5ffee80cb971c85f2ea779d2dd0c020dcdd31a93c46e56c5b2f3ca2"),
+            fp256_unsafe_from("613430d6b5ffee80cb971c85f2ea779d2dd0c020dcdd31a93c46e56c5b2f3ca2")
+                .to_monty(),
         );
         let pub_key = public_keygen(priv_key, curve_points.generator);
         let priv_key2 = PrivateKey::from_fp256(
             //22266559432365357341903140497410248873090149633601160471165130153973144042608
-            fp256_unsafe_from("313a6d10030318ffa481b32fa104b4a77d6ad640a87bade5ee9e4ddc5b2f3c70"),
+            fp256_unsafe_from("313a6d10030318ffa481b32fa104b4a77d6ad640a87bade5ee9e4ddc5b2f3c70")
+                .to_monty(),
         );
         let pub_key2 = public_keygen(priv_key2, curve_points.generator);
         let priv_key3 = PrivateKey::from_fp256(
             //33333359432365357341903140497410248873090149633601160471165130153973144042608
-            fp256_unsafe_from("49b2034a4bc9614d95bdac29251fb567b2ed2b41b0d25be5ee9e4ddc5b2f3c70"),
+            fp256_unsafe_from("49b2034a4bc9614d95bdac29251fb567b2ed2b41b0d25be5ee9e4ddc5b2f3c70")
+                .to_monty(),
         );
         let pub_key3 = public_keygen(priv_key3, curve_points.generator);
 
@@ -1678,7 +1684,8 @@ mod test {
         .unwrap();
         let rand_re_priv_key = PrivateKey::from_fp256(
             //17561965855055966875289582496525889116201409974621952158489640859240156546764
-            fp256_unsafe_from("26d3b86dad678314ca9532ff4046e372802d175cd5e1ad63aacdcc968552c6cc"),
+            fp256_unsafe_from("26d3b86dad678314ca9532ff4046e372802d175cd5e1ad63aacdcc968552c6cc")
+                .to_monty(),
         );
         let rand_re_k = KValue(gen_rth_root(&pairing, rand_re_k_1_fp12));
         let re_key = generate_reencryption_key(
@@ -1711,11 +1718,13 @@ mod test {
         // the fun has just begun! Do a second level of reencryption
         let rand_re_priv_key_2 = PrivateKey::from_fp256(
             //1756196585505596687528958249652588911620140997462195215848000000000
-            fp256_unsafe_from("0000000010ad13d179057a034b800241c7ebb038b4be347ec9bde3e352291000"),
+            fp256_unsafe_from("0000000010ad13d179057a034b800241c7ebb038b4be347ec9bde3e352291000")
+                .to_monty(),
         );
         let re_priv_2 = PrivateKey::from_fp256(
             //22002131259228303741090495322318969763333178674829148099822698556219881568451
-            fp256_unsafe_from("30a4c3d5f31a096db20eed892919e53ebc6c41c1ec39b2a68347872bbca638c3"),
+            fp256_unsafe_from("30a4c3d5f31a096db20eed892919e53ebc6c41c1ec39b2a68347872bbca638c3")
+                .to_monty(),
         );
         let rand_re_k_2 = KValue(gen_rth_root(&pairing, rand_re_k_2_fp12));
         let salt2 = KValue(gen_rth_root(&pairing, salt_2_fp12));
@@ -1766,7 +1775,7 @@ mod test {
         assert_eq!(decrypted_value, plaintext);
 
         //finally, show that a invalid private key will force an auth hash failure
-        let invalid_priv_key = PrivateKey::from_fp256(Fp256::from(42u8));
+        let invalid_priv_key = PrivateKey::from_fp256(fp_256::Monty::from(42u8));
         let decrypt_auth_failure = decrypt(
             invalid_priv_key,
             reencrypted_value_2,
@@ -1797,7 +1806,7 @@ mod test {
         #[test]
         fn encrypt_decrypt_roundtrip(priv_key in arb_priv_key(), plaintext in arb_fp12().prop_filter("", |a| !(*a == Fp12Elem::<fp_256::Monty>::zero()))) {
             let pub_key = public_keygen(priv_key, curve::FP_256_CURVE_POINTS.generator);
-            let ephem_secret_key = PrivateKey::from_fp256(Fp256::from(42u8));
+            let ephem_secret_key = PrivateKey::from_fp256(fp_256::Monty::from(42u8));
             let priv_signing_key = good_signing_keys();
             let pairing = pairing::Pairing::new();
             let curve_points = &*curve::FP_256_CURVE_POINTS;

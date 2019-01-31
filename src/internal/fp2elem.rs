@@ -188,8 +188,9 @@ where
 }
 
 ///This is not constant time. It reveals the u32, but not the point itself.
-impl<T: PartialEq + Zero + One + Mul<T, Output = T> + Sub<T, Output = T> + Copy + Square> Pow<u32>
-    for Fp2Elem<T>
+impl<T> Pow<u32> for Fp2Elem<T>
+where
+    T: PartialEq + Zero + One + Mul<T, Output = T> + Sub<T, Output = T> + Copy + Square,
 {
     type Output = Fp2Elem<T>;
     fn pow(self, rhs: u32) -> Self {
