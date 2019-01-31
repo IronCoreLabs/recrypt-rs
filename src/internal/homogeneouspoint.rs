@@ -537,18 +537,36 @@ pub mod test {
     #[test]
     fn check_extension() {
         println!("xi {:?}", fp_256::Monty::xi());
-        println!("xi_inv_times_9 {:?}", fp_256::Monty::xi_inv_times_9());        
-        println!("frobenius_factor_1 {:?}", fp_256::Monty::frobenius_factor_1());
-        println!("frobenius_factor_2 {:?}", fp_256::Monty::frobenius_factor_2());
-        println!("frobenius_factor_fp12 {:?}", fp_256::Monty::frobenius_factor_fp12());
+        println!("xi_inv_times_9 {:?}", fp_256::Monty::xi_inv_times_9());
+        println!(
+            "frobenius_factor_1 {:?}",
+            fp_256::Monty::frobenius_factor_1()
+        );
+        println!(
+            "frobenius_factor_2 {:?}",
+            fp_256::Monty::frobenius_factor_2()
+        );
+        println!(
+            "frobenius_factor_fp12 {:?}",
+            fp_256::Monty::frobenius_factor_fp12()
+        );
         println!("v {:?}", fp_256::Monty::v());
 
         println!("fp480");
         println!("xi {:?}", fp_480::Monty::xi());
-        println!("xi_inv_times_9 {:?}", fp_480::Monty::xi_inv_times_9());        
-        println!("frobenius_factor_1 {:?}", fp_480::Monty::frobenius_factor_1());
-        println!("frobenius_factor_2 {:?}", fp_480::Monty::frobenius_factor_2());
-        println!("frobenius_factor_fp12 {:?}", fp_480::Monty::frobenius_factor_fp12());
+        println!("xi_inv_times_9 {:?}", fp_480::Monty::xi_inv_times_9());
+        println!(
+            "frobenius_factor_1 {:?}",
+            fp_480::Monty::frobenius_factor_1()
+        );
+        println!(
+            "frobenius_factor_2 {:?}",
+            fp_480::Monty::frobenius_factor_2()
+        );
+        println!(
+            "frobenius_factor_fp12 {:?}",
+            fp_480::Monty::frobenius_factor_fp12()
+        );
         println!("v {:?}", fp_480::Monty::v());
     }
 

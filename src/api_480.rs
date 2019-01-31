@@ -1010,7 +1010,8 @@ impl PublicKey {
     }
 
     pub fn new_from_slice(bytes: (&[u8], &[u8])) -> Result<Self> {
-        if bytes.0.len() == Monty480::ENCODED_SIZE_BYTES && bytes.1.len() == Monty480::ENCODED_SIZE_BYTES
+        if bytes.0.len() == Monty480::ENCODED_SIZE_BYTES
+            && bytes.1.len() == Monty480::ENCODED_SIZE_BYTES
         {
             let mut x_dest = [0u8; Monty480::ENCODED_SIZE_BYTES];
             x_dest.copy_from_slice(bytes.0);

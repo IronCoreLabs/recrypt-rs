@@ -1125,13 +1125,13 @@ mod test {
         }
     }
     prop_compose! {
-        [pub] fn arb_fp480()(seed in any::<u64>()) -> fp_480::Monty {
+        [pub] fn arb_fp480()(seed in any::<u32>()) -> fp_480::Monty {
             if seed == 0 {
                 fp_480::Monty::zero()
             } else if seed == 1 {
                 fp_480::Monty::one()
             } else {
-                fp_480::Monty::from(seed).pow(seed as u32).pow(seed as u32)
+                fp_480::Monty::from(seed).pow(seed).pow(seed)
             }
 
         }
@@ -1185,19 +1185,20 @@ mod test {
         gen_rth_root(
             &pairing::Pairing::new(),
             Fp12Elem::create_from_t(
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-                Fp256::from(random_bytes.random_bytes_32()).to_monty(),
-            ),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+                Fp256::from(random_bytes.random_bytes_32()),
+            )
+            .map(&|fp| fp.to_monty()),
         )
     }
 
