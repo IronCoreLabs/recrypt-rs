@@ -9,8 +9,8 @@ use crate::internal::sha256::Sha256;
 use crate::internal::sha256::Sha256Hashing;
 use crate::internal::{field, PrivateKey, PublicKey};
 use gridiron::digits::constant_time_primitives::ConstantSwap;
-use gridiron::fp_256;
-use gridiron::fp_480::Fp480;
+use gridiron::fp_256::Monty as Monty256;
+use gridiron::fp_480::Monty as Monty480;
 use std::marker::PhantomData;
 
 /// `r` - the x coordinate for a point on the elliptic curve.
@@ -44,8 +44,8 @@ pub struct SchnorrSign<FP, FR, H> {
     phantom: PhantomData<FR>,
 }
 
-impl SchnorrSign<fp_256::Monty, Fr256, Sha256> {
-    pub fn new_256() -> SchnorrSign<fp_256::Monty, Fr256, Sha256> {
+impl SchnorrSign<Monty256, Fr256, Sha256> {
+    pub fn new_256() -> SchnorrSign<Monty256, Fr256, Sha256> {
         SchnorrSign {
             sha256: Sha256,
             g: FP_256_CURVE_POINTS.generator,
@@ -54,8 +54,8 @@ impl SchnorrSign<fp_256::Monty, Fr256, Sha256> {
     }
 }
 
-impl SchnorrSign<Fp480, Fr480, Sha256> {
-    pub fn new_480() -> SchnorrSign<Fp480, Fr480, Sha256> {
+impl SchnorrSign<Monty480, Fr480, Sha256> {
+    pub fn new_480() -> SchnorrSign<Monty480, Fr480, Sha256> {
         SchnorrSign {
             sha256: Sha256,
             g: FP_480_CURVE_POINTS.generator,
@@ -213,9 +213,10 @@ mod test {
             .unwrap(),
         );
         //65000549695646603732796438742359905742825358107623003571877145026864184071782
-        let priv_key = PrivateKey::from_fp256(fp256_unsafe_from(
-            "8fb501e34aa387f9aa6fecb86184dc21ee5b88d120b5b59e185cac6c5e089666",
-        ));
+        let priv_key = PrivateKey::from_fp256(
+            fp256_unsafe_from("8fb501e34aa387f9aa6fecb86184dc21ee5b88d120b5b59e185cac6c5e089666")
+                .to_monty(),
+        );
         //65000549695646603732796438742359905742570406053903786389881062969044166799967
         let k = Fr256::new([
             1470919263, 878569654, 1621943440, 1953263767, 407749138, 1308464908, 685899370,

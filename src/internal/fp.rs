@@ -150,9 +150,9 @@ impl From<fp_256::Monty> for fr_256::Fr256 {
     }
 }
 
-impl From<fp_480::Fp480> for fr_480::Fr480 {
-    fn from(src: fp_480::Fp480) -> Self {
-        From::from(src.to_bytes_array())
+impl From<fp_480::Monty> for fr_480::Fr480 {
+    fn from(src: fp_480::Monty) -> Self {
+        From::from(src.to_norm().to_bytes_array())
     }
 }
 /// Function to be used for static values either as defined as constants or used in tests.

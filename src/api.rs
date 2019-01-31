@@ -1036,7 +1036,7 @@ impl PrivateKey {
     }
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
-        let internal_key = internal::PrivateKey::from_fp256(Fp256::from(bytes));
+        let internal_key = internal::PrivateKey::from_fp256(Fp256::from(bytes).to_monty());
         PrivateKey {
             bytes: internal_key.value.to_bytes_32(),
             _internal_key: internal_key,

@@ -190,7 +190,7 @@ where
 ///This is not constant time. It reveals the u32, but not the point itself.
 impl<T> Pow<u32> for Fp2Elem<T>
 where
-    T: Field,
+    T: PartialEq + Zero + One + Mul<T, Output = T> + Sub<T, Output = T> + Copy + Square,
 {
     type Output = Fp2Elem<T>;
     fn pow(self, rhs: u32) -> Self {
@@ -200,7 +200,7 @@ where
 
 impl<T> Square for Fp2Elem<T>
 where
-    T: Clone + Field,
+    T: Add<Output = T> + Mul<Output = T> + Sub<Output = T> + Copy,
 {
     fn square(&self) -> Self {
         let a2 = self.elem1 * self.elem2;
@@ -275,7 +275,7 @@ pub mod test {
     use crate::internal::test::arb_fp480;
     use gridiron::fp_256;
     use gridiron::fp_256::Fp256;
-    use gridiron::fp_480::Fp480;
+    use gridiron::fp_480;
     use proptest::prop_compose;
     use proptest::proptest;
 
@@ -375,7 +375,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_fp2_480()(e1 in arb_fp480(), e2 in arb_fp480()) -> Fp2Elem<Fp480> {
+        [pub] fn arb_fp2_480()(e1 in arb_fp480(), e2 in arb_fp480()) -> Fp2Elem<fp_480::Monty> {
             Fp2Elem {
                 elem1: e1,
                 elem2: e2

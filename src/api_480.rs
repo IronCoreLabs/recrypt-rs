@@ -19,6 +19,7 @@ use crate::nonemptyvec::NonEmptyVec;
 use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_480::Fp480;
+use gridiron::fp_480::Monty as Monty480;
 use rand;
 use std;
 use std::fmt;
@@ -30,9 +31,9 @@ pub struct Api480<H, S, R> {
     random_bytes: R,
     sha_256: H,
     ed25519: S,
-    pairing: internal::pairing::Pairing<Fp480>,
-    curve_points: &'static internal::curve::CurvePoints<Fp480>,
-    schnorr_signing: SchnorrSign<Fp480, Fr480, H>,
+    pairing: internal::pairing::Pairing<Monty480>,
+    curve_points: &'static internal::curve::CurvePoints<Monty480>,
+    schnorr_signing: SchnorrSign<Monty480, Fr480, H>,
 }
 
 impl Api480<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
@@ -51,7 +52,7 @@ impl<CR: rand::CryptoRng + rand::RngCore> Api480<Sha256, Ed25519, RandomBytes<CR
     pub fn new_with_rand(r: CR) -> Api480<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = pairing::Pairing::new();
         let curve_points = &*curve::FP_480_CURVE_POINTS;
-        let schnorr_signing = internal::schnorr::SchnorrSign::<Fp480, Fr480, Sha256>::new_480();
+        let schnorr_signing = internal::schnorr::SchnorrSign::<Monty480, Fr480, Sha256>::new_480();
         Api480 {
             random_bytes: RandomBytes::new(r),
             sha_256: Sha256,
@@ -79,7 +80,7 @@ impl PartialEq for Revealed<DerivedSymmetricKey> {
 new_bytes_type!(AuthHash, 32);
 
 /// Encrypted Plaintext (Fp12Elem)
-new_bytes_type!(EncryptedMessage, Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES);
+new_bytes_type!(EncryptedMessage, Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES);
 
 /// Not hashed, not encrypted Fp12Elem
 /// See DecryptedSymmetricKey and EncryptedMessage
@@ -87,17 +88,17 @@ new_bytes_type!(EncryptedMessage, Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES);
 // to avoid needless duplication
 pub struct Plaintext {
     bytes: [u8; Plaintext::ENCODED_SIZE_BYTES],
-    _internal_fp12: Fp12Elem<Fp480>,
+    _internal_fp12: Fp12Elem<Monty480>,
 }
 
 impl Plaintext {
-    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES;
 
     /// Construct a Plaintext from raw bytes
     pub fn new(bytes: [u8; Plaintext::ENCODED_SIZE_BYTES]) -> Plaintext {
         // since new takes a fixed size array, we know it is safe to decode the resultant vector
         Plaintext::from(
-            Fp12Elem::<Fp480>::decode(bytes.to_vec())
+            Fp12Elem::<Monty480>::decode(bytes.to_vec())
                 .expect("Developer error: did you change ENCODED_SIZE_BYTES?"),
         )
     }
@@ -108,7 +109,7 @@ impl Plaintext {
         &self.bytes
     }
 
-    pub(crate) fn internal_fp12(&self) -> &Fp12Elem<Fp480> {
+    pub(crate) fn internal_fp12(&self) -> &Fp12Elem<Monty480> {
         &self._internal_fp12
     }
 }
@@ -129,8 +130,8 @@ impl PartialEq for Plaintext {
     }
 }
 
-impl From<Fp12Elem<Fp480>> for Plaintext {
-    fn from(fp12: Fp12Elem<Fp480>) -> Self {
+impl From<Fp12Elem<Monty480>> for Plaintext {
+    fn from(fp12: Fp12Elem<Monty480>) -> Self {
         Plaintext {
             bytes: fp12.to_bytes_fp480(),
             _internal_fp12: fp12,
@@ -153,7 +154,7 @@ impl Drop for Plaintext {
     }
 }
 impl BytesDecoder for Plaintext {
-    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES;
 
     fn decode(bytes: ByteVector) -> std::result::Result<Plaintext, DecodeErr> {
         Ok(Plaintext::from(Fp12Elem::decode(bytes)?))
@@ -177,7 +178,7 @@ pub struct TransformBlock {
     random_transform_public_key: PublicKey,
     /// encrypted temp key value. Used to go from the transformed value to the encrypted value
     encrypted_random_transform_temp_key: EncryptedTempKey,
-    _internal_re_block: internal::ReencryptionBlock<Fp480>,
+    _internal_re_block: internal::ReencryptionBlock<Monty480>,
 }
 
 impl TransformBlock {
@@ -213,7 +214,7 @@ impl TransformBlock {
         &self.encrypted_random_transform_temp_key
     }
 
-    fn try_from(re_block: internal::ReencryptionBlock<Fp480>) -> Result<Self> {
+    fn try_from(re_block: internal::ReencryptionBlock<Monty480>) -> Result<Self> {
         Ok(TransformBlock {
             public_key: PublicKey::try_from(&re_block.public_key)?,
             encrypted_temp_key: EncryptedTempKey::from_fp12(re_block.encrypted_temp_key),
@@ -270,7 +271,7 @@ pub enum EncryptedValue {
 
 impl EncryptedValue {
     fn try_from(
-        signed_value: internal::SignedValue<internal::EncryptedValue<Fp480>>,
+        signed_value: internal::SignedValue<internal::EncryptedValue<Monty480>>,
     ) -> Result<EncryptedValue> {
         use crate::api_480::EncryptedValue as EncryptedValueP;
 
@@ -329,7 +330,7 @@ impl EncryptedValue {
     fn try_into(
         ev: EncryptedValue,
     ) -> std::result::Result<
-        internal::SignedValue<internal::EncryptedValue<Fp480>>,
+        internal::SignedValue<internal::EncryptedValue<Monty480>>,
         internal::bytedecoder::DecodeErr,
     > {
         match ev {
@@ -343,20 +344,22 @@ impl EncryptedValue {
                 public_signing_key,
                 signature,
             } => {
-                let fp12 = Fp12Elem::<Fp480>::decode(encrypted_message.to_vec())?;
-                Ok(internal::SignedValue::<internal::EncryptedValue<Fp480>> {
-                    public_signing_key,
-                    signature,
-                    payload: internal::EncryptedValue::EncryptedOnce(
-                        internal::EncryptedOnceValue {
-                            ephemeral_public_key: pub_key._internal_key,
-                            encrypted_message: fp12,
-                            auth_hash: internal::AuthHash {
-                                bytes: auth_hash.bytes,
+                let fp12 = Fp12Elem::<Monty480>::decode(encrypted_message.to_vec())?;
+                Ok(
+                    internal::SignedValue::<internal::EncryptedValue<Monty480>> {
+                        public_signing_key,
+                        signature,
+                        payload: internal::EncryptedValue::EncryptedOnce(
+                            internal::EncryptedOnceValue {
+                                ephemeral_public_key: pub_key._internal_key,
+                                encrypted_message: fp12,
+                                auth_hash: internal::AuthHash {
+                                    bytes: auth_hash.bytes,
+                                },
                             },
-                        },
-                    ),
-                })
+                        ),
+                    },
+                )
             }
             EncryptedValue::TransformedValue {
                 ephemeral_public_key: pub_key,
@@ -369,25 +372,29 @@ impl EncryptedValue {
                 public_signing_key,
                 signature,
             } => {
-                let fp12 = Fp12Elem::<Fp480>::decode(encrypted_message.to_vec())?;
+                let fp12 = Fp12Elem::<Monty480>::decode(encrypted_message.to_vec())?;
                 let first_block = transform_blocks.first()._internal_re_block;
                 let rest_blocks = transform_blocks
                     .rest()
                     .iter()
                     .map(|tb| tb._internal_re_block)
                     .collect();
-                Ok(internal::SignedValue::<internal::EncryptedValue<Fp480>> {
-                    public_signing_key,
-                    signature,
-                    payload: internal::EncryptedValue::Reencrypted(internal::ReencryptedValue {
-                        ephemeral_public_key: pub_key._internal_key,
-                        encrypted_message: fp12,
-                        auth_hash: internal::AuthHash {
-                            bytes: auth_hash.bytes,
-                        },
-                        encryption_blocks: NonEmptyVec::new(first_block, rest_blocks),
-                    }),
-                })
+                Ok(
+                    internal::SignedValue::<internal::EncryptedValue<Monty480>> {
+                        public_signing_key,
+                        signature,
+                        payload: internal::EncryptedValue::Reencrypted(
+                            internal::ReencryptedValue {
+                                ephemeral_public_key: pub_key._internal_key,
+                                encrypted_message: fp12,
+                                auth_hash: internal::AuthHash {
+                                    bytes: auth_hash.bytes,
+                                },
+                                encryption_blocks: NonEmptyVec::new(first_block, rest_blocks),
+                            },
+                        ),
+                    },
+                )
             }
         }
     }
@@ -397,7 +404,7 @@ impl EncryptedValue {
 #[derive(Clone, Copy)]
 pub struct EncryptedTempKey {
     bytes: [u8; EncryptedTempKey::ENCODED_SIZE_BYTES],
-    _internal_fp12: Fp12Elem<Fp480>,
+    _internal_fp12: Fp12Elem<Monty480>,
 }
 
 impl Hashable for EncryptedTempKey {
@@ -407,9 +414,9 @@ impl Hashable for EncryptedTempKey {
 }
 
 impl EncryptedTempKey {
-    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES;
 
-    fn from_fp12(fp12: Fp12Elem<Fp480>) -> Self {
+    fn from_fp12(fp12: Fp12Elem<Monty480>) -> Self {
         EncryptedTempKey {
             bytes: fp12.to_bytes_fp480(),
             _internal_fp12: fp12,
@@ -417,7 +424,7 @@ impl EncryptedTempKey {
     }
     pub fn new(bytes: [u8; EncryptedTempKey::ENCODED_SIZE_BYTES]) -> Self {
         EncryptedTempKey::from_fp12(
-            Fp12Elem::<Fp480>::decode(bytes.to_vec())
+            Fp12Elem::<Monty480>::decode(bytes.to_vec())
                 .expect("Developer error: did you change ENCODED_SIZE_BYTES?"),
         )
     }
@@ -441,7 +448,7 @@ impl PartialEq for EncryptedTempKey {
 #[derive(Clone, Copy)]
 pub struct HashedValue {
     bytes: [u8; HashedValue::ENCODED_SIZE_BYTES],
-    _internal_value: TwistedHPoint<Fp480>,
+    _internal_value: TwistedHPoint<Monty480>,
 }
 
 impl Hashable for HashedValue {
@@ -451,11 +458,11 @@ impl Hashable for HashedValue {
 }
 
 impl HashedValue {
-    const ENCODED_SIZE_BYTES: usize = TwistedHPoint::<Fp480>::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = TwistedHPoint::<Monty480>::ENCODED_SIZE_BYTES;
 
     pub fn new(bytes: [u8; HashedValue::ENCODED_SIZE_BYTES]) -> Result<Self> {
         Ok(
-            TwistedHPoint::<Fp480>::decode(bytes.to_vec()).map(|hpoint| HashedValue {
+            TwistedHPoint::<Monty480>::decode(bytes.to_vec()).map(|hpoint| HashedValue {
                 bytes,
                 _internal_value: hpoint,
             })?,
@@ -485,8 +492,8 @@ impl PartialEq for HashedValue {
     }
 }
 
-impl From<TwistedHPoint<Fp480>> for HashedValue {
-    fn from(hp: TwistedHPoint<Fp480>) -> Self {
+impl From<TwistedHPoint<Monty480>> for HashedValue {
+    fn from(hp: TwistedHPoint<Monty480>) -> Self {
         // convert hashed_k to fixed array.
         // Assume the point is valid (on the curve, etc) since we're coming from internal types
         let src = &hp.to_bytes()[..];
@@ -517,7 +524,7 @@ pub struct TransformKey {
     hashed_temp_key: HashedValue,
     public_signing_key: PublicSigningKey,
     signature: Ed25519Signature,
-    _internal_key: internal::SignedValue<internal::ReencryptionKey<Fp480>>,
+    _internal_key: internal::SignedValue<internal::ReencryptionKey<Monty480>>,
 }
 
 impl Hashable for TransformKey {
@@ -553,7 +560,7 @@ impl TransformKey {
         &self.signature
     }
     fn try_from_internal(
-        re_key: internal::SignedValue<internal::ReencryptionKey<Fp480>>,
+        re_key: internal::SignedValue<internal::ReencryptionKey<Monty480>>,
     ) -> Result<TransformKey> {
         let result = TransformKey {
             ephemeral_public_key: PublicKey::try_from(&re_key.payload.re_public_key)?,
@@ -913,7 +920,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api48
     }
 }
 
-fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp480> {
+fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Monty480> {
     // generate 12 random Fp values
     internal::gen_rth_root(
         &pairing::Pairing::new(),
@@ -930,13 +937,14 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Fp480> {
             Fp480::from(random_bytes.random_bytes_60()),
             Fp480::from(random_bytes.random_bytes_60()),
             Fp480::from(random_bytes.random_bytes_60()),
-        ),
+        )
+        .map(&|fp| fp.to_monty()),
     )
 }
 
 /// Wrapper around 60 byte array so what we can add Debug, Eq, etc
 #[derive(Clone, Copy)]
-struct SixtyBytes([u8; Fp480::ENCODED_SIZE_BYTES]);
+struct SixtyBytes([u8; Monty480::ENCODED_SIZE_BYTES]);
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -966,7 +974,7 @@ impl PartialEq for SixtyBytes {
 pub struct PublicKey {
     x: SixtyBytes,
     y: SixtyBytes,
-    _internal_key: internal::PublicKey<Fp480>,
+    _internal_key: internal::PublicKey<Monty480>,
 }
 
 impl Hashable for PublicKey {
@@ -976,9 +984,9 @@ impl Hashable for PublicKey {
 }
 
 impl PublicKey {
-    pub const ENCODED_SIZE_BYTES: usize = Fp480::ENCODED_SIZE_BYTES * 2;
+    pub const ENCODED_SIZE_BYTES: usize = Monty480::ENCODED_SIZE_BYTES * 2;
 
-    fn try_from(internal_key: &internal::PublicKey<Fp480>) -> Result<PublicKey> {
+    fn try_from(internal_key: &internal::PublicKey<Monty480>) -> Result<PublicKey> {
         Ok(internal_key
             .to_byte_vectors_60()
             .map(|(x, y)| PublicKey {
@@ -991,22 +999,23 @@ impl PublicKey {
 
     pub fn new(
         (x_bytes, y_bytes): (
-            [u8; Fp480::ENCODED_SIZE_BYTES],
-            [u8; Fp480::ENCODED_SIZE_BYTES],
+            [u8; Monty480::ENCODED_SIZE_BYTES],
+            [u8; Monty480::ENCODED_SIZE_BYTES],
         ),
     ) -> Result<PublicKey> {
-        let x = Fp480::from(x_bytes);
-        let y = Fp480::from(y_bytes);
+        let x = Fp480::from(x_bytes).to_monty();
+        let y = Fp480::from(y_bytes).to_monty();
         let i_pk = internal::PublicKey::from_x_y(x, y)?;
         PublicKey::try_from(&i_pk)
     }
 
     pub fn new_from_slice(bytes: (&[u8], &[u8])) -> Result<Self> {
-        if bytes.0.len() == Fp480::ENCODED_SIZE_BYTES && bytes.1.len() == Fp480::ENCODED_SIZE_BYTES
+        if bytes.0.len() == Monty480::ENCODED_SIZE_BYTES
+            && bytes.1.len() == Monty480::ENCODED_SIZE_BYTES
         {
-            let mut x_dest = [0u8; Fp480::ENCODED_SIZE_BYTES];
+            let mut x_dest = [0u8; Monty480::ENCODED_SIZE_BYTES];
             x_dest.copy_from_slice(bytes.0);
-            let mut y_dest = [0u8; Fp480::ENCODED_SIZE_BYTES];
+            let mut y_dest = [0u8; Monty480::ENCODED_SIZE_BYTES];
             y_dest.copy_from_slice(bytes.1);
 
             Ok(PublicKey::new((x_dest, y_dest))?)
@@ -1020,8 +1029,8 @@ impl PublicKey {
     pub fn bytes_x_y(
         &self,
     ) -> (
-        &[u8; Fp480::ENCODED_SIZE_BYTES],
-        &[u8; Fp480::ENCODED_SIZE_BYTES],
+        &[u8; Monty480::ENCODED_SIZE_BYTES],
+        &[u8; Monty480::ENCODED_SIZE_BYTES],
     ) {
         (&self.x.0, &self.y.0)
     }
@@ -1047,18 +1056,18 @@ impl PartialEq for PublicKey {
 // If you are looking for PartialEq for PrivateKey, see PartialEq for Revealed<PrivateKey>
 pub struct PrivateKey {
     bytes: SixtyBytes,
-    _internal_key: internal::PrivateKey<Fp480>,
+    _internal_key: internal::PrivateKey<Monty480>,
 }
 
 impl PrivateKey {
-    const ENCODED_SIZE_BYTES: usize = Fp480::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Monty480::ENCODED_SIZE_BYTES;
 
     pub fn bytes(&self) -> &[u8; PrivateKey::ENCODED_SIZE_BYTES] {
         &self.bytes.0
     }
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
-        let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes));
+        let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes).to_monty());
         PrivateKey {
             bytes: SixtyBytes(internal_key.value.to_bytes_60()),
             _internal_key: internal_key,
@@ -1086,8 +1095,8 @@ impl Hashable for PrivateKey {
     }
 }
 
-impl From<internal::PrivateKey<Fp480>> for PrivateKey {
-    fn from(internal_pk: internal::PrivateKey<Fp480>) -> Self {
+impl From<internal::PrivateKey<Monty480>> for PrivateKey {
+    fn from(internal_pk: internal::PrivateKey<Monty480>) -> Self {
         PrivateKey {
             bytes: SixtyBytes(internal_pk.value.to_bytes_60()),
             _internal_key: internal_pk,
@@ -1166,7 +1175,7 @@ pub(crate) mod test {
             ed25519,
             pairing: api.pairing,
             curve_points: api.curve_points,
-            schnorr_signing: internal::schnorr::SchnorrSign::<Fp480, Fr480, Sha256>::new_480(),
+            schnorr_signing: internal::schnorr::SchnorrSign::<Monty480, Fr480, Sha256>::new_480(),
         }
     }
 
@@ -1205,7 +1214,7 @@ pub(crate) mod test {
     fn private_key_roundtrip_with_internal() {
         let (priv_key_api, _) = Api480::new().generate_key_pair().unwrap();
 
-        let internal_pk = internal::PrivateKey::<Fp480>::from(&priv_key_api);
+        let internal_pk = internal::PrivateKey::<Monty480>::from(&priv_key_api);
         let roundtrip = PrivateKey::from(internal_pk);
 
         assert_eq!(priv_key_api, roundtrip);
@@ -1217,7 +1226,7 @@ pub(crate) mod test {
         let api = &mut Api480::new();
 
         let result = api.gen_plaintext();
-        assert_eq!(Fp12Elem::<Fp480>::ENCODED_SIZE_BYTES, result.bytes.len());
+        assert_eq!(Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES, result.bytes.len());
     }
 
     #[test]
@@ -1225,8 +1234,8 @@ pub(crate) mod test {
         let mut api = api_with(Some(DummyRandomBytes), DummyEd25519);
         let (_, pub_key) = api.generate_key_pair().unwrap();
         let internal_pk = internal::PublicKey::from_x_y(
-            fp480_unsafe_from("b4ba49325c3450b8fe080cf8617223b9c40fe9e45e522ccc198df68b68fb937ceb2eb976fb74e9b531853ac1a68c32c000b3696673b09553914d6d98"),
-            fp480_unsafe_from("7781287474854f030c553e5ade3511659ec9969743d28b91d1322a8b798297127b26f7ad3b3314cfa79b7b0bfedb050df5773b96e2a1fffceab2b3fd"),
+            fp480_unsafe_from("b4ba49325c3450b8fe080cf8617223b9c40fe9e45e522ccc198df68b68fb937ceb2eb976fb74e9b531853ac1a68c32c000b3696673b09553914d6d98").to_monty(),
+            fp480_unsafe_from("7781287474854f030c553e5ade3511659ec9969743d28b91d1322a8b798297127b26f7ad3b3314cfa79b7b0bfedb050df5773b96e2a1fffceab2b3fd").to_monty(),
         )
         .unwrap();
         let expected_pub_key = PublicKey::try_from(&internal_pk).unwrap();
@@ -1265,7 +1274,7 @@ pub(crate) mod test {
         let hashedvalue = tk.hashed_temp_key;
         assert_eq!(
             tk._internal_key.payload.hashed_k,
-            TwistedHPoint::<Fp480>::decode(hashedvalue.bytes.to_vec()).unwrap()
+            TwistedHPoint::<Monty480>::decode(hashedvalue.bytes.to_vec()).unwrap()
         )
     }
 

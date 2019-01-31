@@ -4,7 +4,6 @@ use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use gridiron::fp_256;
 use gridiron::fp_480;
-use gridiron::fp_480::Fp480;
 
 /// Typeclass for converting an implementing type to a stable byte representation
 /// which can be used for hashing (and thus the hash value will also remain consistent)
@@ -119,6 +118,7 @@ impl<T: Hashable32> Hashable for T {
         self.to_bytes_32().to_vec()
     }
 }
+
 ///This definition is a bit strange, but is required to maintain compatibility with our current idea of what an `fp256`
 ///hashable needs to look like. Note that this costs a multiplication of Montgomery form so it's more expensive than normal
 /// but that's acceptable because of the amount of time we save overall.
@@ -133,13 +133,14 @@ impl Hashable32 for Fr256 {
         self.to_bytes_array()
     }
 }
-impl Hashable60 for Fp480 {
+
+impl Hashable60 for fp_480::Monty {
     fn to_bytes_60(&self) -> [u8; fp_480::PRIMEBYTES] {
-        self.to_bytes_array()
+        self.to_norm().to_bytes_array()
     }
 }
 
-impl Hashable for Fp480 {
+impl Hashable for fp_480::Monty {
     fn to_bytes(&self) -> Vec<u8> {
         self.to_bytes_60().to_vec()
     }
@@ -157,7 +158,7 @@ impl Hashable60 for Fr480 {
     }
 }
 
-pub trait Hashable60: Hashable {
+pub trait Hashable60 {
     fn to_bytes_60(&self) -> [u8; 60];
 }
 
