@@ -944,7 +944,7 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &mut R) -> Fp12Elem<Monty480
 
 /// Wrapper around 60 byte array so what we can add Debug, Eq, etc
 #[derive(Clone, Copy)]
-struct SixtyBytes([u8; Fp480::ENCODED_SIZE_BYTES]);
+struct SixtyBytes([u8; Monty480::ENCODED_SIZE_BYTES]);
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -984,7 +984,7 @@ impl Hashable for PublicKey {
 }
 
 impl PublicKey {
-    pub const ENCODED_SIZE_BYTES: usize = Fp480::ENCODED_SIZE_BYTES * 2;
+    pub const ENCODED_SIZE_BYTES: usize = Monty480::ENCODED_SIZE_BYTES * 2;
 
     fn try_from(internal_key: &internal::PublicKey<Monty480>) -> Result<PublicKey> {
         Ok(internal_key
@@ -999,8 +999,8 @@ impl PublicKey {
 
     pub fn new(
         (x_bytes, y_bytes): (
-            [u8; Fp480::ENCODED_SIZE_BYTES],
-            [u8; Fp480::ENCODED_SIZE_BYTES],
+            [u8; Monty480::ENCODED_SIZE_BYTES],
+            [u8; Monty480::ENCODED_SIZE_BYTES],
         ),
     ) -> Result<PublicKey> {
         let x = Fp480::from(x_bytes).to_monty();
@@ -1010,11 +1010,11 @@ impl PublicKey {
     }
 
     pub fn new_from_slice(bytes: (&[u8], &[u8])) -> Result<Self> {
-        if bytes.0.len() == Fp480::ENCODED_SIZE_BYTES && bytes.1.len() == Fp480::ENCODED_SIZE_BYTES
+        if bytes.0.len() == Monty480::ENCODED_SIZE_BYTES && bytes.1.len() == Monty480::ENCODED_SIZE_BYTES
         {
-            let mut x_dest = [0u8; Fp480::ENCODED_SIZE_BYTES];
+            let mut x_dest = [0u8; Monty480::ENCODED_SIZE_BYTES];
             x_dest.copy_from_slice(bytes.0);
-            let mut y_dest = [0u8; Fp480::ENCODED_SIZE_BYTES];
+            let mut y_dest = [0u8; Monty480::ENCODED_SIZE_BYTES];
             y_dest.copy_from_slice(bytes.1);
 
             Ok(PublicKey::new((x_dest, y_dest))?)
@@ -1028,8 +1028,8 @@ impl PublicKey {
     pub fn bytes_x_y(
         &self,
     ) -> (
-        &[u8; Fp480::ENCODED_SIZE_BYTES],
-        &[u8; Fp480::ENCODED_SIZE_BYTES],
+        &[u8; Monty480::ENCODED_SIZE_BYTES],
+        &[u8; Monty480::ENCODED_SIZE_BYTES],
     ) {
         (&self.x.0, &self.y.0)
     }
@@ -1059,7 +1059,7 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
-    const ENCODED_SIZE_BYTES: usize = Fp480::ENCODED_SIZE_BYTES;
+    const ENCODED_SIZE_BYTES: usize = Monty480::ENCODED_SIZE_BYTES;
 
     pub fn bytes(&self) -> &[u8; PrivateKey::ENCODED_SIZE_BYTES] {
         &self.bytes.0

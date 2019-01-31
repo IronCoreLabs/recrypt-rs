@@ -142,12 +142,12 @@ mod test {
         let result = FP_256_CURVE_POINTS.generator * fp256.to_monty();
         let expected_result = HomogeneousPoint::new(
             //56377452267431283559088187378398270325210563762492926393848580098576649271541
-            fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5"),
+            fp256_unsafe_from("7ca481d71abbae43395152eb7baa230d60543d43e2e8f89a18d182ecf8c3b8f5").to_monty(),
             //46643694276241842996939080253335644316475473619096522181405937227991761798154
-            fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a"),
+            fp256_unsafe_from("671f653900901fc3688542e5939ba6c064a7768f34fe45492a49e1f6d4d7c40a").to_monty(),
         );
         assert_eq!(
-            result.map(&|monty: fp_256::Monty| monty.to_norm()),
+            result,
             expected_result
         )
     }

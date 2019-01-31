@@ -29,23 +29,6 @@ impl BytesDecoder for gridiron::fp_256::Monty {
     }
 }
 
-impl BytesDecoder for Fp480 {
-    const ENCODED_SIZE_BYTES: usize = 60;
-
-    fn decode(bytes: Vec<u8>) -> Result<Self, DecodeErr> {
-        if bytes.len() == Self::ENCODED_SIZE_BYTES {
-            let mut byte_arr: [u8; Self::ENCODED_SIZE_BYTES] = [0u8; Self::ENCODED_SIZE_BYTES];
-            byte_arr.copy_from_slice(&bytes);
-            Result::Ok(Fp480::from(byte_arr))
-        } else {
-            Result::Err(DecodeErr::BytesNotCorrectLength {
-                required_length: Self::ENCODED_SIZE_BYTES,
-                bad_bytes: bytes,
-            })
-        }
-    }
-}
-
 impl BytesDecoder for gridiron::fp_480::Monty {
     const ENCODED_SIZE_BYTES: usize = 60;
 

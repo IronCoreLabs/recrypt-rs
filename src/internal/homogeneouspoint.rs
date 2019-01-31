@@ -535,16 +535,34 @@ pub mod test {
     }
 
     #[test]
+    fn check_extension() {
+        println!("xi {:?}", fp_256::Monty::xi());
+        println!("xi_inv_times_9 {:?}", fp_256::Monty::xi_inv_times_9());        
+        println!("frobenius_factor_1 {:?}", fp_256::Monty::frobenius_factor_1());
+        println!("frobenius_factor_2 {:?}", fp_256::Monty::frobenius_factor_2());
+        println!("frobenius_factor_fp12 {:?}", fp_256::Monty::frobenius_factor_fp12());
+        println!("v {:?}", fp_256::Monty::v());
+
+        println!("fp480");
+        println!("xi {:?}", fp_480::Monty::xi());
+        println!("xi_inv_times_9 {:?}", fp_480::Monty::xi_inv_times_9());        
+        println!("frobenius_factor_1 {:?}", fp_480::Monty::frobenius_factor_1());
+        println!("frobenius_factor_2 {:?}", fp_480::Monty::frobenius_factor_2());
+        println!("frobenius_factor_fp12 {:?}", fp_480::Monty::frobenius_factor_fp12());
+        println!("v {:?}", fp_480::Monty::v());
+    }
+
+    #[test]
     fn eq_will_divide_by_z() {
         let point = HomogeneousPoint {
-            x: Fp256::from(100u32),
-            y: Fp256::from(200u32),
-            z: Fp256::from(100u32),
+            x: fp_256::Monty::from(100u32),
+            y: fp_256::Monty::from(200u32),
+            z: fp_256::Monty::from(100u32),
         };
         let point2 = HomogeneousPoint {
-            x: Fp256::from(1u32),
-            y: Fp256::from(2u32),
-            z: Fp256::from(1u32),
+            x: fp_256::Monty::from(1u32),
+            y: fp_256::Monty::from(2u32),
+            z: fp_256::Monty::from(1u32),
         };
         assert_eq!(point, point2);
     }

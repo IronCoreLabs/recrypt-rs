@@ -188,9 +188,7 @@ where
 }
 
 ///This is not constant time. It reveals the u32, but not the point itself.
-impl<T> Pow<u32> for Fp2Elem<T>
-where
-    T: Field,
+impl<T: PartialEq + Zero + One + Mul<T, Output = T> + Sub<T, Output = T> + Copy + Square> Pow<u32> for Fp2Elem<T>
 {
     type Output = Fp2Elem<T>;
     fn pow(self, rhs: u32) -> Self {
@@ -200,7 +198,7 @@ where
 
 impl<T> Square for Fp2Elem<T>
 where
-    T: Clone + Field,
+    T: Add<Output=T> + Mul<Output=T> + Sub<Output=T> + Copy,
 {
     fn square(&self) -> Self {
         let a2 = self.elem1 * self.elem2;
