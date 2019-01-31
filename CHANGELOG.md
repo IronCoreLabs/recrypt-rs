@@ -1,5 +1,12 @@
-Changelog
-====================
+# Changelog
+
+## 0.6.1
+
+### Notable Internal Changes
+
+- [[#47](#47)] Document HomogeneousPoint / TwistedHPoint normalize behavior and remove panic from pairing
+- [[#50](#50)] Update to use Monty represenation for all 256 bit operations.
+- [[#52](#52)] Update to use Monty represenation for all 480 bit operations.
 
 ## 0.6.0
 ### Public API changes
