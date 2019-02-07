@@ -1,6 +1,6 @@
 [package]
 name = "recrypt"
-version = "0.6.1"
+version = "0.6.2"
 authors = ["IroncCore Labs <info at ironcorelabs.com>"]
 readme = "README.md"
 license = "AGPL-3.0-only"

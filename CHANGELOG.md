@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.2
+
+### Notable Internal Changes
+
+- [[#54](#54)] Consume gridiron 0.6.0, which fixes some perf issues.
+- [[#55](#55)] Optimize inverse, xi multiplications, etc.
+
 ## 0.6.1
 
 ### Notable Internal Changes
