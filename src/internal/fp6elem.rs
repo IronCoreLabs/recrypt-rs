@@ -159,10 +159,10 @@ where
         let elem1 = self.elem1 * other.elem3 + self.elem2 * other.elem2 + self.elem3 * other.elem1;
 
         let elem2 =
-            self.elem1 * other.elem1 * Xi() + self.elem2 * other.elem3 + self.elem3 * other.elem2;
+            self.elem1 * other.elem1 * Xi + self.elem2 * other.elem3 + self.elem3 * other.elem2;
 
         let elem3 =
-            (self.elem1 * other.elem2 + self.elem2 * other.elem1) * Xi() + self.elem3 * other.elem3;
+            (self.elem1 * other.elem2 + self.elem2 * other.elem1) * Xi + self.elem3 * other.elem3;
 
         Fp6Elem {
             elem1,
@@ -222,12 +222,12 @@ where
         let v3 = a * b;
         let v4 = a * c;
         let v5 = b * c;
-        let cap_a = v0 - Xi() * v5;
-        let cap_b = Xi() * v2 - v3;
+        let cap_a = v0 - Xi * v5;
+        let cap_b = Xi * v2 - v3;
         let cap_c = v1 - v4;
         let v6 = a * cap_a;
-        let v61 = v6 + (Xi() * c * cap_b);
-        let v62 = v61 + (Xi() * b * cap_c);
+        let v61 = v6 + (Xi * c * cap_b);
+        let v62 = v61 + (Xi * b * cap_c);
         let cap_f = v62.inv();
         let c0 = cap_a * cap_f;
         let c1 = cap_b * cap_f;
@@ -271,8 +271,8 @@ where
             elem2: self.elem1.elem2 * 2,
         };
         let a2 = a_prime * self.elem3 + self.elem2.square();
-        let fp22 = self.elem1.square() * Xi() + self.elem2 * self.elem3 * 2;
-        let fp32 = (a_prime * self.elem2) * Xi() + self.elem3.square();
+        let fp22 = self.elem1.square() * Xi + self.elem2 * self.elem3 * 2;
+        let fp32 = (a_prime * self.elem2) * Xi + self.elem3.square();
         Fp6Elem {
             elem1: a2,
             elem2: fp22,

@@ -236,7 +236,7 @@ where
             elem2: y,
             elem3: x,
         } = b2;
-        let z2 = z * Xi() + One::one();
+        let z2 = z * Xi + One::one();
         Fp12Elem {
             elem1: a2,
             elem2: Fp6Elem {

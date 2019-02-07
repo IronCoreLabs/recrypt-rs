@@ -25,8 +25,8 @@ pub struct Fp2Elem<T> {
     pub elem2: T,
 }
 
-///This is an empty type which allows for Fp2 * Xi() in order to multiply the fp2 element * Fp2(1, 3).
-pub struct Xi();
+///This is an empty type which allows for Fp2 * Xi in order to multiply the fp2 element * Fp2(1, 3).
+pub struct Xi;
 
 impl<T> Mul<Fp2Elem<T>> for Xi
 where
