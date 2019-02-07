@@ -175,14 +175,20 @@ where
 
 impl<T> Inv for Fp2Elem<T>
 where
-    T: Pow<u32, Output = T> + Add<Output = T> + Neg<Output = T> + Div<Output = T> + Copy,
+    T: Pow<u32, Output = T>
+        + Add<Output = T>
+        + Neg<Output = T>
+        + Mul<Output = T>
+        + Inv<Output = T>
+        + Copy,
 {
     type Output = Fp2Elem<T>;
     fn inv(self) -> Fp2Elem<T> {
-        let mag = self.elem1.pow(2) + self.elem2.pow(2);
+        let magnitude = self.elem1.pow(2) + self.elem2.pow(2);
+        let mag_inv = magnitude.inv();
         Fp2Elem {
-            elem1: (-self.elem1 / mag),
-            elem2: (self.elem2 / mag),
+            elem1: (-self.elem1 * mag_inv),
+            elem2: (self.elem2 * mag_inv),
         }
     }
 }
