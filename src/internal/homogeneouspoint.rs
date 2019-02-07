@@ -344,16 +344,13 @@ impl<T: ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
     /// Decodes and validates that the resultant TwistedHPoint is on the curve
     fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
         if bytes.len() == Self::ENCODED_SIZE_BYTES {
-            //   3 / (u + 3)
-            let twisted_curve_const_coeff: Fp2Elem<T> = ExtensionField::xi().inv() * 3;
-
             let (x_bytes, y_bytes) = bytes.split_at(Self::ENCODED_SIZE_BYTES / 2);
             let hpoint = TwistedHPoint::new(
                 Fp2Elem::<T>::decode(x_bytes.to_vec())?,
                 Fp2Elem::<T>::decode(y_bytes.to_vec())?,
             );
 
-            if hpoint.y.pow(2) == (hpoint.x.pow(3) + twisted_curve_const_coeff) {
+            if hpoint.y.pow(2) == (hpoint.x.pow(3) + ExtensionField::twisted_curve_const_coeff()) {
                 Result::Ok(hpoint)
             } else {
                 Result::Err(DecodeErr::BytesInvalid {

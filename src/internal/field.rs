@@ -158,6 +158,11 @@ where
             elem3: Zero::zero(),
         }
     }
+
+    /// 3 / (u+3)
+    /// pre-calculate as an optimization
+    /// ExtensionField::xi().inv() * 3;
+    fn twisted_curve_const_coeff() -> Fp2Elem<Self>;
 }
 
 impl ExtensionField for fp_256::Monty {
@@ -249,6 +254,20 @@ impl ExtensionField for fp_256::Monty {
                 ]),
             },
             elem3: Zero::zero(),
+        }
+    }
+
+    #[inline]
+    fn twisted_curve_const_coeff() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: fp_256::Monty::new([
+                1925150376, 516250914, 1051564560, 1369812449, 731601065, 672046428, 625168271,
+                1952553705, 93,
+            ]),
+            elem2: fp_256::Monty::new([
+                1674758358, 86153800, 1235541696, 1892123501, 768178752, 600790531, 1643777575,
+                1474105998, 5,
+            ]),
         }
     }
 }
@@ -350,6 +369,22 @@ impl ExtensionField for fp_480::Monty {
                 ]),
             },
             elem3: Zero::zero(),
+        }
+    }
+
+    #[inline]
+    fn twisted_curve_const_coeff() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: fp_480::Monty::new([
+                1976657987, 2124705180, 1103755761, 1290923474, 2085255841, 1647224075, 1270424569,
+                286550022, 1158572853, 451253923, 1853842034, 2007948773, 1667592921, 2116284018,
+                790821013, 23589,
+            ]),
+            elem2: fp_480::Monty::new([
+                1531442428, 2081544602, 1531699218, 302801582, 1652317917, 456481830, 1063041565,
+                835589236, 1390322869, 278987042, 1335789303, 1086071918, 1573345690, 1085259625,
+                1063395545, 27530,
+            ]),
         }
     }
 }
