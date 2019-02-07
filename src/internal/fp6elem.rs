@@ -140,6 +140,26 @@ where
     }
 }
 
+impl<T> Mul<Xi<T>> for Fp6Elem<T>
+where
+    T: Mul<Output = T> + Sub<Output = T> + Add<Output = T> + Copy,
+{
+    type Output = Fp6Elem<T>;
+    fn mul(self, xi: Xi<T>) -> Self {
+        let Xi(other) = xi; 
+        let a2 = self.elem1 * other;
+        let b2 = self.elem2 * other;
+        let c2 = self.elem3 * other;
+        Fp6Elem {
+            elem1: a2,
+            elem2: b2,
+            elem3: c2,
+        }
+    }
+}
+
+struct Xi<T>(Fp2Elem<T>);
+
 impl<T> Mul<Fp6Elem<T>> for Fp6Elem<T>
 where
     T: Mul<Output = T> + Sub<Output = T> + Add<Output = T> + ExtensionField + Copy,

@@ -1,4 +1,5 @@
 use crate::internal::rand_bytes::RandomBytesGen;
+use arrayref;
 use gridiron::fp31;
 use gridiron::fp_256;
 use gridiron::fp_480;
@@ -15,30 +16,25 @@ fp31!(
         1470919265, 878569654, 1621943440, 1953263767, 407749138, 1308464908, 685899370,
         1518399909, 143
     ],
-    // barrett reduction for reducing values up to twice
-    // the number of prime bits (double limbs):
-    // floor(2^(31*numlimbs*2)/p)
-    //
-    //sage: floor(2^(31*9*2)/p).digits(2^31)
+    // reduction_factor
+    //2^(31*(2*9-1)) % p
+    //60578513295813710592630177991574484510343482833477254561432642537919118791084
     [
-        2001388716, 2127935188, 656710022, 1592897923, 336510510, 1906875712, 1016481908,
-        1139000707, 1048853973, 14943480
+        1663783340, 53996217, 1264037426, 366665174, 1029142601, 1377617547, 1943249747,
+        1998363284, 133
     ],
     // W = 31 (bytes)
-    // montgomery R = 2^(W*N) where W = word size and N = limbs
+    // montgomery R = 2^(W*N) % p where W = word size and N = limbs
     //            R = 2^(31*9) = 2^279
-    // montgomery R^-1 mod p
-    //
-    // sage: mont_r = 2^(9*31)
-    // sage: mont_r_inv = 971334446112864535459730953411759453321203419526069760625906204869452142602604249088^-1 % p
-    // sage: mont_r_inv.digits(2^31)
+    //R % p = 31746963425510762026994079049055217408067679606784446338012800016910603496968
     [
-        15365123, 1200204171, 957839710, 1956483681, 380955886, 1912989863, 1467667868, 830668271,
-        61
+        12824072, 179276061, 340986673, 1040734720, 1691111650, 1964912876, 1176826515, 403865604,
+        70
     ],
     // montgomery R^2 mod p
     // sage: mont_r_squared = mont_r^2 % p
     // sage: mont_r_squared.digits(2^31)
+    //28246183317335424924291340695987904736439985320227675295280074811342632444628
     [
         1770447572, 496375461, 2107782367, 1971926976, 1431428989, 1530023807, 975789685,
         962787448, 62
@@ -61,22 +57,19 @@ fp31!(
         303452913, 1136536553, 1175441836, 1648331283, 1378554948, 665368735, 1063821851, 556691390,
         190358044, 1260077487, 1583277252, 222489098, 760385720, 330553579, 429458313, 32766
     ],
-    // barrett reduction for reducing values up to twice
-    // the number of prime bits (double limbs):
-    // floor(2^(31*numlimbs*2)/p).digits(2^31)
+    // reduction factor
+    //2^(31*(2*16-1)) mod p
+    //1739983287038919322992505976901282940154362593622543841175737924115631069143952344086437140836561389835892307985982358767969839917501802215648860
     [
-        1197018551, 750986212, 1291405097, 1641098313, 1952135722, 1345577543, 672618400,
-        351667504, 1678886807, 231227174, 1893732143, 1300610845, 325218135, 866248622, 1596183093,
-        1288991726, 65539
+        1026829916, 1456777803, 134603837, 451267966, 1930150853, 723555411, 1114658449,
+        1023661674, 1480375811, 856405064, 481343463, 446073531, 1812344668, 1053202982, 107882749,
+        18264
     ],
     // W = 31 (bytes)
     // montgomery R = 2^(W*N) where W = word size and N = limbs
     // montgomery R = R = 2^(31*16) = 2^496
-    // montgomery R^-1 mod p
     //
-    // sage: mont_r = 2^496
-    // sage: mont_r_inv = mont_r^-1 % p
-    // sage: mont_r_inv.digits(2^31)
+    // R % p = 1873675273853457188138609473867413143403568023004720367747079366994691680905908500537272220571975000122406141753790885740615895571071002169050925
     [
         1993082669, 148658199, 1545864062, 1328403877, 1966735026, 1348874698, 531286620,
         750137843, 1004132174, 1560224833, 2014075, 1848411426, 1733309265, 1811487384, 799788540,
@@ -126,22 +119,32 @@ impl fr_480::Fr480 {
 }
 impl From<[u8; 64]> for fr_256::Fr256 {
     fn from(src: [u8; 64]) -> Self {
-        // our input is the exact length we need for our
-        // optimized barrett reduction
-        let mut limbs = [0u32; 18];
-        let limbs_17 = ::gridiron::from_sixty_four_bytes(src);
-        limbs.copy_from_slice(&limbs_17);
-        fr_256::Fr256::new(fr_256::Fr256::reduce_barrett(&limbs))
+        let limbs = gridiron::from_sixty_four_bytes(src);
+        let (x0_view, x1_view, x2_view) =
+            arrayref::array_refs![&limbs, fr_256::NUMLIMBS - 1, fr_256::NUMLIMBS - 1, 1];
+        let (mut x0, mut x1, mut x2) = (
+            [0u32; fr_256::NUMLIMBS],
+            [0u32; fr_256::NUMLIMBS],
+            [0u32; fr_256::NUMLIMBS],
+        );
+        x0[..fr_256::NUMLIMBS - 1].copy_from_slice(&x0_view[..]);
+        x1[..fr_256::NUMLIMBS - 1].copy_from_slice(&x1_view[..]);
+        x2[..1].copy_from_slice(&x2_view[..]);
+
+        (fr_256::Fr256::new(x2) * fr_256::REDUCTION_CONST + fr_256::Fr256::new(x1))
+            * fr_256::REDUCTION_CONST
+            + fr_256::Fr256::new(x0)
     }
 }
 impl From<[u8; 64]> for fr_480::Fr480 {
     fn from(src: [u8; 64]) -> Self {
-        // our input is the exact length we need for our
-        // optimized barrett reduction
-        let mut limbs = [0u32; 32];
-        let limbs_17 = ::gridiron::from_sixty_four_bytes(src);
-        limbs.copy_from_slice(&limbs_17);
-        fr_480::Fr480::new(fr_480::Fr480::reduce_barrett(&limbs))
+        let limbs = gridiron::from_sixty_four_bytes(src);
+        let (x0_view, x1_view) = arrayref::array_refs![&limbs, fr_480::NUMLIMBS - 1, 2];
+        let (mut x0, mut x1) = ([0u32; 16], [0u32; 16]);
+        x0[..fr_480::NUMLIMBS - 1].copy_from_slice(&x0_view[..]);
+        x1[..2].copy_from_slice(&x1_view[..]);
+
+        fr_480::Fr480::new(x1) * fr_480::REDUCTION_CONST + fr_480::Fr480::new(x0)
     }
 }
 impl From<fp_256::Monty> for fr_256::Fr256 {
