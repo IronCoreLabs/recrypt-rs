@@ -126,14 +126,6 @@ pub trait ExtensionField: Field
 where
     Self: Sized + From<u8>,
 {
-    /// Xi is u + 3 which is v^3.
-    /// v^p == Xi^((p-1)/3) * v
-    fn xi() -> Fp2Elem<Self> {
-        Fp2Elem {
-            elem1: Self::one(),
-            elem2: Self::from(3u8),
-        }
-    }
     ///Precomputed xi.inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self>;
 
@@ -151,6 +143,7 @@ where
 
     ///v is the thing that cubes to xi
     ///v^3 = u+3, because by definition it is a solution to the equation y^3 - (u + 3)
+    #[inline]
     fn v() -> Fp6Elem<Self> {
         Fp6Elem {
             elem1: Zero::zero(),
@@ -158,22 +151,16 @@ where
             elem3: Zero::zero(),
         }
     }
+
+    /// 3 / (u+3)
+    /// pre-calculate as an optimization
+    /// ExtensionField::xi().inv() * 3;
+    fn twisted_curve_const_coeff() -> Fp2Elem<Self>;
 }
 
 impl ExtensionField for fp_256::Monty {
-    fn xi() -> Fp2Elem<Self> {
-        Fp2Elem {
-            elem1: fp_256::Monty::new([
-                1368961080, 1174866893, 1632604085, 2004383869, 1511972380, 1964912876, 1176826515,
-                403865604, 70,
-            ]),
-            elem2: fp_256::Monty::new([
-                381778497, 559663760, 555210920, 1938629360, 1980684343, 291306425, 697096529,
-                1840680552, 66,
-            ]),
-        }
-    }
     //precalculate this since it's used in every double and add operation in the extension field.
+    //xi is u + 3 or Fp2Elem(1, 3)
     // Fp256::xi().inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self> {
         Fp2Elem {
@@ -236,39 +223,24 @@ impl ExtensionField for fp_256::Monty {
         }
     }
 
-    ///v is the thing that cubes to xi
-    ///v^3 = u+3, because by definition it is a solution to the equation y^3 - (u + 3)
-    fn v() -> Fp6Elem<Self> {
-        Fp6Elem {
-            elem1: Zero::zero(),
-            elem2: Fp2Elem {
-                elem1: Zero::zero(),
-                elem2: fp_256::Monty::new([
-                    1368961080, 1174866893, 1632604085, 2004383869, 1511972380, 1964912876,
-                    1176826515, 403865604, 70,
-                ]),
-            },
-            elem3: Zero::zero(),
+    #[inline]
+    fn twisted_curve_const_coeff() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: fp_256::Monty::new([
+                1925150376, 516250914, 1051564560, 1369812449, 731601065, 672046428, 625168271,
+                1952553705, 93,
+            ]),
+            elem2: fp_256::Monty::new([
+                1674758358, 86153800, 1235541696, 1892123501, 768178752, 600790531, 1643777575,
+                1474105998, 5,
+            ]),
         }
     }
 }
 
 impl ExtensionField for fp_480::Monty {
-    fn xi() -> Fp2Elem<Self> {
-        Fp2Elem {
-            elem1: fp_480::Monty::new([
-                1588384315, 657481659, 1879608514, 2019977405, 241404753, 1339062904, 639566708,
-                740072562, 1004131918, 1560224833, 2014075, 1848411426, 1733309265, 1811487384,
-                799788540, 19667,
-            ]),
-            elem2: fp_480::Monty::new([
-                1562186266, 585547362, 445363961, 373107586, 235669429, 70320378, 1725584133,
-                1655137918, 674554062, 1273113365, 570248622, 1027777883, 144574781, 808941279,
-                1969907309, 26235,
-            ]),
-        }
-    }
     // precalculate this since it's used in every double and add operation in the extension field.
+    // xi is u + 3 or Fp2Elem(1, 3)
     // Fp480::xi().inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self> {
         Fp2Elem {
@@ -335,21 +307,19 @@ impl ExtensionField for fp_480::Monty {
         }
     }
 
-    ///v is the thing that cubes to xi
-    ///v^3 = u+3, because by definition it is a solution to the equation y^3 - (u + 3)
-    fn v() -> Fp6Elem<Self> {
-        Fp6Elem {
-            elem1: Zero::zero(),
-            elem2: Fp2Elem {
-                elem1: Zero::zero(),
-                //This is 1 in monty form
-                elem2: fp_480::Monty::new([
-                    1588384315, 657481659, 1879608514, 2019977405, 241404753, 1339062904,
-                    639566708, 740072562, 1004131918, 1560224833, 2014075, 1848411426, 1733309265,
-                    1811487384, 799788540, 19667,
-                ]),
-            },
-            elem3: Zero::zero(),
+    #[inline]
+    fn twisted_curve_const_coeff() -> Fp2Elem<Self> {
+        Fp2Elem {
+            elem1: fp_480::Monty::new([
+                1976657987, 2124705180, 1103755761, 1290923474, 2085255841, 1647224075, 1270424569,
+                286550022, 1158572853, 451253923, 1853842034, 2007948773, 1667592921, 2116284018,
+                790821013, 23589,
+            ]),
+            elem2: fp_480::Monty::new([
+                1531442428, 2081544602, 1531699218, 302801582, 1652317917, 456481830, 1063041565,
+                835589236, 1390322869, 278987042, 1335789303, 1086071918, 1573345690, 1085259625,
+                1063395545, 27530,
+            ]),
         }
     }
 }

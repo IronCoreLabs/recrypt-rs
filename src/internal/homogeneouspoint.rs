@@ -344,16 +344,13 @@ impl<T: ExtensionField + BytesDecoder> BytesDecoder for TwistedHPoint<T> {
     /// Decodes and validates that the resultant TwistedHPoint is on the curve
     fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
         if bytes.len() == Self::ENCODED_SIZE_BYTES {
-            //   3 / (u + 3)
-            let twisted_curve_const_coeff: Fp2Elem<T> = ExtensionField::xi().inv() * 3;
-
             let (x_bytes, y_bytes) = bytes.split_at(Self::ENCODED_SIZE_BYTES / 2);
             let hpoint = TwistedHPoint::new(
                 Fp2Elem::<T>::decode(x_bytes.to_vec())?,
                 Fp2Elem::<T>::decode(y_bytes.to_vec())?,
             );
 
-            if hpoint.y.pow(2) == (hpoint.x.pow(3) + twisted_curve_const_coeff) {
+            if hpoint.y.pow(2) == (hpoint.x.pow(3) + ExtensionField::twisted_curve_const_coeff()) {
                 Result::Ok(hpoint)
             } else {
                 Result::Err(DecodeErr::BytesInvalid {
@@ -438,9 +435,6 @@ where
 //   "Complete addition formulas for prime order elliptic curves",
 //   https://eprint.iacr.org/2015/1060
 // (For y^2=x^3+b, doubling formulas, page 12.)
-// Mind that the main curve uses b = 3, but the twisted curve uses
-// b = 3/(u+3). The code below _assumes_ that the twisted curve is used
-// when the base field is FP2Elem (this is quite ugly).
 fn double<T, U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
 where
     T: Field + Copy + Mul<U, Output = T>,

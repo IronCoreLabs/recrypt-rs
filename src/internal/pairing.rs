@@ -1,6 +1,6 @@
 use crate::internal::field::ExtensionField;
 use crate::internal::fp12elem::Fp12Elem;
-use crate::internal::fp2elem::Fp2Elem;
+use crate::internal::fp2elem::{Fp2Elem, Xi};
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::homogeneouspoint::Double;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
@@ -236,7 +236,7 @@ where
             elem2: y,
             elem3: x,
         } = b2;
-        let z2 = z * ExtensionField::xi() + One::one();
+        let z2 = z * Xi + One::one();
         Fp12Elem {
             elem1: a2,
             elem2: Fp6Elem {

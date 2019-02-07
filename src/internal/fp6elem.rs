@@ -1,6 +1,6 @@
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::field::{ExtensionField, Field};
-use crate::internal::fp2elem::Fp2Elem;
+use crate::internal::fp2elem::{Fp2Elem, Xi};
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
 use crate::internal::{pow_for_square, sum_n, Square};
@@ -158,12 +158,11 @@ where
 
         let elem1 = self.elem1 * other.elem3 + self.elem2 * other.elem2 + self.elem3 * other.elem1;
 
-        let elem2 = self.elem1 * other.elem1 * ExtensionField::xi()
-            + self.elem2 * other.elem3
-            + self.elem3 * other.elem2;
+        let elem2 =
+            self.elem1 * other.elem1 * Xi + self.elem2 * other.elem3 + self.elem3 * other.elem2;
 
-        let elem3 = (self.elem1 * other.elem2 + self.elem2 * other.elem1) * ExtensionField::xi()
-            + self.elem3 * other.elem3;
+        let elem3 =
+            (self.elem1 * other.elem2 + self.elem2 * other.elem1) * Xi + self.elem3 * other.elem3;
 
         Fp6Elem {
             elem1,
@@ -215,8 +214,6 @@ where
 {
     type Output = Fp6Elem<T>;
     fn inv(self) -> Fp6Elem<T> {
-        let xi: Fp2Elem<T> = ExtensionField::xi();
-
         // Algorithm 5.23 from El Mrabet--Joye 2017 "Guide to Pairing-Based Cryptography."
         let (c, b, a) = (self.elem1, self.elem2, self.elem3);
         let v0 = a.square();
@@ -225,12 +222,12 @@ where
         let v3 = a * b;
         let v4 = a * c;
         let v5 = b * c;
-        let cap_a = v0 - xi * v5;
-        let cap_b = xi * v2 - v3;
+        let cap_a = v0 - Xi * v5;
+        let cap_b = Xi * v2 - v3;
         let cap_c = v1 - v4;
         let v6 = a * cap_a;
-        let v61 = v6 + (xi * c * cap_b);
-        let v62 = v61 + (xi * b * cap_c);
+        let v61 = v6 + (Xi * c * cap_b);
+        let v62 = v61 + (Xi * b * cap_c);
         let cap_f = v62.inv();
         let c0 = cap_a * cap_f;
         let c1 = cap_b * cap_f;
@@ -269,15 +266,13 @@ where
     T: Clone + ExtensionField,
 {
     fn square(&self) -> Self {
-        let xi: Fp2Elem<T> = ExtensionField::xi();
-
         let a_prime = Fp2Elem {
             elem1: self.elem1.elem1 * 2,
             elem2: self.elem1.elem2 * 2,
         };
         let a2 = a_prime * self.elem3 + self.elem2.square();
-        let fp22 = self.elem1.square() * xi + self.elem2 * self.elem3 * 2;
-        let fp32 = (a_prime * self.elem2) * xi + self.elem3.square();
+        let fp22 = self.elem1.square() * Xi + self.elem2 * self.elem3 * 2;
+        let fp32 = (a_prime * self.elem2) * Xi + self.elem3.square();
         Fp6Elem {
             elem1: a2,
             elem2: fp22,
