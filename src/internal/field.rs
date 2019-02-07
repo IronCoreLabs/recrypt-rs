@@ -236,7 +236,6 @@ impl ExtensionField for fp_256::Monty {
             ]),
         }
     }
-
 }
 
 impl ExtensionField for fp_480::Monty {
