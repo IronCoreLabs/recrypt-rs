@@ -438,9 +438,6 @@ where
 //   "Complete addition formulas for prime order elliptic curves",
 //   https://eprint.iacr.org/2015/1060
 // (For y^2=x^3+b, doubling formulas, page 12.)
-// Mind that the main curve uses b = 3, but the twisted curve uses
-// b = 3/(u+3). The code below _assumes_ that the twisted curve is used
-// when the base field is FP2Elem (this is quite ugly).
 fn double<T, U>(x: T, y: T, z: T, three_b: U) -> (T, T, T)
 where
     T: Field + Copy + Mul<U, Output = T>,
