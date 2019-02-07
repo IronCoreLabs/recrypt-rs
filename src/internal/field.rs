@@ -151,6 +151,7 @@ where
 
     ///v is the thing that cubes to xi
     ///v^3 = u+3, because by definition it is a solution to the equation y^3 - (u + 3)
+    #[inline]
     fn v() -> Fp6Elem<Self> {
         Fp6Elem {
             elem1: Zero::zero(),
@@ -168,10 +169,7 @@ where
 impl ExtensionField for fp_256::Monty {
     fn xi() -> Fp2Elem<Self> {
         Fp2Elem {
-            elem1: fp_256::Monty::new([
-                1368961080, 1174866893, 1632604085, 2004383869, 1511972380, 1964912876, 1176826515,
-                403865604, 70,
-            ]),
+            elem1: One::one(),
             elem2: fp_256::Monty::new([
                 381778497, 559663760, 555210920, 1938629360, 1980684343, 291306425, 697096529,
                 1840680552, 66,
@@ -241,22 +239,6 @@ impl ExtensionField for fp_256::Monty {
         }
     }
 
-    ///v is the thing that cubes to xi
-    ///v^3 = u+3, because by definition it is a solution to the equation y^3 - (u + 3)
-    fn v() -> Fp6Elem<Self> {
-        Fp6Elem {
-            elem1: Zero::zero(),
-            elem2: Fp2Elem {
-                elem1: Zero::zero(),
-                elem2: fp_256::Monty::new([
-                    1368961080, 1174866893, 1632604085, 2004383869, 1511972380, 1964912876,
-                    1176826515, 403865604, 70,
-                ]),
-            },
-            elem3: Zero::zero(),
-        }
-    }
-
     #[inline]
     fn twisted_curve_const_coeff() -> Fp2Elem<Self> {
         Fp2Elem {
@@ -270,16 +252,13 @@ impl ExtensionField for fp_256::Monty {
             ]),
         }
     }
+
 }
 
 impl ExtensionField for fp_480::Monty {
     fn xi() -> Fp2Elem<Self> {
         Fp2Elem {
-            elem1: fp_480::Monty::new([
-                1588384315, 657481659, 1879608514, 2019977405, 241404753, 1339062904, 639566708,
-                740072562, 1004131918, 1560224833, 2014075, 1848411426, 1733309265, 1811487384,
-                799788540, 19667,
-            ]),
+            elem1: One::one(),
             elem2: fp_480::Monty::new([
                 1562186266, 585547362, 445363961, 373107586, 235669429, 70320378, 1725584133,
                 1655137918, 674554062, 1273113365, 570248622, 1027777883, 144574781, 808941279,
@@ -351,24 +330,6 @@ impl ExtensionField for fp_480::Monty {
                 1606643950, 1537923020, 1695901916, 157173875, 1177883133, 354458948, 163418612,
                 376825454, 23056,
             ]),
-        }
-    }
-
-    ///v is the thing that cubes to xi
-    ///v^3 = u+3, because by definition it is a solution to the equation y^3 - (u + 3)
-    fn v() -> Fp6Elem<Self> {
-        Fp6Elem {
-            elem1: Zero::zero(),
-            elem2: Fp2Elem {
-                elem1: Zero::zero(),
-                //This is 1 in monty form
-                elem2: fp_480::Monty::new([
-                    1588384315, 657481659, 1879608514, 2019977405, 241404753, 1339062904,
-                    639566708, 740072562, 1004131918, 1560224833, 2014075, 1848411426, 1733309265,
-                    1811487384, 799788540, 19667,
-                ]),
-            },
-            elem3: Zero::zero(),
         }
     }
 

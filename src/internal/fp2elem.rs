@@ -25,6 +25,39 @@ pub struct Fp2Elem<T> {
     pub elem2: T,
 }
 
+///This is an empty type which allows for Fp2 * Xi() in order to multiply the fp2 element * Fp2(1, 3).
+pub struct Xi();
+
+impl<T> Mul<Fp2Elem<T>> for Xi
+where
+    T: Mul<u32, Output = T> + Sub<Output = T> + Add<Output = T> + Copy,
+{
+    type Output = Fp2Elem<T>;
+    #[inline]
+    fn mul(self, fp2: Fp2Elem<T>) -> Fp2Elem<T> {
+        fp2 * self
+    }
+}
+
+impl<T> Mul<Xi> for Fp2Elem<T>
+where
+    T: Mul<u32, Output = T> + Sub<Output = T> + Add<Output = T> + Copy,
+{
+    type Output = Fp2Elem<T>;
+    ///This is a shorthand for multiplying times u + 3.
+    /// (a*u+b)*(u+3) = -a+3b + u*(3a+b)
+    /// In this case we expand out the additions.
+    #[inline]
+    fn mul(self, _xi: Xi) -> Self {
+        Fp2Elem {
+            //3a+b
+            elem1: self.elem1 + self.elem1 + self.elem1 + self.elem2,
+            //-a+3b
+            elem2: self.elem2 + self.elem2 + self.elem2 - self.elem1,
+        }
+    }
+}
+
 impl<T> fmt::Debug for Fp2Elem<T>
 where
     T: fmt::Debug,
