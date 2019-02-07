@@ -126,14 +126,6 @@ pub trait ExtensionField: Field
 where
     Self: Sized + From<u8>,
 {
-    /// Xi is u + 3 which is v^3.
-    /// v^p == Xi^((p-1)/3) * v
-    fn xi() -> Fp2Elem<Self> {
-        Fp2Elem {
-            elem1: Self::one(),
-            elem2: Self::from(3u8),
-        }
-    }
     ///Precomputed xi.inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self>;
 
@@ -167,16 +159,8 @@ where
 }
 
 impl ExtensionField for fp_256::Monty {
-    fn xi() -> Fp2Elem<Self> {
-        Fp2Elem {
-            elem1: One::one(),
-            elem2: fp_256::Monty::new([
-                381778497, 559663760, 555210920, 1938629360, 1980684343, 291306425, 697096529,
-                1840680552, 66,
-            ]),
-        }
-    }
     //precalculate this since it's used in every double and add operation in the extension field.
+    //xi is u + 3 or Fp2Elem(1, 3)
     // Fp256::xi().inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self> {
         Fp2Elem {
@@ -256,17 +240,8 @@ impl ExtensionField for fp_256::Monty {
 }
 
 impl ExtensionField for fp_480::Monty {
-    fn xi() -> Fp2Elem<Self> {
-        Fp2Elem {
-            elem1: One::one(),
-            elem2: fp_480::Monty::new([
-                1562186266, 585547362, 445363961, 373107586, 235669429, 70320378, 1725584133,
-                1655137918, 674554062, 1273113365, 570248622, 1027777883, 144574781, 808941279,
-                1969907309, 26235,
-            ]),
-        }
-    }
     // precalculate this since it's used in every double and add operation in the extension field.
+    // xi is u + 3 or Fp2Elem(1, 3)
     // Fp480::xi().inv() * 9
     fn xi_inv_times_9() -> Fp2Elem<Self> {
         Fp2Elem {
