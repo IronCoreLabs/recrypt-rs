@@ -326,7 +326,7 @@ pub trait Square {
 
 impl Square for Fp256 {
     fn square(&self) -> Self {
-        self.square()
+        *self * *self
     }
 }
 
@@ -338,7 +338,7 @@ impl Square for fp_256::Monty {
 
 impl Square for Fr256 {
     fn square(&self) -> Self {
-        self.square()
+        *self * *self
     }
 }
 
@@ -350,7 +350,7 @@ impl Square for gridiron::fp_480::Monty {
 
 impl Square for Fr480 {
     fn square(&self) -> Self {
-        self.square()
+        *self * *self
     }
 }
 
