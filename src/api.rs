@@ -1,4 +1,5 @@
-use crate::api_common::{ApiErr, Result};
+pub use crate::api_common::RecryptErr;
+use crate::api_common::Result;
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
@@ -26,7 +27,7 @@ use std::fmt;
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
-pub struct Api<H, S, R> {
+pub struct Recrypt<H, S, R> {
     random_bytes: R,
     sha_256: H,
     ed25519: S,
@@ -35,24 +36,24 @@ pub struct Api<H, S, R> {
     schnorr_signing: SchnorrSign<Monty256, Fr256, H>,
 }
 
-impl Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
-    pub fn new() -> Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
-        Api::new_with_rand(rand::thread_rng())
+impl Recrypt<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+    pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+        Recrypt::new_with_rand(rand::thread_rng())
     }
 }
 
-impl Default for Api<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+impl Default for Recrypt<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<CR: rand::CryptoRng + rand::RngCore> Api<Sha256, Ed25519, RandomBytes<CR>> {
-    pub fn new_with_rand(r: CR) -> Api<Sha256, Ed25519, RandomBytes<CR>> {
+impl<CR: rand::CryptoRng + rand::RngCore> Recrypt<Sha256, Ed25519, RandomBytes<CR>> {
+    pub fn new_with_rand(r: CR) -> Recrypt<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = internal::pairing::Pairing::new();
         let curve_points = &*curve::FP_256_CURVE_POINTS;
         let schnorr_signing = internal::schnorr::SchnorrSign::<Monty256, Fr256, Sha256>::new_256();
-        Api {
+        Recrypt {
             random_bytes: RandomBytes::new(r),
             sha_256: Sha256,
             ed25519: Ed25519,
@@ -476,7 +477,7 @@ impl HashedValue {
             dest.copy_from_slice(bytes);
             Ok(HashedValue::new(dest)?)
         } else {
-            Err(ApiErr::InputWrongSize(
+            Err(RecryptErr::InputWrongSize(
                 "HashedValue",
                 HashedValue::ENCODED_SIZE_BYTES,
             ))
@@ -661,7 +662,7 @@ pub trait SchnorrOps {
 }
 
 impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
-    for Api<H, S, RandomBytes<CR>>
+    for Recrypt<H, S, RandomBytes<CR>>
 {
     fn schnorr_sign<A: Hashable>(
         &mut self,
@@ -697,7 +698,7 @@ pub trait Ed25519Ops {
     fn generate_ed25519_key_pair(&mut self) -> SigningKeypair;
 }
 
-impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Api<H, S, RandomBytes<CR>> {
+impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Recrypt<H, S, RandomBytes<CR>> {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
     fn generate_ed25519_key_pair(&mut self) -> SigningKeypair {
@@ -738,7 +739,7 @@ pub trait KeyGenOps {
     ) -> Result<TransformKey>;
 }
 
-impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Api<H, S, R> {
+impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recrypt<H, S, R> {
     fn compute_public_key(&self, private_key: &PrivateKey) -> Result<PublicKey> {
         let pub_key_internal = internal::public_keygen(
             internal::PrivateKey::from(private_key),
@@ -808,7 +809,7 @@ pub trait CryptoOps {
     /// - `signing_keypair`       - signing keypair of the person (or device) who is encrypting this value
     ///
     /// # Return
-    /// EncryptedValue which can be decrypted by the matching private key of `to_public_key` or ApiErr.
+    /// EncryptedValue which can be decrypted by the matching private key of `to_public_key` or RecryptErr.
     fn encrypt(
         &mut self,
         plaintext: &Plaintext,
@@ -843,7 +844,7 @@ pub trait CryptoOps {
     ) -> Result<EncryptedValue>;
 }
 
-impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Api<H, S, R> {
+impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recrypt<H, S, R> {
     fn gen_plaintext(&mut self) -> Plaintext {
         let rand_fp12 = gen_random_fp12(&self.pairing, &mut self.random_bytes);
         Plaintext::from(rand_fp12)
@@ -994,7 +995,7 @@ impl PublicKey {
 
             Ok(PublicKey::new((x_dest, y_dest))?)
         } else {
-            Err(ApiErr::InputWrongSize(
+            Err(RecryptErr::InputWrongSize(
                 "PublicKey",
                 PublicKey::ENCODED_SIZE_BYTES,
             ))
@@ -1029,7 +1030,7 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
-    const ENCODED_SIZE_BYTES: usize = Monty256::ENCODED_SIZE_BYTES;
+    pub const ENCODED_SIZE_BYTES: usize = Monty256::ENCODED_SIZE_BYTES;
 
     pub fn bytes(&self) -> &[u8; PrivateKey::ENCODED_SIZE_BYTES] {
         &self.bytes
@@ -1131,9 +1132,9 @@ pub(crate) mod test {
     fn api_with<R: RandomBytesGen + Default, S: Ed25519Signing>(
         random_bytes: Option<R>,
         ed25519: S,
-    ) -> Api<Sha256, S, R> {
-        let api = Api::new();
-        Api::<Sha256, S, R> {
+    ) -> Recrypt<Sha256, S, R> {
+        let api = Recrypt::new();
+        Recrypt::<Sha256, S, R> {
             random_bytes: random_bytes.unwrap_or_default(),
             schnorr_signing: internal::schnorr::SchnorrSign::new_256(),
             sha_256: api.sha_256,
@@ -1145,7 +1146,7 @@ pub(crate) mod test {
 
     #[test]
     fn schnorr_signing_roundtrip_augmented() {
-        let mut api = Api::new();
+        let mut api = Recrypt::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let (aug_private_key, aug_pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8];
@@ -1156,7 +1157,7 @@ pub(crate) mod test {
     }
     #[test]
     fn schnorr_signing_roundtrip_unaugmented() {
-        let mut api = Api::new();
+        let mut api = Recrypt::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8, 3u8, 4u8];
         let sig = api.schnorr_sign(&private_key, pub_key, &message);
@@ -1166,7 +1167,7 @@ pub(crate) mod test {
 
     #[test]
     fn public_key_roundtrip_with_internal() {
-        let (_, pub_key_api) = Api::new().generate_key_pair().unwrap();
+        let (_, pub_key_api) = Recrypt::new().generate_key_pair().unwrap();
 
         let internal_pk = pub_key_api._internal_key;
         let roundtrip = PublicKey::try_from(&internal_pk).unwrap();
@@ -1176,7 +1177,7 @@ pub(crate) mod test {
 
     #[test]
     fn private_key_roundtrip_with_internal() {
-        let (priv_key_api, _) = Api::new().generate_key_pair().unwrap();
+        let (priv_key_api, _) = Recrypt::new().generate_key_pair().unwrap();
 
         let internal_pk = internal::PrivateKey::<Monty256>::from(&priv_key_api);
         let roundtrip = PrivateKey::from(internal_pk);
@@ -1187,7 +1188,7 @@ pub(crate) mod test {
 
     #[test]
     fn gen_plaintext_len() {
-        let api = &mut Api::new();
+        let api = &mut Recrypt::new();
 
         let result = api.gen_plaintext();
         assert_eq!(Fp12Elem::<Monty256>::ENCODED_SIZE_BYTES, result.bytes.len());
@@ -1195,7 +1196,7 @@ pub(crate) mod test {
 
     #[test]
     fn test_compute_public_key() {
-        let api = &mut Api::new();
+        let api = &mut Recrypt::new();
         //37777967648492203239675772600961898148040325589588086812374811831221462604944
         let parsed_priv_key =
             fp256_unsafe_from("5385926b9f6135086d1912901e5a433ffcebc19a30fadbd0ee8cee26ba719c90")
@@ -1258,7 +1259,7 @@ pub(crate) mod test {
     }
 
     fn good_transform_key() -> TransformKey {
-        let mut api = Api::new();
+        let mut api = Recrypt::new();
         let signing_key = ed25519::test::good_signing_keypair();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
         api.generate_transform_key(&master_priv, master_pub, &signing_key)
@@ -1287,7 +1288,7 @@ pub(crate) mod test {
 
     #[test]
     fn roundtrip_transform_block() {
-        let mut api = Api::new();
+        let mut api = Recrypt::new();
         let pub_key1 = api.generate_key_pair().unwrap().1;
         let pub_key2 = api.generate_key_pair().unwrap().1;
         let ee1 = EncryptedTempKey::new(api.gen_plaintext().bytes);
@@ -1313,7 +1314,7 @@ pub(crate) mod test {
         let priv_key = PrivateKey::new_from_slice(&hex::decode(
             "3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea",
         )?)?;
-        let api = Api::new();
+        let api = Recrypt::new();
         let pt = api.decrypt(encrypted, &priv_key)?;
         assert_eq!(pt, expected_pt);
         Ok(())
@@ -1322,7 +1323,7 @@ pub(crate) mod test {
     #[test]
     fn encrypt_decrypt_roundtrip() -> Result<()> {
         use rand::SeedableRng;
-        let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
+        let mut api = Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
         let pt = api.gen_plaintext();
         let (priv_key, pub_key) = api.generate_key_pair().unwrap();
         let priv_signing_key = api.generate_ed25519_key_pair();
@@ -1345,7 +1346,7 @@ pub(crate) mod test {
         let mut dest: [u8; 32] = [0u8; 32];
         dest.copy_from_slice(src);
         let expected_result = DerivedSymmetricKey::new(dest);
-        let result = Api::new().derive_symmetric_key(&pt);
+        let result = Recrypt::new().derive_symmetric_key(&pt);
         assert_eq!(Revealed(expected_result), Revealed(result))
     }
 
@@ -1391,7 +1392,7 @@ pub(crate) mod test {
 
     #[test]
     fn encrypt_decrypt_roundtrip_augmented_keys() {
-        let mut api = Api::new();
+        let mut api = Recrypt::new();
         let signing_key = api.generate_ed25519_key_pair();
         let pt = api.gen_plaintext();
         let (master_private_key, client_generated_pub) = api.generate_key_pair().unwrap();
@@ -1459,7 +1460,7 @@ pub(crate) mod test {
     #[test]
     fn generate_ed25519_key_pair() {
         use rand::SeedableRng;
-        let mut api = Api::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
+        let mut api = Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
         let signing_keypair = Revealed(api.generate_ed25519_key_pair());
         let expected_signing_keypair = Revealed(SigningKeypair::new_unchecked([
             118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
@@ -1490,7 +1491,7 @@ pub(crate) mod test {
         assert_eq!(auth_hash_from_fixed, auth_hash_from_slice.unwrap());
 
         assert_eq!(
-            ApiErr::InputWrongSize("AuthHash", 32),
+            RecryptErr::InputWrongSize("AuthHash", 32),
             AuthHash::new_from_slice(&input[..30]).unwrap_err()
         )
     }
@@ -1505,13 +1506,13 @@ pub(crate) mod test {
         assert_eq!(hv_from_fixed.unwrap(), hv_from_slice.unwrap());
 
         assert_eq!(
-            ApiErr::InputWrongSize("HashedValue", 128),
+            RecryptErr::InputWrongSize("HashedValue", 128),
             HashedValue::new_from_slice(&input[..30]).unwrap_err()
         )
     }
     #[test]
     fn publickey_new_from_slice() {
-        let mut api = Api::new();
+        let mut api = Recrypt::new();
         let (_, pk1) = api.generate_key_pair().unwrap();
         let input: ([u8; 32], [u8; 32]) = (pk1.x, pk1.y);
         let slice: (&[u8], &[u8]) = (&input.0, &input.1);
@@ -1521,7 +1522,7 @@ pub(crate) mod test {
         assert_eq!(pk_from_fixed.unwrap(), pk_from_slice.unwrap());
 
         assert_eq!(
-            ApiErr::InputWrongSize("PublicKey", 64),
+            RecryptErr::InputWrongSize("PublicKey", 64),
             PublicKey::new_from_slice((&input.0[..30], &input.1[..32])).unwrap_err()
         )
     }
@@ -1529,7 +1530,7 @@ pub(crate) mod test {
     // note that this doesn't show that Drop is working properly, just that clear does
     #[test]
     fn private_key_clear() {
-        let (mut priv_key, _) = Api::new().generate_key_pair().unwrap();
+        let (mut priv_key, _) = Recrypt::new().generate_key_pair().unwrap();
         priv_key.clear();
         assert_eq!(priv_key.bytes(), &[0u8; 32]);
         assert_eq!(priv_key._internal_key, Default::default())
