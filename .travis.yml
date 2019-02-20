@@ -5,6 +5,7 @@ rust:
 branches:
   only:
     - master
+    - recrypt-0.7
 before_script:
   - rustup component add rustfmt-preview
 script:
