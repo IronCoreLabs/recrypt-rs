@@ -12,43 +12,9 @@ branches:
     - master
 before_script:
   - rustup component add rustfmt-preview
-  - cross --version || cargo install cross
-matrix:
-  include:
-    # Linux
-    - name: "Alpine Linux x86_64"
-      os: linux
-      env:
-        - TARGET=x86_64-unknown-linux-musl
-        - TEST=1
-    - name: "ARM64 Android"
-      os: linux
-      env:
-        - TARGET=aarch64-linux-android
-        - TEST=1
-    - name: "Linux 32bit"
-      os: linux
-      env:
-        - TARGET=i586-unknown-linux-gnu
-        - TEST=1
-    # OSX
-    - name: "OSX x86_64"
-      os: osx
-      env:
-        - TARGET=x86_64-apple-darwin
-        - TEST=1
-    # ARM
-    - name: "32bit ARM"
-      os: linux
-      env:
-        - TARGET=armv7-unknown-linux-gnueabihf
-        - TEST=1
 script:
+  - cargo build --verbose
+  - cargo test --verbose
   - cargo fmt -- --check
-  - cross build --target $TARGET
-  - |
-    if [ $TEST = 1 ]; then
-      cross test --target $TARGET
-    fi
 after_success:
   - ./.travis_scripts/cmp-bench.sh
