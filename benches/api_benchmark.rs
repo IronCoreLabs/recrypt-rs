@@ -6,7 +6,7 @@ use criterion::Criterion;
 use recrypt::api::CryptoOps;
 use recrypt::api::Ed25519Ops;
 use recrypt::api::KeyGenOps;
-use recrypt::api::Recrypt as Api256;
+use recrypt::api::Recrypt;
 use recrypt::api_480::CryptoOps as CryptoOps480;
 use recrypt::api_480::Ed25519Ops as Ed25519Ops480;
 use recrypt::api_480::KeyGenOps as KeyGenOps480;
@@ -213,8 +213,8 @@ macro_rules! recrypt_bench {
     };
 }
 
-recrypt_bench! {api = Api480; suite_desc = criterion_benchmark_fp480; bits = "480"}
-recrypt_bench! {api = Api256; suite_desc = criterion_benchmark_fp256; bits = "256"}
+recrypt_bench! {api = Recrypt480; suite_desc = criterion_benchmark_fp480; bits = "480"}
+recrypt_bench! {api = Recrypt; suite_desc = criterion_benchmark_fp256; bits = "256"}
 
 criterion_group! {
     name = benches;
