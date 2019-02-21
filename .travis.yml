@@ -12,9 +12,43 @@ branches:
     - master
 before_script:
   - rustup component add rustfmt-preview
+  - cross --version || cargo install cross
+matrix:
+  include:
+    # Linux
+    - name: "Travis Default Environment"
+      os: linux
+      env:
+        - TEST=1
+    - name: "Alpine Linux x86_64"
+      os: linux
+      env:
+        - TARGET=x86_64-unknown-linux-musl
+        - TEST=0
+    # OSX
+    - name: "OSX x86_64"
+      os: osx
+      env:
+        - TARGET=x86_64-apple-darwin
+        - TEST=1
 script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - cargo fmt -- --check
+  # If not target specified, run a normal cargo build and format check
+  - |
+    if [ -z $TARGET ]; then
+      cargo build
+      cargo fmt -- --check
+    # Otherwise use cross to build for the specified argument
+    else
+      cross build --target $TARGET
+    fi
+    # Only run unit tests if architecture specifies that we should
+  - |
+    if [ $TEST = 1 ]; then
+      cross test --target $TARGET
+    fi
 after_success:
-  - ./.travis_scripts/cmp-bench.sh
+  # Only run our benchmarks once, we don't need them for every target
+  - |
+    if [ -z $TARGET ]; then
+      ./.travis_scripts/cmp-bench.sh
+    fi
