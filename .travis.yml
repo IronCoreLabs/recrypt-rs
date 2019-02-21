@@ -34,7 +34,7 @@ matrix:
 script:
   # If not target specified, run a normal cargo build and format check
   - |
-    if [ -z "$TARGET" ]; then
+    if [ -z "${TARGET}" ]; then
       cargo build
       cargo fmt -- --check
     # Otherwise use cross to build for the specified argument
