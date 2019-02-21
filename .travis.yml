@@ -37,10 +37,12 @@ matrix:
       env:
         - TARGET=aarch64-apple-ios
         - TEST=0
+        - APPLE=1
     - name: "iOS ARM7"
       os: "osx"
       env:
         - TARGET=armv7-apple-ios
+        - APPLE=1
     # Android
     - name: "Android x64"
       os: linux
@@ -53,17 +55,21 @@ matrix:
         - TARGET=armv7-linux-androideabi
         - TEST=0
 script:
-  # If not target specified, run a normal cargo build and format check
   - |
+    # If not target specified, run a normal cargo build and format check
     if [ -z "${TARGET}" ]; then
       cargo build
       cargo fmt -- --check
+    # Cross doesn't have support for ios/osx targets, so manually add/build them with cargo
+    elif [ $APPLE = 1 ]; then
+      rustup target add $TARGET
+      cargo build --target $TARGET
     # Otherwise use cross to build for the specified argument
     else
       cross build --target $TARGET
     fi
-    # Only run unit tests if architecture specifies that we should
   - |
+    # Only run unit tests if architecture specifies that we should
     if [ $TEST = 1 ]; then
       if [ -z "${TARGET}" ]; then
         cargo test
@@ -72,8 +78,8 @@ script:
       fi
     fi
 after_success:
-  # Only run our benchmarks once, we don't need them for every target
   - |
+    # Only run our benchmarks once, we don't need them for every target
     if [ -z "${TARGET}" ]; then
       ./.travis_scripts/cmp-bench.sh
     fi
