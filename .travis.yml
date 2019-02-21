@@ -35,7 +35,7 @@ script:
   # If not target specified, run a normal cargo build and format check
   - |
     if [ -z "${TARGET}" ]; then
-      cargo build
+      cargo build --verbose
       cargo fmt -- --check
     # Otherwise use cross to build for the specified argument
     else
@@ -44,7 +44,11 @@ script:
     # Only run unit tests if architecture specifies that we should
   - |
     if [ $TEST = 1 ]; then
-      cross test --target $TARGET
+      if [ -z "${TARGET}" ]; then
+        cargo test --verbose
+      else
+        cross test --target $TARGET
+      fi
     fi
 after_success:
   # Only run our benchmarks once, we don't need them for every target
