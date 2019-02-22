@@ -55,31 +55,6 @@ matrix:
         - TARGET=armv7-linux-androideabi
         - TEST=0
 script:
-  - |
-    # If not target specified, run a normal cargo build and format check
-    if [ -z "${TARGET}" ]; then
-      cargo build --verbose
-      cargo fmt -- --check
-    # Cross doesn't have support for ios targets, so manually add/build them with cargo
-    elif [ $IOS = 1 ]; then
-      rustup target add $TARGET
-      cargo build --target $TARGET
-    # Otherwise use cross to build for the specified argument
-    else
-      cross build --target $TARGET
-    fi
-  - |
-    # Only run unit tests if architecture specifies that we should
-    if [ $TEST = 1 ]; then
-      if [ -z "${TARGET}" ]; then
-        cargo test --verbose
-      else
-        cross test --target $TARGET
-      fi
-    fi
+  - ./.travis_scripts/cross-test.sh
 after_success:
-  - |
-    # Only run our benchmarks once, we don't need them for every target
-    if [ -z "${TARGET}" ]; then
-      ./.travis_scripts/cmp-bench.sh
-    fi
+  - ./.travis_scripts/cmp-bench.sh
