@@ -3,7 +3,7 @@
 set -e
 set -x
 
-if [ "${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}" != "master" ]; then
+if [ "${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}" != "master" ] && [ -z "${TARGET}" ]; then
     REMOTE_URL="$(git config --get remote.origin.url)"
     cargo install critcmp
 
