@@ -1107,7 +1107,7 @@ mod test {
     use proptest::arbitrary::any;
     use proptest::prelude::*;
     prop_compose! {
-        [pub] fn arb_fp256()(seed in any::<u32>()) -> fp_256::Monty {
+        pub fn arb_fp256()(seed in any::<u32>()) -> fp_256::Monty {
             if seed == 0 {
                 fp_256::Monty::zero()
             } else if seed == 1 {
@@ -1118,7 +1118,7 @@ mod test {
         }
     }
     prop_compose! {
-        [pub] fn arb_fp480()(seed in any::<u32>()) -> fp_480::Monty {
+        pub fn arb_fp480()(seed in any::<u32>()) -> fp_480::Monty {
             if seed == 0 {
                 fp_480::Monty::zero()
             } else if seed == 1 {
@@ -1866,13 +1866,13 @@ mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<fp_256::Monty> {
+        pub fn arb_pub_key()(ref hpoint in arb_homogeneous_256().prop_filter("", |a| !(*a == Zero::zero()))) -> PublicKey<fp_256::Monty> {
             PublicKey { value: (*hpoint) }
         }
     }
 
     prop_compose! {
-        [pub] fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<fp_256::Monty> {
+        pub fn arb_priv_key()(fp256 in arb_fp256().prop_filter("", |a| !(*a == Zero::zero()))) -> PrivateKey<fp_256::Monty> {
             PrivateKey { value: fp256 }
         }
     }

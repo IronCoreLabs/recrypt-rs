@@ -85,10 +85,6 @@
 //! constant time `PartialEq`, but until then secret API values (`Plaintext`, `PrivateKey`, `DerivedSymmetricKey`)
 //! have equality only when wrapped in the `Revealed` type.
 
-#[cfg(test)]
-#[macro_use]
-extern crate proptest; // shouldn't be needed in Rust 2018, but hoping proptest will better document how to import
-
 pub mod prelude;
 #[macro_use] // this is still required in Rust 2018
 mod internal; // this needs to come before `api` as api relies on macros defined in `internal`

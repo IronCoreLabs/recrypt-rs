@@ -113,6 +113,7 @@ macro_rules! field_proptest {
             use crate::internal::fp2elem::test::*;
             use crate::internal::fp12elem::test::*;
             use crate::internal::fp6elem::test::*;
+            use proptest::prelude::*;
 
             proptest! {
                 #[test]

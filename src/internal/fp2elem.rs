@@ -407,7 +407,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_fp2()(e1 in arb_fp256(), e2 in arb_fp256()) -> Fp2Elem<fp_256::Monty> {
+        pub fn arb_fp2()(e1 in arb_fp256(), e2 in arb_fp256()) -> Fp2Elem<fp_256::Monty> {
             Fp2Elem {
                 elem1: e1,
                 elem2: e2
@@ -416,7 +416,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_fp2_480()(e1 in arb_fp480(), e2 in arb_fp480()) -> Fp2Elem<fp_480::Monty> {
+        pub fn arb_fp2_480()(e1 in arb_fp480(), e2 in arb_fp480()) -> Fp2Elem<fp_480::Monty> {
             Fp2Elem {
                 elem1: e1,
                 elem2: e2
