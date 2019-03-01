@@ -8,8 +8,9 @@
 //!
 //! ## Basic Encrypt/Decrypt Example
 //! ```
+//! use recrypt::prelude::*;
 //! use recrypt::Revealed;
-//! use recrypt::api::*;
+//!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();
 //!
@@ -34,8 +35,9 @@
 //! Encrypt a message to public key `initial_pub_key` and decrypt it with `target_priv_key`
 //! after transforming the encrypted message.
 //! ```
+//! use recrypt::prelude::*;
 //! use recrypt::Revealed;
-//! use recrypt::api::*;
+//!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();
 //!
@@ -62,7 +64,7 @@
 //!     &signing_keypair).unwrap();
 //!
 //! // Transform the plaintext to be encrypted to the target!
-//! // The data is _not_ be decrypted here. Simply transformed!
+//! // The data is _not_ decrypted here. Simply transformed!
 //! let transformed_val = recrypt.transform(
 //!     encrypted_val,
 //!     initial_to_target_transform_key,
@@ -87,6 +89,7 @@
 #[macro_use]
 extern crate proptest; // shouldn't be needed in Rust 2018, but hoping proptest will better document how to import
 
+pub mod prelude;
 #[macro_use] // this is still required in Rust 2018
 mod internal; // this needs to come before `api` as api relies on macros defined in `internal`
 pub mod api;
