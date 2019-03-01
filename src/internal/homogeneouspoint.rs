@@ -757,7 +757,7 @@ pub mod test {
     );
 
     prop_compose! {
-        [pub] fn arb_homogeneous_fp2_256()(seed in any::<u32>()) -> TwistedHPoint<Monty256> {
+        pub fn arb_homogeneous_fp2_256()(seed in any::<u32>()) -> TwistedHPoint<Monty256> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
@@ -769,7 +769,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_256()(seed in any::<u32>()) -> HomogeneousPoint<Monty256> {
+        pub fn arb_homogeneous_256()(seed in any::<u32>()) -> HomogeneousPoint<Monty256> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
@@ -781,7 +781,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_fp2_480()(seed in any::<u32>()) -> TwistedHPoint<Monty480> {
+        pub fn arb_homogeneous_fp2_480()(seed in any::<u32>()) -> TwistedHPoint<Monty480> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
@@ -793,7 +793,7 @@ pub mod test {
     }
 
     prop_compose! {
-        [pub] fn arb_homogeneous_480()(seed in any::<u32>()) -> HomogeneousPoint<Monty480> {
+        pub fn arb_homogeneous_480()(seed in any::<u32>()) -> HomogeneousPoint<Monty480> {
             if seed == 0 {
                 Zero::zero()
             } else if seed == 1 {
