@@ -113,6 +113,10 @@ Our implementation was guided by the following papers:
 And by the book:
 _Guide to Pairing-Based Cryptography_ by N.E. Mrabet and M. Joye, Chapman and Hall/CRC Cryptography and Network Security Series, 2016.
 
+## Code Audit
+
+NCC Group has conducted an audit of this library - release [0.6.2](https://github.com/IronCoreLabs/recrypt-rs/releases/tag/0.6.2) contains all of the audited code, including updates that were created to resolve issues that were discovered during the audit. The NCC Group audit found that the chosen pairing and elliptic curve are cryptographically sound, and that the Rust implementation is a faithful and correct embodiment of the target protocol. In addition, the audit confirmed that the implementation does not leak secret information via timing or memory access pattern side-channel attacks.
+
 # License
 
 Recrypt-rust is licensed under the [GNU Affero General Public License](LICENSE).
