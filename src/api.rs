@@ -74,6 +74,13 @@ impl PartialEq for Revealed<DerivedSymmetricKey> {
     }
 }
 
+impl DerivedSymmetricKey {
+    /// Convert this DerivedSymmetricKey to a PrivateKey
+    pub fn to_private_key(self) -> PrivateKey {
+        PrivateKey::new(self.bytes)
+    }
+}
+
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
 /// It is a hash of the plaintext.
@@ -641,7 +648,7 @@ pub trait SchnorrOps {
     fn schnorr_sign<A: Hashable>(
         &mut self,
         priv_key: &PrivateKey,
-        pub_key: PublicKey,
+        pub_key: &PublicKey,
         message: &A,
     ) -> SchnorrSignature;
 
@@ -654,7 +661,7 @@ pub trait SchnorrOps {
     /// - `signature` - The signature that was generated from `schnorr_sign`.
     fn schnorr_verify<A: Hashable>(
         &self,
-        pub_key: PublicKey,
+        pub_key: &PublicKey,
         augmenting_priv_key: Option<&PrivateKey>,
         message: &A,
         signature: SchnorrSignature,
@@ -667,7 +674,7 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
     fn schnorr_sign<A: Hashable>(
         &mut self,
         priv_key: &PrivateKey,
-        pub_key: PublicKey,
+        pub_key: &PublicKey,
         message: &A,
     ) -> SchnorrSignature {
         let k = Fr256::from_rand_no_bias(&mut self.random_bytes);
@@ -679,7 +686,7 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
 
     fn schnorr_verify<A: Hashable>(
         &self,
-        pub_key: PublicKey,
+        pub_key: &PublicKey,
         augmenting_priv_key: Option<&PrivateKey>,
         message: &A,
         signature: SchnorrSignature,
@@ -734,7 +741,7 @@ pub trait KeyGenOps {
     fn generate_transform_key(
         &mut self,
         from_private_key: &PrivateKey,
-        to_public_key: PublicKey,
+        to_public_key: &PublicKey,
         signing_keypair: &SigningKeypair,
     ) -> Result<TransformKey>;
 }
@@ -762,7 +769,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recry
     fn generate_transform_key(
         &mut self,
         from_private_key: &PrivateKey,
-        to_public_key: PublicKey,
+        to_public_key: &PublicKey,
         signing_keypair: &SigningKeypair,
     ) -> Result<TransformKey> {
         let ephem_reencryption_private_key = self.random_private_key();
@@ -813,7 +820,7 @@ pub trait CryptoOps {
     fn encrypt(
         &mut self,
         plaintext: &Plaintext,
-        to_public_key: PublicKey,
+        to_public_key: &PublicKey,
         signing_keypair: &SigningKeypair,
     ) -> Result<EncryptedValue>;
 
@@ -861,7 +868,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
     fn encrypt(
         &mut self,
         plaintext: &Plaintext,
-        to_public_key: PublicKey,
+        to_public_key: &PublicKey,
         signing_keypair: &SigningKeypair,
     ) -> Result<EncryptedValue> {
         //generate a ephemeral private key
@@ -1151,8 +1158,8 @@ pub(crate) mod test {
         let (aug_private_key, aug_pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8];
         let augmented_pub = pub_key.augment(&aug_pub_key).unwrap();
-        let sig = api.schnorr_sign(&private_key, augmented_pub, &message);
-        let result = api.schnorr_verify(augmented_pub, Some(&aug_private_key), &message, sig);
+        let sig = api.schnorr_sign(&private_key, &augmented_pub, &message);
+        let result = api.schnorr_verify(&augmented_pub, Some(&aug_private_key), &message, sig);
         assert!(result);
     }
     #[test]
@@ -1160,8 +1167,8 @@ pub(crate) mod test {
         let mut api = Recrypt::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8, 3u8, 4u8];
-        let sig = api.schnorr_sign(&private_key, pub_key, &message);
-        let result = api.schnorr_verify(pub_key, None, &message, sig);
+        let sig = api.schnorr_sign(&private_key, &pub_key, &message);
+        let result = api.schnorr_verify(&pub_key, None, &message, sig);
         assert!(result);
     }
 
@@ -1262,7 +1269,7 @@ pub(crate) mod test {
         let mut api = Recrypt::new();
         let signing_key = ed25519::test::good_signing_keypair();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
-        api.generate_transform_key(&master_priv, master_pub, &signing_key)
+        api.generate_transform_key(&master_priv, &master_pub, &signing_key)
             .unwrap()
     }
 
@@ -1328,7 +1335,7 @@ pub(crate) mod test {
         let (priv_key, pub_key) = api.generate_key_pair().unwrap();
         let priv_signing_key = api.generate_ed25519_key_pair();
 
-        let encrypted_val = api.encrypt(&pt, pub_key, &priv_signing_key).unwrap();
+        let encrypted_val = api.encrypt(&pt, &pub_key, &priv_signing_key).unwrap();
 
         let decrypted_val = api.decrypt(encrypted_val, &priv_key).unwrap();
 
@@ -1358,9 +1365,9 @@ pub(crate) mod test {
 
         let plaintext = api.gen_plaintext();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
-        let enc_value = api.encrypt(&plaintext, master_pub, &signing_key).unwrap();
+        let enc_value = api.encrypt(&plaintext, &master_pub, &signing_key).unwrap();
         let master_to_master_transform_key = api
-            .generate_transform_key(&master_priv, master_pub, &signing_key)
+            .generate_transform_key(&master_priv, &master_pub, &signing_key)
             .unwrap();
         let transformed_value = api
             .transform(enc_value, master_to_master_transform_key, &signing_key)
@@ -1377,9 +1384,9 @@ pub(crate) mod test {
         let pt = api.gen_plaintext();
         let (master_private_key, master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
-        let encrypted_msg = api.encrypt(&pt, master_public_key, &signing_key).unwrap();
+        let encrypted_msg = api.encrypt(&pt, &master_public_key, &signing_key).unwrap();
         let master_to_device_transform_key = api
-            .generate_transform_key(&master_private_key, device_public_key, &signing_key)
+            .generate_transform_key(&master_private_key, &device_public_key, &signing_key)
             .unwrap();
 
         let transformed_msg = api
@@ -1399,9 +1406,9 @@ pub(crate) mod test {
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let (server_private, server_public) = api.generate_key_pair().unwrap();
         let master_public_key = client_generated_pub.augment(&server_public).unwrap();
-        let encrypted_msg = api.encrypt(&pt, master_public_key, &signing_key).unwrap();
+        let encrypted_msg = api.encrypt(&pt, &master_public_key, &signing_key).unwrap();
         let master_to_device_transform_key = api
-            .generate_transform_key(&master_private_key, device_public_key, &signing_key)
+            .generate_transform_key(&master_private_key, &device_public_key, &signing_key)
             .unwrap();
         let augmented_transform_key = master_to_device_transform_key
             .augment(&server_private)
@@ -1424,20 +1431,20 @@ pub(crate) mod test {
         let (user_master_private_key, user_master_public_key) = api.generate_key_pair().unwrap();
         let (device_private_key, device_public_key) = api.generate_key_pair().unwrap();
         let encrypted_msg = api
-            .encrypt(&pt, group_master_public_key, &signing_key)
+            .encrypt(&pt, &group_master_public_key, &signing_key)
             .unwrap();
 
         // now create two transform keys. Group -> User -> Device (arrows are the transform keys)
         let group_to_user_transform_key = api
             .generate_transform_key(
                 &group_master_private_key,
-                user_master_public_key,
+                &user_master_public_key,
                 &signing_key,
             )
             .unwrap();
 
         let user_to_device_transform_key = api
-            .generate_transform_key(&user_master_private_key, device_public_key, &signing_key)
+            .generate_transform_key(&user_master_private_key, &device_public_key, &signing_key)
             .unwrap();
 
         let transformed_to_user = api
@@ -1527,6 +1534,22 @@ pub(crate) mod test {
         )
     }
 
+    #[test]
+    fn private_key_new_from_slice() {
+        let mut rand_bytes = DummyRandomBytes;
+        let input: [u8; 32] = rand_bytes.random_bytes_32();
+        let slice: &[u8] = &input;
+        let from_fixed = PrivateKey::new(input);
+        let from_slice = PrivateKey::new_from_slice(slice);
+
+        assert_eq!(from_fixed, from_slice.unwrap());
+
+        assert_eq!(
+            RecryptErr::InputWrongSize("PrivateKey", 32),
+            PrivateKey::new_from_slice(&input[..30]).unwrap_err()
+        )
+    }
+
     // note that this doesn't show that Drop is working properly, just that clear does
     #[test]
     fn private_key_clear() {
@@ -1535,4 +1558,5 @@ pub(crate) mod test {
         assert_eq!(priv_key.bytes(), &[0u8; 32]);
         assert_eq!(priv_key._internal_key, Default::default())
     }
+
 }
