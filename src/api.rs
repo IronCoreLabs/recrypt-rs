@@ -1558,5 +1558,4 @@ pub(crate) mod test {
         assert_eq!(priv_key.bytes(), &[0u8; 32]);
         assert_eq!(priv_key._internal_key, Default::default())
     }
-
 }

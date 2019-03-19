@@ -75,6 +75,13 @@ impl PartialEq for Revealed<DerivedSymmetricKey> {
     }
 }
 
+impl DerivedSymmetricKey {
+    /// Convert this DerivedSymmetricKey to a PrivateKey
+    pub fn to_private_key(self) -> PrivateKey {
+        PrivateKey::new(self.bytes)
+    }
+}
+
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
 /// It is a hash of the plaintext.
@@ -1472,6 +1479,22 @@ pub(crate) mod test {
         assert_eq!(
             RecryptErr::InputWrongSize("PublicKey", 120),
             PublicKey::new_from_slice((&input.0[..30], &input.1[..32])).unwrap_err()
+        )
+    }
+
+    #[test]
+    fn private_key_new_from_slice() {
+        let mut rand_bytes = DummyRandomBytes;
+        let input: [u8; 32] = rand_bytes.random_bytes_32();
+        let slice: &[u8] = &input;
+        let from_fixed = PrivateKey::new(input);
+        let from_slice = PrivateKey::new_from_slice(slice);
+
+        assert_eq!(from_fixed, from_slice.unwrap());
+
+        assert_eq!(
+            RecryptErr::InputWrongSize("PrivateKey", 32),
+            PrivateKey::new_from_slice(&input[..30]).unwrap_err()
         )
     }
 
