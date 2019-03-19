@@ -868,8 +868,8 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
         let mut result_bytes = [0u8; 60];
         //we're defining the mapping of plaintext to private key as 0 and plaintext hashed combined with 1 and plaintext hashed.
         //We then chop it to 60 and let the mod happen in the private key constructor.
-        result_bytes[0..32].copy_from_slice(&self.sha_256.hash(&(&0u8, plaintext)));
-        result_bytes[32..60].copy_from_slice(&self.sha_256.hash(&(&1u8, plaintext))[0..28]);
+        result_bytes[0..28].copy_from_slice(&self.sha_256.hash(&(&0u8, plaintext))[4..32]);
+        result_bytes[28..60].copy_from_slice(&self.sha_256.hash(&(&1u8, plaintext))[0..32]);
         PrivateKey::new(result_bytes)
     }
 
