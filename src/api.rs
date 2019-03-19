@@ -74,13 +74,6 @@ impl PartialEq for Revealed<DerivedSymmetricKey> {
     }
 }
 
-impl DerivedSymmetricKey {
-    /// Convert this DerivedSymmetricKey to a PrivateKey
-    pub fn to_private_key(self) -> PrivateKey {
-        PrivateKey::new(self.bytes)
-    }
-}
-
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
 /// It is a hash of the plaintext.
@@ -802,11 +795,12 @@ pub trait CryptoOps {
     fn gen_plaintext(&mut self) -> Plaintext;
 
     /// Convert our plaintext into a DecryptedSymmetricKey by hashing it.
+    /// Typically you either use `derive_private_key` or `derive_symmetric_key` but not both.
     fn derive_symmetric_key(&self, decrypted_value: &Plaintext) -> DerivedSymmetricKey;
 
-    ///Compute the stable hash of a value. This can be used to hash a Plaintext into a symmetric key or to generate a
-    ///PrivateKey from a Plaintext which you're encrypting to someone else.
-    fn hash_256<T: Hashable>(&self, to_hash: &T) -> [u8; 32];
+    ///Derive a private key for a plaintext by hashing it and modding it by the prime.
+    ///Typically you either use `derive_private_key` or `derive_symmetric_key` but not both.
+    fn derive_private_key(&self, plaintext: &Plaintext) -> PrivateKey;
 
     /// Encrypt the plaintext to the `to_public_key`.
     ///
@@ -858,11 +852,11 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
     }
 
     fn derive_symmetric_key(&self, decrypted_value: &Plaintext) -> DerivedSymmetricKey {
-        DerivedSymmetricKey::new(self.hash_256(decrypted_value))
+        DerivedSymmetricKey::new(self.sha_256.hash(decrypted_value))
     }
 
-    fn hash_256<T: Hashable>(&self, to_hash: &T) -> [u8; 32] {
-        self.sha_256.hash(to_hash)
+    fn derive_private_key(&self, plaintext: &Plaintext) -> PrivateKey {
+        PrivateKey::new(self.sha_256.hash(plaintext))
     }
 
     fn encrypt(
@@ -1355,6 +1349,24 @@ pub(crate) mod test {
         let expected_result = DerivedSymmetricKey::new(dest);
         let result = Recrypt::new().derive_symmetric_key(&pt);
         assert_eq!(Revealed(expected_result), Revealed(result))
+    }
+
+    #[test]
+    ///This test is meant to show that if the top byte is too large the private key and derived symmetric key might actually be different.
+    fn derive_known_symmetric_key_not_same_bytes_as_private_key() {
+        let api = Recrypt::default();
+        let bytes = hex::decode("34f36d6fb086b38435823c96f016fc8e41c7ab39c1abb02a773333b88f8d1f1409289fccaa485629e15d3273768e2a039368c68dc5873353b5c18a2d0eb02adf04519ded7fc4bd07c2b405b8f9075b96be28915f793f3e90b3e5488f20c666ff00839462c603d7f1f9d5c86556a0590bc2a76fb5d2d6dc2afa53fb5470af3a5521dd82ee76290502a84a0bc5e7e37b183332dc761fb808b8e7ba138cbee30a802f9257b5f2117452025a1e92e45b9624ad29f46db639f223e7c067e1fdb3c93d4f55165a15ec90451272325f19678f2d3e6230736916ec562fbda94f920d5149506b7efe1211ac62e826f1b8d2f8c41f10c1cf4d53a7222d5124b536c3707b0b86198131f9f4ef2cfdf7ff9d13bc6b6e21f8e0a337a0acda48055d10143381760e783473a14153b371b1147c18852acb4af0a3d4d9dd7e738b04e7cd0c0a6b5a1b826f3aa4817cfab2ccb73ab03258e42b7baa54cde8a903de4d3a6b8c7742e92b9976fdf64c496dab1d143f4d65bc86d9f8f6e3ee38e97da3faa8bbdf461688").unwrap();
+        let pt = Plaintext::from(Fp12Elem::decode(bytes).unwrap());
+        let src = &hex::decode("cd1b366b2575f2a69390c51b3b1e0c3e2eace761e0a4cee2a1895175071f6700")
+            .unwrap()[..];
+        let mut dest: [u8; 32] = [0u8; 32];
+        dest.copy_from_slice(src);
+        let expected_result = DerivedSymmetricKey::new(dest);
+        let result = api.derive_symmetric_key(&pt);
+        assert_eq!(Revealed(expected_result), Revealed(result));
+        //This hashes, but also mods the value.
+        let private_key_result = api.derive_private_key(&pt);
+        assert_ne!(private_key_result.bytes(), result.bytes());
     }
 
     use std::default::Default;

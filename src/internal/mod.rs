@@ -1863,41 +1863,6 @@ mod test {
 
             prop_assert_eq!(signed_re_key.payload.to_bytes(), re_key_copy.to_bytes())
         }
-
-        #[test]
-        fn derived_sym_key_to_priv_key(fp256 in arb_fp256()) {
-            // two cases to consider here
-            // CASE 1: bytes that are not larger p
-            let raw_bytes: [u8; 32] = fp256.to_norm().to_bytes_array();
-            let private_key_from_raw = api::PrivateKey::new(raw_bytes);
-            let dsk_from_raw = api::DerivedSymmetricKey::new(raw_bytes);
-            let private_key_from_dsk = dsk_from_raw.to_private_key();
-
-            // an fp256 always converts straight into a private key
-            // and all byte representations remain the same
-            assert_eq!(&raw_bytes, private_key_from_raw.bytes());
-            assert_eq!(dsk_from_raw.bytes(), private_key_from_dsk.bytes());
-            assert_eq!(private_key_from_raw.bytes(), private_key_from_dsk.bytes());
-
-            // CASE 2: bytes that are larger than p
-            // let's make sure these values are all bigger than p.
-            let mut not_in_fp = raw_bytes;
-            not_in_fp[0] |= 144; // p starts with 0x8f, so with a top byte bigger than 0x90 (144) should cause modding by p
-
-            // do the same set of calculations for private key and dsk
-            let private_key_from_not_in_fp = api::PrivateKey::new(not_in_fp);
-            let dsk_from_not_in_fp = api::DerivedSymmetricKey::new(not_in_fp);
-            let private_key_from_dsk_2 = dsk_from_not_in_fp.to_private_key();
-
-            // a private key's byte representation is no longer equal to the bytes it came from
-            assert_ne!(&not_in_fp, private_key_from_not_in_fp.bytes());
-            // a derived symmetric key just a wrapper around 32 bytes. It's not affected by 'mod p'
-            // so the byte representation of a private key derived from a dsk and the dsk bytes will differ
-            assert_ne!(dsk_from_not_in_fp.bytes(), private_key_from_dsk_2.bytes());
-            // but whether the private key came straight from bytes or via a dsk,
-            // the resultant private keys should be the same
-            assert_eq!(private_key_from_not_in_fp.bytes(), private_key_from_dsk_2.bytes())
-        }
     }
 
     prop_compose! {

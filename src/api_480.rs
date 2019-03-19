@@ -807,9 +807,9 @@ pub trait CryptoOps {
     /// Convert our plaintext into a DecryptedSymmetricKey by hashing it.
     fn derive_symmetric_key(&self, decrypted_value: &Plaintext) -> DerivedSymmetricKey;
 
-    ///Compute the stable hash of a value. This can be used to hash a Plaintext into a symmetric key or to generate a
-    ///PrivateKey from a Plaintext which you're encrypting to someone else.
-    fn hash_256<T: Hashable>(&self, to_hash: &T) -> [u8; 32];
+    ///Derive a private key for a plaintext by hashing it twice (with known leading bytes) and modding it by the prime.
+    ///Typically you either use `derive_private_key` or `derive_symmetric_key` but not both.
+    fn derive_private_key(&self, plaintext: &Plaintext) -> PrivateKey;
 
     /// Encrypt the plaintext to the `to_public_key`.
     ///
@@ -861,12 +861,18 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
     }
 
     fn derive_symmetric_key(&self, decrypted_value: &Plaintext) -> DerivedSymmetricKey {
-        DerivedSymmetricKey::new(self.hash_256(decrypted_value))
+        DerivedSymmetricKey::new(self.sha_256.hash(decrypted_value))
     }
 
-    fn hash_256<T: Hashable>(&self, to_hash: &T) -> [u8; 32] {
-        self.sha_256.hash(to_hash)
+    fn derive_private_key(&self, plaintext: &Plaintext) -> PrivateKey {
+        let mut result_bytes = [0u8; 60];
+        //we're defining the mapping of plaintext to private key as 0 and plaintext hashed combined with 1 and plaintext hashed.
+        //We then chop it to 60 and let the mod happen in the private key constructor.
+        result_bytes[0..32].copy_from_slice(&self.sha_256.hash(&(&0u8,plaintext)));
+        result_bytes[32..60].copy_from_slice(&self.sha_256.hash(&(&1u8,plaintext))[0..28]);
+        PrivateKey::new(result_bytes)
     }
+
 
     fn encrypt(
         &mut self,
