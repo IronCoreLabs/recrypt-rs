@@ -75,12 +75,14 @@ impl PartialEq for Revealed<DerivedSymmetricKey> {
     }
 }
 
-impl DerivedSymmetricKey {
-    /// Convert this DerivedSymmetricKey to a PrivateKey
-    pub fn to_private_key(self) -> PrivateKey {
-        PrivateKey::new(self.bytes)
-    }
-}
+// Not implemented for now
+
+//impl DerivedSymmetricKey {
+//    /// Convert this DerivedSymmetricKey to a PrivateKey
+//    pub fn to_private_key(self) -> PrivateKey {
+//        PrivateKey::new(self.bytes)
+//    }
+//}
 
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
@@ -1485,7 +1487,7 @@ pub(crate) mod test {
     #[test]
     fn private_key_new_from_slice() {
         let mut rand_bytes = DummyRandomBytes;
-        let input: [u8; 32] = rand_bytes.random_bytes_32();
+        let input: [u8; 60] = rand_bytes.random_bytes_60();
         let slice: &[u8] = &input;
         let from_fixed = PrivateKey::new(input);
         let from_slice = PrivateKey::new_from_slice(slice);
