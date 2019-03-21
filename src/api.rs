@@ -1357,6 +1357,7 @@ pub(crate) mod test {
         let api = Recrypt::default();
         let bytes = hex::decode("34f36d6fb086b38435823c96f016fc8e41c7ab39c1abb02a773333b88f8d1f1409289fccaa485629e15d3273768e2a039368c68dc5873353b5c18a2d0eb02adf04519ded7fc4bd07c2b405b8f9075b96be28915f793f3e90b3e5488f20c666ff00839462c603d7f1f9d5c86556a0590bc2a76fb5d2d6dc2afa53fb5470af3a5521dd82ee76290502a84a0bc5e7e37b183332dc761fb808b8e7ba138cbee30a802f9257b5f2117452025a1e92e45b9624ad29f46db639f223e7c067e1fdb3c93d4f55165a15ec90451272325f19678f2d3e6230736916ec562fbda94f920d5149506b7efe1211ac62e826f1b8d2f8c41f10c1cf4d53a7222d5124b536c3707b0b86198131f9f4ef2cfdf7ff9d13bc6b6e21f8e0a337a0acda48055d10143381760e783473a14153b371b1147c18852acb4af0a3d4d9dd7e738b04e7cd0c0a6b5a1b826f3aa4817cfab2ccb73ab03258e42b7baa54cde8a903de4d3a6b8c7742e92b9976fdf64c496dab1d143f4d65bc86d9f8f6e3ee38e97da3faa8bbdf461688").unwrap();
         let pt = Plaintext::from(Fp12Elem::decode(bytes).unwrap());
+        //This is a manually computed symmetric key based on the above plaintext (which was chosen because this value is greater than P)
         let src = &hex::decode("cd1b366b2575f2a69390c51b3b1e0c3e2eace761e0a4cee2a1895175071f6700")
             .unwrap()[..];
         let mut dest: [u8; 32] = [0u8; 32];
@@ -1364,7 +1365,7 @@ pub(crate) mod test {
         let expected_result = DerivedSymmetricKey::new(dest);
         let result = api.derive_symmetric_key(&pt);
         assert_eq!(Revealed(expected_result), Revealed(result));
-        //This hashes, but also mods the value.
+        //This hashes, but also mods the value so it's not the same.
         let private_key_result = api.derive_private_key(&pt);
         assert_ne!(private_key_result.bytes(), result.bytes());
     }

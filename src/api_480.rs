@@ -75,15 +75,6 @@ impl PartialEq for Revealed<DerivedSymmetricKey> {
     }
 }
 
-// Not implemented for now
-
-//impl DerivedSymmetricKey {
-//    /// Convert this DerivedSymmetricKey to a PrivateKey
-//    pub fn to_private_key(self) -> PrivateKey {
-//        PrivateKey::new(self.bytes)
-//    }
-//}
-
 /// A value included in an encrypted message that can be used when the message is decrypted
 /// to ensure that you got the same value out as the one that was originally encrypted.
 /// It is a hash of the plaintext.
