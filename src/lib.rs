@@ -22,7 +22,7 @@
 //! let signing_keypair = recrypt.generate_ed25519_key_pair();
 //!
 //! // encrypt!
-//! let encrypted_val = recrypt.encrypt(&pt, pub_key, &signing_keypair).unwrap();
+//! let encrypted_val = recrypt.encrypt(&pt, &pub_key, &signing_keypair).unwrap();
 //!
 //! // decrypt!
 //! let decrypted_val = recrypt.decrypt(encrypted_val, &priv_key).unwrap();
@@ -51,7 +51,7 @@
 //! let (initial_priv_key, initial_pub_key) = recrypt.generate_key_pair().unwrap();
 //!
 //! // encrypt the data to `initial_pub_key`!
-//! let encrypted_val = recrypt.encrypt(&pt, initial_pub_key, &signing_keypair).unwrap();
+//! let encrypted_val = recrypt.encrypt(&pt, &initial_pub_key, &signing_keypair).unwrap();
 //!
 //! // generate a second public/private keypair as the target of the transform.
 //! // after applying the transform, `target_priv_key` will be able to decrypt the data!
@@ -60,7 +60,7 @@
 //! // generate a transform key that will change which private key can decrypt the data
 //! let initial_to_target_transform_key = recrypt.generate_transform_key(
 //!     &initial_priv_key,
-//!     target_pub_key,
+//!     &target_pub_key,
 //!     &signing_keypair).unwrap();
 //!
 //! // Transform the plaintext to be encrypted to the target!

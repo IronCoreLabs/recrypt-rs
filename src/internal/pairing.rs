@@ -434,7 +434,6 @@ mod test {
 
     #[test]
     fn monty_pair_match_known_good_value() {
-        println!("{:?}", fp_256::Monty::one());
         // matches values verified by recrypt-scala
         let expected_good_result = Fp12Elem::create_from_t(
             //20621517740542501009268492188240231175004875885443969425948886451683622135253

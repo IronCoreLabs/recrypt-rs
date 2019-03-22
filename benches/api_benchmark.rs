@@ -44,7 +44,7 @@ macro_rules! recrypt_bench {
                     },
                     |(from, to)| {
                         api.borrow_mut()
-                            .generate_transform_key(&from, to, &signing_keypair)
+                            .generate_transform_key(&from, &to, &signing_keypair)
                             .unwrap();
                     },
                 );
@@ -77,7 +77,7 @@ macro_rules! recrypt_bench {
                     || api.borrow_mut().gen_plaintext(),
                     |pt| {
                         api.borrow_mut()
-                            .encrypt(&pt, pbk, &signing_keypair)
+                            .encrypt(&pt, &pbk, &signing_keypair)
                             .unwrap();
                     },
                 );
@@ -88,7 +88,7 @@ macro_rules! recrypt_bench {
                 let (pvk, pbk) = api.generate_key_pair().unwrap();
                 let signing_keypair = api.generate_ed25519_key_pair();
                 let pt = api.gen_plaintext();
-                let encrypted_value = api.encrypt(&pt, pbk, &signing_keypair).unwrap();
+                let encrypted_value = api.encrypt(&pt, &pbk, &signing_keypair).unwrap();
                 b.iter(|| api.decrypt(encrypted_value.clone(), &pvk).unwrap());
             });
 
@@ -99,13 +99,13 @@ macro_rules! recrypt_bench {
                 let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
                 let tk = api
                     .borrow_mut()
-                    .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
+                    .generate_transform_key(&level_0_pvk, &level_1_pbk, &signing_keypair)
                     .unwrap();
                 b.iter_with_setup(
                     || {
                         let pt = api.borrow_mut().gen_plaintext();
                         api.borrow_mut()
-                            .encrypt(&pt, level_0_pbk, &signing_keypair)
+                            .encrypt(&pt, &level_0_pbk, &signing_keypair)
                             .unwrap()
                     },
                     |ev| {
@@ -123,14 +123,14 @@ macro_rules! recrypt_bench {
                 let (level_1_pvk, level_1_pbk) = api.borrow_mut().generate_key_pair().unwrap();
                 let tk = api
                     .borrow_mut()
-                    .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
+                    .generate_transform_key(&level_0_pvk, &level_1_pbk, &signing_keypair)
                     .unwrap();
                 b.iter_with_setup(
                     || {
                         let pt = api.borrow_mut().gen_plaintext();
                         let ev = api
                             .borrow_mut()
-                            .encrypt(&pt, level_0_pbk, &signing_keypair)
+                            .encrypt(&pt, &level_0_pbk, &signing_keypair)
                             .unwrap();
                         api.borrow_mut()
                             .transform(ev, tk.clone(), &signing_keypair)
@@ -150,17 +150,17 @@ macro_rules! recrypt_bench {
                 let signing_keypair = api.borrow_mut().generate_ed25519_key_pair();
                 let tk_0_to_1 = api
                     .borrow_mut()
-                    .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
+                    .generate_transform_key(&level_0_pvk, &level_1_pbk, &signing_keypair)
                     .unwrap();
                 let tk_1_to_2 = api
                     .borrow_mut()
-                    .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
+                    .generate_transform_key(&level_1_pvk, &level_2_pbk, &signing_keypair)
                     .unwrap();
                 b.iter_with_setup(
                     || {
                         let pt = api.borrow_mut().gen_plaintext();
                         api.borrow_mut()
-                            .encrypt(&pt, level_0_pbk, &signing_keypair)
+                            .encrypt(&pt, &level_0_pbk, &signing_keypair)
                             .unwrap()
                     },
                     |ev| {
@@ -183,18 +183,18 @@ macro_rules! recrypt_bench {
                 let (level_2_pvk, level_2_pbk) = api.borrow_mut().generate_key_pair().unwrap();
                 let tk_0_to_1 = api
                     .borrow_mut()
-                    .generate_transform_key(&level_0_pvk, level_1_pbk, &signing_keypair)
+                    .generate_transform_key(&level_0_pvk, &level_1_pbk, &signing_keypair)
                     .unwrap();
                 let tk_1_to_2 = api
                     .borrow_mut()
-                    .generate_transform_key(&level_1_pvk, level_2_pbk, &signing_keypair)
+                    .generate_transform_key(&level_1_pvk, &level_2_pbk, &signing_keypair)
                     .unwrap();
                 b.iter_with_setup(
                     || {
                         let pt = api.borrow_mut().gen_plaintext();
                         let ev_to_0 = api
                             .borrow_mut()
-                            .encrypt(&pt, level_0_pbk, &signing_keypair)
+                            .encrypt(&pt, &level_0_pbk, &signing_keypair)
                             .unwrap();
                         let ev_to_1 = api
                             .borrow_mut()
