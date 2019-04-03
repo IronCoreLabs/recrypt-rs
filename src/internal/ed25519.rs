@@ -44,14 +44,21 @@ quick_error! {
     }
 }
 
-// we don't derive Copy or Clone here on purpose. SigningKeypair is a sensitive value and
+// We don't derive Copy here on purpose. SigningKeypair is a sensitive value and
 // should be passed by reference to avoid needless duplication
 /// The first 32 bytes of this are the Secret Ed25519 key and the 2nd 32 bytes are the Compressed Y form
 /// of the public key.
+#[derive(Clone)]
 pub struct SigningKeypair {
     pub(crate) bytes: [u8; 64],
 }
 bytes_only_debug!(SigningKeypair);
+
+impl From<SigningKeypair> for [u8; 64] {
+    fn from(t: SigningKeypair) -> Self {
+        t.bytes
+    }
+}
 
 impl SigningKeypair {
     const ENCODED_SIZE_BYTES: usize = 64;
@@ -225,5 +232,17 @@ pub(crate) mod test {
         let error2 = SigningKeypair::from_byte_slice(&[0u8; 64])
             .expect_err("Public key error should happen.");
         assert_eq!(error2, Ed25519Error::PublicKeyInvalid([0u8; 32]))
+    }
+
+    #[test]
+    fn signing_keypair_into_bytes() {
+        let sec_key = SecretKey::from_bytes(&[1; 32]).unwrap();
+        let dalek_pub_key = ed25519_dalek::PublicKey::from(&sec_key);
+        let key_pair = SigningKeypair {
+            bytes: array_concat_32(&sec_key.to_bytes(), &dalek_pub_key.to_bytes()),
+        };
+        let key_pair_bytes = key_pair.bytes().clone();
+        let bytes: [u8; 64] = key_pair.into();
+        assert_eq!(key_pair_bytes[..], bytes[..])
     }
 }
