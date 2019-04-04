@@ -33,6 +33,15 @@ where
     }
 }
 
+impl<T> Hashable for &[T]
+where
+    T: Hashable,
+{
+    fn to_bytes(&self) -> ByteVector {
+        <[T] as Hashable>::to_bytes(self)
+    }
+}
+
 impl<T> Hashable for Vec<T>
 where
     T: Hashable,
@@ -187,4 +196,10 @@ mod test {
         }
     }
 
+    #[test]
+    fn test_resolution(){
+        let bytes = [1u8, 2u8];
+        <[u8] as Hashable>::to_bytes(&bytes);
+        <&[u8] as Hashable>::to_bytes(&bytes);
+    }
 }
