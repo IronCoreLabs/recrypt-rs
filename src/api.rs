@@ -1022,7 +1022,7 @@ impl PartialEq for PublicKey {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 // If you are looking for PartialEq for PrivateKey, see PartialEq for Revealed<PrivateKey>
 pub struct PrivateKey {
