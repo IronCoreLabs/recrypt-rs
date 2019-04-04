@@ -74,6 +74,13 @@ macro_rules! _bytes_core {
             new_from_slice!($t);
         }
 
+        //Allow people to consume the bytes type to get out the wrapped array.
+        impl From<$t> for [u8; $t::ENCODED_SIZE_BYTES] {
+            fn from(t: $t) -> Self {
+                t.bytes
+            }
+        }
+
         bytes_only_debug!($t);
     };
 }

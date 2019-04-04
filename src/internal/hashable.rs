@@ -19,7 +19,7 @@ impl Hashable for u8 {
     }
 }
 
-impl<'a, T> Hashable for [&'a T]
+impl<T> Hashable for [T]
 where
     T: Hashable,
 {
@@ -30,6 +30,15 @@ where
             result.append(&mut bytes);
         }
         result
+    }
+}
+
+impl<T> Hashable for &[T]
+where
+    T: Hashable,
+{
+    fn to_bytes(&self) -> ByteVector {
+        <[T] as Hashable>::to_bytes(self)
     }
 }
 
@@ -186,5 +195,4 @@ mod test {
             assert_eq!(concat, vec![bv1, bv2].to_bytes());
         }
     }
-
 }
