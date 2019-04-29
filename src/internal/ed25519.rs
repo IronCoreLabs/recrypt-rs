@@ -109,12 +109,12 @@ impl SigningKeypair {
 
     ///Get the public_key portion of this SigningKeypair.
     pub fn public_key(&self) -> PublicSigningKey {
-        PublicSigningKey::from(self)
+        self.into()
     }
 
     ///Export the bytes of the keypair.
-    pub fn bytes(&self) -> [u8; 64] {
-        self.bytes
+    pub fn bytes(&self) -> &[u8; 64] {
+        &self.bytes
     }
 
     ///
