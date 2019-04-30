@@ -1,6 +1,6 @@
 [package]
 name = "recrypt"
-version = "0.6.2"
+version = "0.7.0"
 authors = ["IroncCore Labs <info at ironcorelabs.com>"]
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -43,7 +43,7 @@ debug = false
 lto = true
 
 [dev-dependencies]
-proptest = "~0.8"
+proptest = "~0.9"
 rand_chacha = "~0.1"
 criterion = "~0.2"
 

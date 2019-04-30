@@ -16,14 +16,14 @@ macro_rules! new_from_slice {
     ($t: ident) => {
         /// construct $t from byte slice. Input slice must be exactly the correct length for the type.
         /// # Returns
-        /// Ok($t) or Err($ApiError::InputWrongSize]
-        pub fn new_from_slice(bytes: &[u8]) -> std::result::Result<$t, ApiErr> {
+        /// Ok($t) or Err($RecryptErr::InputWrongSize]
+        pub fn new_from_slice(bytes: &[u8]) -> std::result::Result<$t, RecryptErr> {
             if bytes.len() == $t::ENCODED_SIZE_BYTES {
                 let mut dest = [0u8; $t::ENCODED_SIZE_BYTES];
                 dest.copy_from_slice(bytes);
                 Ok($t::new(dest))
             } else {
-                Err(ApiErr::InputWrongSize(
+                Err(RecryptErr::InputWrongSize(
                     &stringify!($t),
                     $t::ENCODED_SIZE_BYTES,
                 ))
@@ -74,6 +74,13 @@ macro_rules! _bytes_core {
             new_from_slice!($t);
         }
 
+        //Allow people to consume the bytes type to get out the wrapped array.
+        impl From<$t> for [u8; $t::ENCODED_SIZE_BYTES] {
+            fn from(t: $t) -> Self {
+                t.bytes
+            }
+        }
+
         bytes_only_debug!($t);
     };
 }
@@ -113,6 +120,7 @@ macro_rules! field_proptest {
             use crate::internal::fp2elem::test::*;
             use crate::internal::fp12elem::test::*;
             use crate::internal::fp6elem::test::*;
+            use proptest::prelude::*;
 
             proptest! {
                 #[test]

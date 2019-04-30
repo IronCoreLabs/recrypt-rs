@@ -69,13 +69,18 @@ where
     pub fn len(&self) -> usize {
         self.rest.len() + 1
     }
+
+    pub fn as_vec(self) -> Vec<T> {
+        self.into()
+    }
 }
 
 impl<T> Into<Vec<T>> for NonEmptyVec<T> {
     fn into(mut self) -> Vec<T> {
-        let mut tmp = vec![self.first];
-        tmp.append(&mut self.rest);
-        tmp
+        let mut result: Vec<T> = Vec::with_capacity(self.rest.len() + 1);
+        result.push(self.first);
+        result.append(&mut self.rest);
+        result
     }
 }
 

@@ -408,7 +408,7 @@ pub mod test {
     use proptest::prelude::*;
 
     prop_compose! {
-        [pub] fn arb_fp12()(e1 in arb_fp6(), e2 in arb_fp6()) -> Fp12Elem<fp_256::Monty> {
+        pub fn arb_fp12()(e1 in arb_fp6(), e2 in arb_fp6()) -> Fp12Elem<fp_256::Monty> {
             Fp12Elem {
                 elem1: e1,
                 elem2: e2
@@ -416,7 +416,7 @@ pub mod test {
        }
     }
     prop_compose! {
-        [pub] fn arb_fp12_480()(e1 in arb_fp6_480(), e2 in arb_fp6_480()) -> Fp12Elem<fp_480::Monty> {
+        pub fn arb_fp12_480()(e1 in arb_fp6_480(), e2 in arb_fp6_480()) -> Fp12Elem<fp_480::Monty> {
             Fp12Elem {
                 elem1: e1,
                 elem2: e2

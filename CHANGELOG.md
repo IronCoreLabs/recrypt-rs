@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.7.0
+
+### Public API changes
+ - [[#57](#57)]
+   - `api::Api` renamed to `api::Recrypt`
+   - `api_480::Api480` renamed to `api_480::Recrypt480`
+   - `ApiErr` renamed to `RecryptErr` and `RecryptErr` is now publicly exported
+   - `PrivateKey::ENCODED_SIZE_BYTES` is now pub
+ - [[#63](#63)] Added a prelude for easier importing of common types and traits
+   - `use recrypt::prelude::*`
+ - [[#70](#70)] 
+   - `DerivedSymmetricKey` now has a `to_private_key`
+   - `PublicKey` APIs now take all arguments as borrows
+ - [[#71](#71)] 
+   - provide `From<SigningKeyPair>` instance for `[u8; 64]`
+   - provide `Clone` for `PrivateKey`
+   - many wrapped byte types can be consumed to get the underlying bytes out without copying
+ - [[#72](#72)] `PublicSigningKey`'s `bytes()` method now returns a reference instead of copying 
+
 ## 0.6.2
 
 ### Notable Internal Changes

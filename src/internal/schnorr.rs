@@ -168,7 +168,7 @@ mod test {
     use proptest::prelude::*;
 
     prop_compose! {
-        [pub] fn arb_fr256()(seed in any::<u32>()) -> Fr256 {
+        pub fn arb_fr256()(seed in any::<u32>()) -> Fr256 {
             if seed == 0 {
                 Fr256::zero()
             } else if seed == 1 {
