@@ -19,16 +19,19 @@ pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use crate::Revealed;
 use clear_on_drop::clear::Clear;
+use core::borrow::BorrowMut;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
 use std;
 use std::fmt;
+use std::ops::DerefMut;
+use std::sync::Mutex;
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
 pub struct Recrypt<H, S, R> {
-    random_bytes: R,
+    random_bytes: Mutex<R>,
     sha_256: H,
     ed25519: S,
     pairing: internal::pairing::Pairing<Monty256>,
@@ -54,7 +57,7 @@ impl<CR: rand::CryptoRng + rand::RngCore> Recrypt<Sha256, Ed25519, RandomBytes<C
         let curve_points = &*curve::FP_256_CURVE_POINTS;
         let schnorr_signing = internal::schnorr::SchnorrSign::<Monty256, Fr256, Sha256>::new_256();
         Recrypt {
-            random_bytes: RandomBytes::new(r),
+            random_bytes: Mutex::new(RandomBytes::new(r)),
             sha_256: Sha256,
             ed25519: Ed25519,
             pairing,
@@ -639,7 +642,7 @@ pub trait SchnorrOps {
     ///- `pub_key` the public key which will be used to validate the signature.
     ///- `message` the message to sign.
     fn schnorr_sign<A: Hashable>(
-        &mut self,
+        &self,
         priv_key: &PrivateKey,
         pub_key: &PublicKey,
         message: &A,
@@ -665,12 +668,14 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
     for Recrypt<H, S, RandomBytes<CR>>
 {
     fn schnorr_sign<A: Hashable>(
-        &mut self,
+        &self,
         priv_key: &PrivateKey,
         pub_key: &PublicKey,
         message: &A,
     ) -> SchnorrSignature {
-        let k = Fr256::from_rand_no_bias(&mut self.random_bytes);
+        let mut rand_bytes_guard = self.random_bytes.lock().unwrap();
+        let rand_bytes = rand_bytes_guard.deref_mut();
+        let k = Fr256::from_rand_no_bias(rand_bytes);
         self.schnorr_signing
             .sign(priv_key.into(), pub_key._internal_key, message, k)
             .unwrap() //The  curve we're using _cannot_ produce an x value which would be zero, so this can't happen
@@ -695,14 +700,16 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
 
 pub trait Ed25519Ops {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait.
-    fn generate_ed25519_key_pair(&mut self) -> SigningKeypair;
+    fn generate_ed25519_key_pair(&self) -> SigningKeypair;
 }
 
 impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Recrypt<H, S, RandomBytes<CR>> {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
-    fn generate_ed25519_key_pair(&mut self) -> SigningKeypair {
-        SigningKeypair::new(&mut self.random_bytes.rng)
+    fn generate_ed25519_key_pair(&self) -> SigningKeypair {
+        let mut rand_guard = self.random_bytes.lock().unwrap();
+        let rand = rand_guard.borrow_mut();
+        SigningKeypair::new(&mut rand.rng)
     }
 }
 
@@ -714,12 +721,12 @@ pub trait KeyGenOps {
     /// Generate a random private key.
     ///
     /// Relies on `Api::random_bytes` to generate cryptographically secure random bytes
-    fn random_private_key(&mut self) -> PrivateKey;
+    fn random_private_key(&self) -> PrivateKey;
 
     /// Generate a public/private keypair.
     ///
     /// Relies on `Api::random_bytes` to generate cryptographically secure random bytes
-    fn generate_key_pair(&mut self) -> Result<(PrivateKey, PublicKey)>;
+    fn generate_key_pair(&self) -> Result<(PrivateKey, PublicKey)>;
 
     /// Generate a transform key which is used to delegate to the `to_public_key` from the `from_private_key`.
     ///
@@ -732,7 +739,7 @@ pub trait KeyGenOps {
     /// Key which allows a proxy to compute the transform. See `EncryptOps.transform`.
     ///
     fn generate_transform_key(
-        &mut self,
+        &self,
         from_private_key: &PrivateKey,
         to_public_key: &PublicKey,
         signing_keypair: &SigningKeypair,
@@ -748,25 +755,28 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recry
         PublicKey::try_from(&pub_key_internal)
     }
 
-    fn random_private_key(&mut self) -> PrivateKey {
-        let rand_bytes = self.random_bytes.random_bytes_32();
+    fn random_private_key(&self) -> PrivateKey {
+        let mut rand = self.random_bytes.lock().unwrap();
+        let rand_bytes = rand.random_bytes_32();
         PrivateKey::new(rand_bytes)
     }
 
-    fn generate_key_pair(&mut self) -> Result<(PrivateKey, PublicKey)> {
+    fn generate_key_pair(&self) -> Result<(PrivateKey, PublicKey)> {
         let priv_key = self.random_private_key();
         let maybe_pub_key = self.compute_public_key(&priv_key);
         maybe_pub_key.map(|pub_key| (priv_key, pub_key))
     }
 
     fn generate_transform_key(
-        &mut self,
+        &self,
         from_private_key: &PrivateKey,
         to_public_key: &PublicKey,
         signing_keypair: &SigningKeypair,
     ) -> Result<TransformKey> {
         let ephem_reencryption_private_key = self.random_private_key();
-        let temp_key = internal::KValue(gen_random_fp12(&self.pairing, &mut self.random_bytes));
+        let mut rand_guard = self.random_bytes.lock().unwrap();
+        let rand = rand_guard.deref_mut();
+        let temp_key = internal::KValue(gen_random_fp12(&self.pairing, rand));
         let reencryption_key = internal::generate_reencryption_key(
             from_private_key._internal_key,
             to_public_key._internal_key,
@@ -847,7 +857,8 @@ pub trait CryptoOps {
 
 impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recrypt<H, S, R> {
     fn gen_plaintext(&mut self) -> Plaintext {
-        let rand_fp12 = gen_random_fp12(&self.pairing, &mut self.random_bytes);
+        let rand = self.random_bytes.get_mut().unwrap();
+        let rand_fp12 = gen_random_fp12(&self.pairing, rand);
         Plaintext::from(rand_fp12)
     }
 
@@ -1136,7 +1147,7 @@ pub(crate) mod test {
     ) -> Recrypt<Sha256, S, R> {
         let api = Recrypt::new();
         Recrypt::<Sha256, S, R> {
-            random_bytes: random_bytes.unwrap_or_default(),
+            random_bytes: Mutex::new(random_bytes.unwrap_or_default()),
             schnorr_signing: internal::schnorr::SchnorrSign::new_256(),
             sha_256: api.sha_256,
             ed25519: ed25519,
