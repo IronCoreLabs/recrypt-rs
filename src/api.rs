@@ -802,7 +802,7 @@ pub trait CryptoOps {
     /// let rth_pow = plaintext.pow(curve_order);
     /// assert_eq!(rth_pow, Fp12Elem::one());
     /// Note that this cannot be implemented here as we do not define a way to do: Fp12.pow(Fp256)
-    fn gen_plaintext(&mut self) -> Plaintext;
+    fn gen_plaintext(&self) -> Plaintext;
 
     /// Convert our plaintext into a DecryptedSymmetricKey by hashing it.
     /// Typically you either use `derive_private_key` or `derive_symmetric_key` but not both.
@@ -822,7 +822,7 @@ pub trait CryptoOps {
     /// # Return
     /// EncryptedValue which can be decrypted by the matching private key of `to_public_key` or RecryptErr.
     fn encrypt(
-        &mut self,
+        &self,
         plaintext: &Plaintext,
         to_public_key: &PublicKey,
         signing_keypair: &SigningKeypair,
@@ -848,7 +848,7 @@ pub trait CryptoOps {
     /// The transformed value will be signed using the `private_signing_key` and will embed
     /// the `public_signing_key` into the returned value.
     fn transform(
-        &mut self,
+        &self,
         encrypted_value: EncryptedValue,
         transform_key: TransformKey,
         signing_keypair: &SigningKeypair,
@@ -856,8 +856,9 @@ pub trait CryptoOps {
 }
 
 impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recrypt<H, S, R> {
-    fn gen_plaintext(&mut self) -> Plaintext {
-        let rand = self.random_bytes.get_mut().unwrap();
+    fn gen_plaintext(&self) -> Plaintext {
+        let mut rand_guard = self.random_bytes.lock().unwrap();
+        let rand = rand_guard.deref_mut();
         let rand_fp12 = gen_random_fp12(&self.pairing, rand);
         Plaintext::from(rand_fp12)
     }
@@ -871,7 +872,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
     }
 
     fn encrypt(
-        &mut self,
+        &self,
         plaintext: &Plaintext,
         to_public_key: &PublicKey,
         signing_keypair: &SigningKeypair,
@@ -911,7 +912,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
     }
 
     fn transform(
-        &mut self,
+        &self,
         encrypted_value: EncryptedValue,
         transform_key: TransformKey,
         signing_keypair: &SigningKeypair,
@@ -1158,7 +1159,7 @@ pub(crate) mod test {
 
     #[test]
     fn schnorr_signing_roundtrip_augmented() {
-        let mut api = Recrypt::new();
+        let api = Recrypt::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let (aug_private_key, aug_pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8];
@@ -1169,7 +1170,7 @@ pub(crate) mod test {
     }
     #[test]
     fn schnorr_signing_roundtrip_unaugmented() {
-        let mut api = Recrypt::new();
+        let api = Recrypt::new();
         let (private_key, pub_key) = api.generate_key_pair().unwrap();
         let message = vec![1u8, 2u8, 3u8, 4u8];
         let sig = api.schnorr_sign(&private_key, &pub_key, &message);
@@ -1237,7 +1238,7 @@ pub(crate) mod test {
 
     #[test]
     fn test_generate_key_pair_max_private_key() {
-        let mut api = api_with(Some(DummyRandomBytes), DummyEd25519);
+        let api = api_with(Some(DummyRandomBytes), DummyEd25519);
         let (_, pub_key) = api.generate_key_pair().unwrap();
         let internal_pk = internal::PublicKey::from_x_y(
             //58483620629232886210555514960799664032881966270053836377116209031946678864174
@@ -1254,7 +1255,7 @@ pub(crate) mod test {
 
     #[test]
     fn test_handle_zero_point() {
-        let mut api = api_with(Some(TestZeroBytes), DummyEd25519);
+        let api = api_with(Some(TestZeroBytes), DummyEd25519);
         assert!(api.generate_key_pair().is_err())
     }
 
@@ -1271,7 +1272,7 @@ pub(crate) mod test {
     }
 
     fn good_transform_key() -> TransformKey {
-        let mut api = Recrypt::new();
+        let api = Recrypt::new();
         let signing_key = ed25519::test::good_signing_keypair();
         let (master_priv, master_pub) = api.generate_key_pair().unwrap();
         api.generate_transform_key(&master_priv, &master_pub, &signing_key)
@@ -1300,7 +1301,7 @@ pub(crate) mod test {
 
     #[test]
     fn roundtrip_transform_block() {
-        let mut api = Recrypt::new();
+        let api = Recrypt::new();
         let pub_key1 = api.generate_key_pair().unwrap().1;
         let pub_key2 = api.generate_key_pair().unwrap().1;
         let ee1 = EncryptedTempKey::new(api.gen_plaintext().bytes);
@@ -1335,7 +1336,7 @@ pub(crate) mod test {
     #[test]
     fn encrypt_decrypt_roundtrip() -> Result<()> {
         use rand::SeedableRng;
-        let mut api = Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
+        let api = Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
         let pt = api.gen_plaintext();
         let (priv_key, pub_key) = api.generate_key_pair().unwrap();
         let priv_signing_key = api.generate_ed25519_key_pair();
@@ -1384,7 +1385,7 @@ pub(crate) mod test {
     use std::default::Default;
     #[test]
     fn transform_to_same_key() {
-        let mut api = api_with(Some(RandomBytes::default()), DummyEd25519);
+        let api = api_with(Some(RandomBytes::default()), DummyEd25519);
         let signing_key = ed25519::test::good_signing_keypair();
 
         let plaintext = api.gen_plaintext();
@@ -1403,7 +1404,7 @@ pub(crate) mod test {
     #[test]
     fn encrypt_decrypt_roundtrip_unaugmented_keys() {
         let signing_key = ed25519::test::good_signing_keypair();
-        let mut api = api_with(Some(RandomBytes::default()), DummyEd25519);
+        let api = api_with(Some(RandomBytes::default()), DummyEd25519);
 
         let pt = api.gen_plaintext();
         let (master_private_key, master_public_key) = api.generate_key_pair().unwrap();
@@ -1423,7 +1424,7 @@ pub(crate) mod test {
 
     #[test]
     fn encrypt_decrypt_roundtrip_augmented_keys() {
-        let mut api = Recrypt::new();
+        let api = Recrypt::new();
         let signing_key = api.generate_ed25519_key_pair();
         let pt = api.gen_plaintext();
         let (master_private_key, client_generated_pub) = api.generate_key_pair().unwrap();
@@ -1447,7 +1448,7 @@ pub(crate) mod test {
 
     #[test]
     fn two_level_transform_roundtrip() {
-        let mut api = api_with(Some(RandomBytes::default()), DummyEd25519);
+        let api = api_with(Some(RandomBytes::default()), DummyEd25519);
         let signing_key = api.generate_ed25519_key_pair();
 
         let pt = api.gen_plaintext();
@@ -1491,7 +1492,7 @@ pub(crate) mod test {
     #[test]
     fn generate_ed25519_key_pair() {
         use rand::SeedableRng;
-        let mut api = Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
+        let api = Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
         let signing_keypair = Revealed(api.generate_ed25519_key_pair());
         let expected_signing_keypair = Revealed(SigningKeypair::new_unchecked([
             118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
@@ -1543,7 +1544,7 @@ pub(crate) mod test {
     }
     #[test]
     fn publickey_new_from_slice() {
-        let mut api = Recrypt::new();
+        let api = Recrypt::new();
         let (_, pk1) = api.generate_key_pair().unwrap();
         let input: ([u8; 32], [u8; 32]) = (pk1.x, pk1.y);
         let slice: (&[u8], &[u8]) = (&input.0, &input.1);
