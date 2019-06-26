@@ -23,6 +23,9 @@ use core::borrow::BorrowMut;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
+use rand::rngs::OsRng;
+use rand::SeedableRng;
+use rand_chacha;
 use std;
 use std::fmt;
 use std::ops::DerefMut;
@@ -39,13 +42,16 @@ pub struct Recrypt<H, S, R> {
     schnorr_signing: SchnorrSign<Monty256, Fr256, H>,
 }
 
-impl Recrypt<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
-    pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
-        Recrypt::new_with_rand(rand::thread_rng())
+impl Recrypt<Sha256, Ed25519, RandomBytes<rand_chacha::ChaChaRng>> {
+    pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<rand_chacha::ChaChaRng>> {
+        Recrypt::new_with_rand(
+            rand_chacha::ChaChaRng::from_rng(OsRng::new().expect("OS RNG failed to initialize."))
+                .expect("ChaChaRng failed to initialize"),
+        )
     }
 }
 
-impl Default for Recrypt<Sha256, Ed25519, RandomBytes<rand::rngs::ThreadRng>> {
+impl Default for Recrypt<Sha256, Ed25519, RandomBytes<rand_chacha::ChaChaRng>> {
     fn default() -> Self {
         Self::new()
     }

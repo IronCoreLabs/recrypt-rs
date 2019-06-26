@@ -13,6 +13,7 @@ edition = "2018"
 
 [dependencies]
 rand = "~0.6"
+rand_chacha = "~0.1"
 sha2 = "~0.8"
 num-traits = "~0.2"
 lazy_static = "~1.2"
@@ -40,7 +41,7 @@ lto = true
 
 [dev-dependencies]
 proptest = "~0.9"
-rand_chacha = "~0.1"
+
 criterion = "~0.2"
 
 [features]
