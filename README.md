@@ -14,7 +14,15 @@ See the [Single-hop Transform Encryption Example](https://docs.rs/recrypt/) for 
 
 ## Usage 
 
-If you are building an application and would like to use Transform Encryption, you might try looking at the [IronCore SDKs](https://docs.ironcorelabs.com/sdks/overview/index.html).
+If you are building an application and would like to use Transform Encryption, you might try looking at the IronCore SDKs as they provide higher level of abstraction as part of the IronCore Privacy Platform:
+- [ironweb](https://github.com/IronCoreLabs/ironweb) - Javascript implementation of IronCore's Privacy Platform. Appropriate for all modern browsers.
+- [ironoxide](https://github.com/IronCoreLabs/ironoxide) - Pure Rust implementation of IronCore's Privacy Platform.
+- [ironoxide-java](https://github.com/IronCoreLabs/ironoxide-java) - Java bindings for `ironoxide`. Appropriate for all JVM languages.
+- [ironoxide-scala](https://github.com/IronCoreLabs/ironoxide-scala) - Scala wrappers around `ironoxide-java`.
+- [ironode](https://github.com/IronCoreLabs/ironnode) - NodeJS implementation of IronCore's Privacy Platform.
+
+
+All SDKs are intended to be compatible with one another.
 
 ### Rust Dependency
 
@@ -117,7 +125,6 @@ _Guide to Pairing-Based Cryptography_ by N.E. Mrabet and M. Joye, Chapman and Ha
 
 Recrypt-rust is licensed under the [GNU Affero General Public License](LICENSE).
 We also offer commercial licenses - [email](mailto:info@ironcorelabs.com) for more information.
-
 
 Copyright (c)  2018-present  IronCore Labs, Inc.
 All rights reserved.
