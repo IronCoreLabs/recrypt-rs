@@ -22,6 +22,7 @@ use clear_on_drop::clear::Clear;
 use core::borrow::BorrowMut;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
+use log::error;
 use rand;
 use rand::rngs::OsRng;
 use rand::SeedableRng;
@@ -29,7 +30,7 @@ use rand_chacha;
 use std;
 use std::fmt;
 use std::ops::DerefMut;
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
@@ -780,9 +781,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recry
         signing_keypair: &SigningKeypair,
     ) -> Result<TransformKey> {
         let ephem_reencryption_private_key = self.random_private_key();
-        let mut rand_guard = self.random_bytes.lock().unwrap();
-        let rand = rand_guard.deref_mut();
-        let temp_key = internal::KValue(gen_random_fp12(&self.pairing, rand));
+        let temp_key = internal::KValue(gen_random_fp12(&self.pairing, &self.random_bytes));
         let reencryption_key = internal::generate_reencryption_key(
             from_private_key._internal_key,
             to_public_key._internal_key,
@@ -863,9 +862,7 @@ pub trait CryptoOps {
 
 impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recrypt<H, S, R> {
     fn gen_plaintext(&self) -> Plaintext {
-        let mut rand_guard = self.random_bytes.lock().unwrap();
-        let rand = rand_guard.deref_mut();
-        let rand_fp12 = gen_random_fp12(&self.pairing, rand);
+        let rand_fp12 = gen_random_fp12(&self.pairing, &self.random_bytes);
         Plaintext::from(rand_fp12)
     }
 
@@ -939,26 +936,39 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
     }
 }
 
+fn take_lock<T>(m: &Mutex<T>) -> MutexGuard<T> {
+    m.lock().unwrap_or_else(|e| {
+        let error = format!("Error when acquiring lock: {}", e);
+        error!("{}", error);
+        panic!(error);
+    })
+}
+
 fn gen_random_fp12<R: RandomBytesGen>(
     pairing: &pairing::Pairing<Monty256>,
-    random_bytes: &mut R,
+    random_bytes: &Mutex<R>,
 ) -> Fp12Elem<Monty256> {
+    let rand_bytes_arr = {
+        let mut g = take_lock(&random_bytes);
+        let rand_bytes = g.deref_mut();
+        [rand_bytes.random_bytes_32(); 12]
+    };
     // generate 12 random Fp values
     internal::gen_rth_root(
         pairing,
         Fp12Elem::create_from_t(
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
-            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(rand_bytes_arr[0]),
+            Fp256::from(rand_bytes_arr[1]),
+            Fp256::from(rand_bytes_arr[2]),
+            Fp256::from(rand_bytes_arr[3]),
+            Fp256::from(rand_bytes_arr[4]),
+            Fp256::from(rand_bytes_arr[5]),
+            Fp256::from(rand_bytes_arr[6]),
+            Fp256::from(rand_bytes_arr[7]),
+            Fp256::from(rand_bytes_arr[8]),
+            Fp256::from(rand_bytes_arr[9]),
+            Fp256::from(rand_bytes_arr[10]),
+            Fp256::from(rand_bytes_arr[11]),
         )
         .map(&|fp256| fp256.to_monty()),
     )
