@@ -44,6 +44,7 @@ rand_chacha = "~0.1"
 criterion = "~0.2"
 
 [features]
+unstable = []
 default = ["ed25519-dalek/std", "ed25519-dalek/u64_backend"]
 wasm = ["ed25519-dalek/std", "ed25519-dalek/u32_backend", "clear_on_drop/no_cc"]
 
