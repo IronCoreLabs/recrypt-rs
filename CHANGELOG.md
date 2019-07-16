@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1
+
+- [[#80](#80)] Added a default set of features to enable `ed2559-dalek`s 64 bit backend and added a `wasm` feature that will instead use a 32 bit backend
+
+### Public API changes
+
+None
+
 ## 0.7.0
 
 ### Public API changes
@@ -10,14 +18,14 @@
    - `PrivateKey::ENCODED_SIZE_BYTES` is now pub
  - [[#63](#63)] Added a prelude for easier importing of common types and traits
    - `use recrypt::prelude::*`
- - [[#70](#70)] 
+ - [[#70](#70)]
    - `DerivedSymmetricKey` now has a `to_private_key`
    - `PublicKey` APIs now take all arguments as borrows
- - [[#71](#71)] 
+ - [[#71](#71)]
    - provide `From<SigningKeyPair>` instance for `[u8; 64]`
    - provide `Clone` for `PrivateKey`
    - many wrapped byte types can be consumed to get the underlying bytes out without copying
- - [[#72](#72)] `PublicSigningKey`'s `bytes()` method now returns a reference instead of copying 
+ - [[#72](#72)] `PublicSigningKey`'s `bytes()` method now returns a reference instead of copying
 
 ## 0.6.2
 
@@ -56,9 +64,9 @@
 
 ## 0.4.0
 - [#20] Update dependencies (rand 0.6, sha 0.8, ed25519 1.0.0-pre.0)
-- [#18] Add a way to hash a Plaintext to 32 bytes. 
-- [#17] Add quick_error to all of our error ADTS 
-- [#14] Add benchmarking on Travis 
+- [#18] Add a way to hash a Plaintext to 32 bytes.
+- [#17] Add quick_error to all of our error ADTS
+- [#14] Add benchmarking on Travis
 ## 0.3.0
 
 - Add hashable instance for TransformKey (#13)
