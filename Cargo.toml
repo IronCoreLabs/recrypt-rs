@@ -1,6 +1,6 @@
 [package]
 name = "recrypt"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["IroncCore Labs <info at ironcorelabs.com>"]
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -17,17 +17,13 @@ sha2 = "~0.8"
 num-traits = "~0.2"
 lazy_static = "~1.2"
 arrayvec = "~0.4"
-ed25519-dalek = "1.0.0-pre.1"
+#Disable all features for ed25519 and enable the proper ones down in the [features] section below
+ed25519-dalek = { version="1.0.0-pre.1", default-features = false }
 clear_on_drop = "~0.2"
-gridiron = "^0.6.0" 
+gridiron = "^0.6.0"
 quick-error = "~1.2"
 hex="~0.3"
 arrayref = "^0.3.5"
-
-[target.wasm32-unknown-unknown.dependencies]
-# The clear_on_drop crate, by default, implements code via C to clear memory. That doesn't work in WASM. However, they
-# have a feature to turn off requiring C which we're enabling here for WASM targets.
-clear_on_drop = {version = "0.2", features = ["no_cc"]}
 
 [profile.dev]
 opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
@@ -49,6 +45,8 @@ criterion = "~0.2"
 
 [features]
 unstable = []
+default = ["ed25519-dalek/std", "ed25519-dalek/u64_backend"]
+wasm = ["ed25519-dalek/std", "ed25519-dalek/u32_backend", "clear_on_drop/no_cc"]
 
 [[bench]]
 name = "api_benchmark"
