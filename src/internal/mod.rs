@@ -21,6 +21,7 @@ use gridiron::fp_256;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_480;
 use gridiron::fp_480::Fp480;
+use log::error;
 use num_traits::{One, Zero};
 use quick_error::quick_error;
 use std::ops::{Add, Mul, Neg};
@@ -44,6 +45,7 @@ pub mod sha256;
 
 use crate::api;
 use crate::api_480;
+use std::sync::{Mutex, MutexGuard};
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
@@ -1091,6 +1093,13 @@ where
         NonEmptyVec::new(re_block_last_prime, vec![new_re_block]),
     );
     Ok(reencrypted_value.with_new_re_blocks(new_blocks_vec))
+}
+pub(crate) fn take_lock<T>(m: &Mutex<T>) -> MutexGuard<T> {
+    m.lock().unwrap_or_else(|e| {
+        let error = format!("Error when acquiring lock: {}", e);
+        error!("{}", error);
+        panic!(error);
+    })
 }
 
 #[cfg(test)]

@@ -4,7 +4,7 @@
 //! use recrypt::prelude::*;
 //! use rand::rngs::ThreadRng;
 //!
-//! let recrypt: Recrypt<Sha256, Ed25519, RandomBytes<ThreadRng>> = Recrypt::new();
+//! let recrypt: Recrypt<Sha256, Ed25519, RandomBytes<_>> = Recrypt::new();
 //! ```
 
 // necessary for instantiating and storing a Recrypt as a struct member

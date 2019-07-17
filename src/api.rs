@@ -2,7 +2,6 @@ pub use crate::api_common::RecryptErr;
 use crate::api_common::Result;
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
-use crate::internal::curve;
 pub use crate::internal::ed25519::{
     Ed25519, Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair,
 };
@@ -16,13 +15,12 @@ pub use crate::internal::rand_bytes::*;
 use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
+use crate::internal::{curve, take_lock};
 use crate::nonemptyvec::NonEmptyVec;
 use crate::Revealed;
 use clear_on_drop::clear::Clear;
-use core::borrow::BorrowMut;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
-use log::error;
 use rand;
 use rand::rngs::OsRng;
 use rand::SeedableRng;
@@ -30,7 +28,7 @@ use rand_chacha;
 use std;
 use std::fmt;
 use std::ops::DerefMut;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::Mutex;
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
@@ -680,9 +678,7 @@ impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
         pub_key: &PublicKey,
         message: &A,
     ) -> SchnorrSignature {
-        let mut rand_bytes_guard = self.random_bytes.lock().unwrap();
-        let rand_bytes = rand_bytes_guard.deref_mut();
-        let k = Fr256::from_rand_no_bias(rand_bytes);
+        let k = Fr256::from_rand_no_bias(&self.random_bytes);
         self.schnorr_signing
             .sign(priv_key.into(), pub_key._internal_key, message, k)
             .unwrap() //The  curve we're using _cannot_ produce an x value which would be zero, so this can't happen
@@ -714,8 +710,7 @@ impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Recrypt<H, S, Ran
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
     fn generate_ed25519_key_pair(&self) -> SigningKeypair {
-        let mut rand_guard = self.random_bytes.lock().unwrap();
-        let rand = rand_guard.borrow_mut();
+        let rand = &mut *take_lock(&self.random_bytes);
         SigningKeypair::new(&mut rand.rng)
     }
 }
@@ -763,8 +758,10 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recry
     }
 
     fn random_private_key(&self) -> PrivateKey {
-        let mut rand = self.random_bytes.lock().unwrap();
-        let rand_bytes = rand.random_bytes_32();
+        let rand_bytes = {
+            let rand = &mut *take_lock(&self.random_bytes);
+            rand.random_bytes_32()
+        };
         PrivateKey::new(rand_bytes)
     }
 
@@ -934,14 +931,6 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
             &self.pairing,
         )?)
     }
-}
-
-fn take_lock<T>(m: &Mutex<T>) -> MutexGuard<T> {
-    m.lock().unwrap_or_else(|e| {
-        let error = format!("Error when acquiring lock: {}", e);
-        error!("{}", error);
-        panic!(error);
-    })
 }
 
 fn gen_random_fp12<R: RandomBytesGen>(
@@ -1167,7 +1156,7 @@ pub(crate) mod test {
             random_bytes: Mutex::new(random_bytes.unwrap_or_default()),
             schnorr_signing: internal::schnorr::SchnorrSign::new_256(),
             sha_256: api.sha_256,
-            ed25519: ed25519,
+            ed25519,
             pairing: api.pairing,
             curve_points: api.curve_points,
         }
