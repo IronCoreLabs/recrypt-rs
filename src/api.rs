@@ -23,6 +23,7 @@ use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
 use rand::rngs::OsRng;
+use rand::FromEntropy;
 use rand::SeedableRng;
 use rand_chacha;
 use std;
@@ -33,7 +34,7 @@ use std::sync::Mutex;
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
 pub struct Recrypt<H, S, R> {
-    random_bytes: Mutex<R>,
+    random_bytes: R,
     sha_256: H,
     ed25519: S,
     pairing: internal::pairing::Pairing<Monty256>,
@@ -43,10 +44,7 @@ pub struct Recrypt<H, S, R> {
 
 impl Recrypt<Sha256, Ed25519, RandomBytes<rand_chacha::ChaChaRng>> {
     pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<rand_chacha::ChaChaRng>> {
-        Recrypt::new_with_rand(
-            rand_chacha::ChaChaRng::from_rng(OsRng::new().expect("OS RNG failed to initialize."))
-                .expect("ChaChaRng failed to initialize"),
-        )
+        Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_entropy())
     }
 }
 
@@ -62,7 +60,7 @@ impl<CR: rand::CryptoRng + rand::RngCore> Recrypt<Sha256, Ed25519, RandomBytes<C
         let curve_points = &*curve::FP_256_CURVE_POINTS;
         let schnorr_signing = internal::schnorr::SchnorrSign::<Monty256, Fr256, Sha256>::new_256();
         Recrypt {
-            random_bytes: Mutex::new(RandomBytes::new(r)),
+            random_bytes: RandomBytes::new(r),
             sha_256: Sha256,
             ed25519: Ed25519,
             pairing,
@@ -710,8 +708,7 @@ impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Recrypt<H, S, Ran
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
     fn generate_ed25519_key_pair(&self) -> SigningKeypair {
-        let rand = &mut *take_lock(&self.random_bytes);
-        SigningKeypair::new(&mut rand.rng)
+        SigningKeypair::new(&self.random_bytes.rng)
     }
 }
 
@@ -758,11 +755,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recry
     }
 
     fn random_private_key(&self) -> PrivateKey {
-        let rand_bytes = {
-            let rand = &mut *take_lock(&self.random_bytes);
-            rand.random_bytes_32()
-        };
-        PrivateKey::new(rand_bytes)
+        PrivateKey::new(self.random_bytes.random_bytes_32())
     }
 
     fn generate_key_pair(&self) -> Result<(PrivateKey, PublicKey)> {
@@ -935,12 +928,11 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
 
 fn gen_random_fp12<R: RandomBytesGen>(
     pairing: &pairing::Pairing<Monty256>,
-    random_bytes: &Mutex<R>,
+    random_bytes: &R,
 ) -> Fp12Elem<Monty256> {
     let rand_bytes_arr = {
-        let mut g = take_lock(&random_bytes);
-        let rand_bytes = g.deref_mut();
-        [rand_bytes.random_bytes_32(); 12]
+        // TODO inefficient
+        [random_bytes.random_bytes_32(); 12]
     };
     // generate 12 random Fp values
     internal::gen_rth_root(
