@@ -2,6 +2,7 @@ pub use crate::api_common::RecryptErr;
 use crate::api_common::Result;
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
+use crate::internal::curve;
 pub use crate::internal::ed25519::{
     Ed25519, Ed25519Signature, Ed25519Signing, PublicSigningKey, SigningKeypair,
 };
@@ -15,21 +16,16 @@ pub use crate::internal::rand_bytes::*;
 use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
-use crate::internal::{curve, take_lock};
 use crate::nonemptyvec::NonEmptyVec;
 use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
-use rand::rngs::OsRng;
 use rand::FromEntropy;
-use rand::SeedableRng;
 use rand_chacha;
 use std;
 use std::fmt;
-use std::ops::DerefMut;
-use std::sync::Mutex;
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
@@ -70,8 +66,8 @@ impl<CR: rand::CryptoRng + rand::RngCore> Recrypt<Sha256, Ed25519, RandomBytes<C
     }
 }
 
-/// Hashed but not encrypted Plaintext used for envelope encryption
-/// If you are looking for PartialEq for DerivedSymmetricKey, see PartialEq for Revealed<DerivedSymmetricKey>
+// Hashed but not encrypted Plaintext used for envelope encryption
+// If you are looking for PartialEq for DerivedSymmetricKey, see PartialEq for Revealed<DerivedSymmetricKey>
 new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
 
 impl PartialEq for Revealed<DerivedSymmetricKey> {
@@ -80,16 +76,16 @@ impl PartialEq for Revealed<DerivedSymmetricKey> {
     }
 }
 
-/// A value included in an encrypted message that can be used when the message is decrypted
-/// to ensure that you got the same value out as the one that was originally encrypted.
-/// It is a hash of the plaintext.
+// A value included in an encrypted message that can be used when the message is decrypted
+// to ensure that you got the same value out as the one that was originally encrypted.
+// It is a hash of the plaintext.
 new_bytes_type!(AuthHash, 32);
 
-/// Encrypted Plaintext (Fp12Elem)
+// Encrypted Plaintext (Fp12Elem)
 new_bytes_type!(EncryptedMessage, Fp12Elem::<Monty256>::ENCODED_SIZE_BYTES);
 
-/// Not hashed, not encrypted Fp12Elem
-/// See DecryptedSymmetricKey and EncryptedMessage
+// Not hashed, not encrypted Fp12Elem
+// See DecryptedSymmetricKey and EncryptedMessage
 // we don't derive Copy or Clone here on purpose. Plaintext is a sensitive value and should be passed by reference
 // to avoid needless duplication
 pub struct Plaintext {
@@ -930,10 +926,8 @@ fn gen_random_fp12<R: RandomBytesGen>(
     pairing: &pairing::Pairing<Monty256>,
     random_bytes: &R,
 ) -> Fp12Elem<Monty256> {
-    let rand_bytes_arr = {
-        // TODO inefficient
-        [random_bytes.random_bytes_32(); 12]
-    };
+    let rand_bytes_arr = [random_bytes.random_bytes_32(); 12];
+
     // generate 12 random Fp values
     internal::gen_rth_root(
         pairing,
@@ -1130,11 +1124,11 @@ pub(crate) mod test {
     #[derive(Default)]
     pub(crate) struct DummyRandomBytes;
     impl RandomBytesGen for DummyRandomBytes {
-        fn random_bytes_32(&mut self) -> [u8; 32] {
+        fn random_bytes_32(&self) -> [u8; 32] {
             [std::u8::MAX; 32]
         }
 
-        fn random_bytes_60(&mut self) -> [u8; 60] {
+        fn random_bytes_60(&self) -> [u8; 60] {
             unimplemented!() //not needed for Fp256
         }
     }
@@ -1145,7 +1139,7 @@ pub(crate) mod test {
     ) -> Recrypt<Sha256, S, R> {
         let api = Recrypt::new();
         Recrypt::<Sha256, S, R> {
-            random_bytes: Mutex::new(random_bytes.unwrap_or_default()),
+            random_bytes: random_bytes.unwrap_or_default(),
             schnorr_signing: internal::schnorr::SchnorrSign::new_256(),
             sha_256: api.sha_256,
             ed25519,
@@ -1259,11 +1253,11 @@ pub(crate) mod test {
     #[derive(Default)]
     struct TestZeroBytes;
     impl RandomBytesGen for TestZeroBytes {
-        fn random_bytes_32(&mut self) -> [u8; 32] {
+        fn random_bytes_32(&self) -> [u8; 32] {
             [0u8; 32]
         }
 
-        fn random_bytes_60(&mut self) -> [u8; 60] {
+        fn random_bytes_60(&self) -> [u8; 60] {
             unimplemented!() // not needed for Fp256
         }
     }
@@ -1558,7 +1552,7 @@ pub(crate) mod test {
 
     #[test]
     fn private_key_new_from_slice() {
-        let mut rand_bytes = DummyRandomBytes;
+        let rand_bytes = DummyRandomBytes;
         let input: [u8; 32] = rand_bytes.random_bytes_32();
         let slice: &[u8] = &input;
         let from_fixed = PrivateKey::new(input);

@@ -13,8 +13,7 @@ fn generate_plaintexts() {
     for _i in 0..5000 {
         let recrypt_ref_clone = recrypt.clone();
         threads.push(thread::spawn(move || {
-            let pt = recrypt_ref_clone.gen_plaintext();
-            //            dbg!(&_i);
+            let _pt = recrypt_ref_clone.gen_plaintext();
         }));
     }
 
@@ -23,7 +22,7 @@ fn generate_plaintexts() {
 
     let mut joined_count = 0;
     for t in threads {
-        t.join();
+        t.join().expect("join failed");
         joined_count += 1;
     }
 

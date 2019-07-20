@@ -10,10 +10,9 @@ use quick_error::quick_error;
 use rand;
 use std;
 use std::fmt;
-use std::ops::Deref;
 use std::sync::Mutex;
 
-///CompressedY version of the PublicSigningKey
+// CompressedY version of the PublicSigningKey
 new_bytes_type!(PublicSigningKey, 32);
 
 impl PublicSigningKey {

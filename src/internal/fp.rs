@@ -1,10 +1,8 @@
 use crate::internal::rand_bytes::RandomBytesGen;
-use crate::internal::take_lock;
 use arrayref;
 use gridiron::fp31;
 use gridiron::fp_256;
 use gridiron::fp_480;
-use std::sync::Mutex;
 
 // r: 65000549695646603732796438742359905742570406053903786389881062969044166799969 (also "curve_order" for Fp256)
 fp31!(
@@ -106,7 +104,7 @@ impl fr_256::Fr256 {
 }
 impl fr_480::Fr480 {
     ///Generate an Fr480 with no bias from `RandomBytesGen`.
-    pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &mut R) -> fr_480::Fr480 {
+    pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &R) -> fr_480::Fr480 {
         let mut fr: fr_480::Fr480;
         //We want to generate a value that is in Fr, but we don't want to allow values that
         //are greater than Fr because it can give a bias to schnorr signing. If we generate a value
