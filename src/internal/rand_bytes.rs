@@ -2,6 +2,7 @@ use rand;
 use rand::{CryptoRng, RngCore};
 
 use crate::internal::take_lock;
+use rand::FromEntropy;
 use std::default::Default;
 use std::ops::DerefMut;
 use std::sync::Mutex;
@@ -16,9 +17,9 @@ pub struct RandomBytes<T: CryptoRng + RngCore> {
     pub(crate) rng: Mutex<T>,
 }
 
-impl Default for RandomBytes<rand::rngs::ThreadRng> {
+impl Default for RandomBytes<rand_chacha::ChaChaRng> {
     fn default() -> Self {
-        RandomBytes::<rand::rngs::ThreadRng>::new(rand::thread_rng())
+        RandomBytes::new(rand_chacha::ChaChaRng::from_entropy())
     }
 }
 

@@ -2,7 +2,6 @@
 //!
 //! ```
 //! use recrypt::prelude::*;
-//! use rand::rngs::ThreadRng;
 //!
 //! let recrypt: Recrypt<Sha256, Ed25519, RandomBytes<_>> = Recrypt::new();
 //! ```
