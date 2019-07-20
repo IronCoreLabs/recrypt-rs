@@ -1094,6 +1094,26 @@ where
     );
     Ok(reencrypted_value.with_new_re_blocks(new_blocks_vec))
 }
+
+/// Acquire mutex in a blocking fashion. If the Mutex is or becomes poisoned, write out an error
+/// message and panic.
+///
+/// The lock is released when the returned MutexGuard falls out of scope.
+///
+/// # Usage:
+/// single statement (mut)
+/// `let result = take_lock(&t).deref_mut().call_method_on_t();`
+///
+/// mutli-statement (mut)
+///
+/// ```ignore
+/// let t = T {};
+/// let result = {
+///     let g = &mut *take_lock(&t);
+///     g.call_method_on_t()
+/// }; // lock released here
+/// ```
+///
 pub(crate) fn take_lock<T>(m: &Mutex<T>) -> MutexGuard<T> {
     m.lock().unwrap_or_else(|e| {
         let error = format!("Error when acquiring lock: {}", e);

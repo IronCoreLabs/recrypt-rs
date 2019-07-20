@@ -10,7 +10,7 @@ fn generate_plaintexts() {
     ));
 
     let mut threads = vec![];
-    for _i in 0..5000 {
+    for _i in 0..10 {
         let recrypt_ref_clone = recrypt.clone();
         threads.push(thread::spawn(move || {
             let _pt = recrypt_ref_clone.gen_plaintext();
@@ -26,5 +26,5 @@ fn generate_plaintexts() {
         joined_count += 1;
     }
 
-    dbg!(joined_count);
+    assert_eq!(joined_count, 10);
 }
