@@ -1,7 +1,7 @@
 use crate::api_common::RecryptErr;
-use crate::internal::array_split_64;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
+use crate::internal::{array_split_64, take_lock};
 use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use ed25519_dalek;
@@ -10,8 +10,9 @@ use quick_error::quick_error;
 use rand;
 use std;
 use std::fmt;
+use std::sync::Mutex;
 
-///CompressedY version of the PublicSigningKey
+// CompressedY version of the PublicSigningKey
 new_bytes_type!(PublicSigningKey, 32);
 
 impl PublicSigningKey {
@@ -62,8 +63,9 @@ impl From<SigningKeypair> for [u8; 64] {
 
 impl SigningKeypair {
     const ENCODED_SIZE_BYTES: usize = 64;
-    pub fn new<CR: rand::RngCore + rand::CryptoRng>(rng: &mut CR) -> SigningKeypair {
-        let keypair = ed25519_dalek::Keypair::generate::<CR>(rng);
+    pub fn new<CR: rand::RngCore + rand::CryptoRng>(rng: &Mutex<CR>) -> SigningKeypair {
+        let keypair = ed25519_dalek::Keypair::generate::<CR>(&mut *take_lock(&rng));
+
         //Unchecked is safe because the public is on the curve and the size is statically guaranteed.
         SigningKeypair::new_unchecked(keypair.to_bytes())
     }

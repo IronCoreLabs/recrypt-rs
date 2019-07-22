@@ -17,17 +17,17 @@ macro_rules! recrypt_bench {
     (api = $api:ident; suite_desc = $suite_desc:ident; bits = $bits:tt) => {
         fn $suite_desc(c: &mut Criterion) {
             c.bench_function(concat!($bits, "-bit generate key pair"), |b| {
-                let mut api = $api::new();
+                let api = $api::new();
                 b.iter(|| api.generate_key_pair());
             });
 
             c.bench_function(concat!($bits, "-bit generate plaintext"), |b| {
-                let mut api = $api::new();
+                let api = $api::new();
                 b.iter(|| api.gen_plaintext());
             });
 
             c.bench_function(concat!($bits, "-bit generate ed25519 keypair"), |b| {
-                let mut api = $api::new();
+                let api = $api::new();
                 b.iter(|| {
                     api.generate_ed25519_key_pair();
                 });
@@ -84,7 +84,7 @@ macro_rules! recrypt_bench {
             });
 
             c.bench_function(concat!($bits, "-bit decrypt (level 0)"), |b| {
-                let mut api = $api::new();
+                let api = $api::new();
                 let (pvk, pbk) = api.generate_key_pair().unwrap();
                 let signing_keypair = api.generate_ed25519_key_pair();
                 let pt = api.gen_plaintext();

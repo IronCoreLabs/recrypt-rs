@@ -13,6 +13,7 @@ edition = "2018"
 
 [dependencies]
 rand = "~0.6"
+rand_chacha = "~0.1"
 sha2 = "~0.8"
 num-traits = "~0.2"
 lazy_static = "~1.2"
@@ -24,6 +25,7 @@ gridiron = "^0.6.0"
 quick-error = "~1.2"
 hex="~0.3"
 arrayref = "^0.3.5"
+log = "~0.4"
 
 [profile.dev]
 opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
@@ -40,7 +42,7 @@ lto = true
 
 [dev-dependencies]
 proptest = "~0.9"
-rand_chacha = "~0.1"
+
 criterion = "~0.2"
 
 [features]

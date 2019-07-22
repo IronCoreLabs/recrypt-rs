@@ -89,7 +89,7 @@ fp31!(
 );
 impl fr_256::Fr256 {
     ///Generate an Fr256 with no bias from `RandomBytesGen`.
-    pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &mut R) -> fr_256::Fr256 {
+    pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &R) -> fr_256::Fr256 {
         let mut fr: fr_256::Fr256;
         //We want to generate a value that is in Fr, but we don't want to allow values that
         //are greater than Fr because it can give a bias to schnorr signing. If we generate a value
@@ -104,7 +104,7 @@ impl fr_256::Fr256 {
 }
 impl fr_480::Fr480 {
     ///Generate an Fr480 with no bias from `RandomBytesGen`.
-    pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &mut R) -> fr_480::Fr480 {
+    pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &R) -> fr_480::Fr480 {
         let mut fr: fr_480::Fr480;
         //We want to generate a value that is in Fr, but we don't want to allow values that
         //are greater than Fr because it can give a bias to schnorr signing. If we generate a value
