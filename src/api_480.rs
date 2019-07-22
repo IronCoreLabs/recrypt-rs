@@ -1,5 +1,5 @@
-use crate::api_common::RecryptErr;
 use crate::api_common::Result;
+use crate::api_common::{DefaultRng, RecryptErr};
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
@@ -22,8 +22,9 @@ use clear_on_drop::clear::Clear;
 use gridiron::fp_480::Fp480;
 use gridiron::fp_480::Monty as Monty480;
 use rand;
+use rand::rngs::adapter::ReseedingRng;
+use rand::rngs::EntropyRng;
 use rand::FromEntropy;
-use rand_chacha::ChaChaRng;
 use std;
 use std::fmt;
 
@@ -39,19 +40,29 @@ pub struct Recrypt480<H, S, R> {
     schnorr_signing: SchnorrSign<Monty480, Fr480, H>,
 }
 
-impl Recrypt480<Sha256, Ed25519, RandomBytes<ChaChaRng>> {
-    pub fn new() -> Recrypt480<Sha256, Ed25519, RandomBytes<ChaChaRng>> {
-        Recrypt480::new_with_rand(ChaChaRng::from_entropy())
+impl Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
+    /// Construct a new Recrypt480 with pre-selected CSPRNG implementation.
+    ///
+    /// The RNG will periodically reseed itself from the system's best entropy source.
+    pub fn new() -> Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
+        // 32 KB
+        const BYTES_BEFORE_RESEEDING: u64 = 32 * 1024;
+        Recrypt480::new_with_rand(ReseedingRng::new(
+            rand_chacha::ChaChaCore::from_entropy(),
+            BYTES_BEFORE_RESEEDING,
+            EntropyRng::new(),
+        ))
     }
 }
 
-impl Default for Recrypt480<Sha256, Ed25519, RandomBytes<ChaChaRng>> {
+impl Default for Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl<CR: rand::CryptoRng + rand::RngCore> Recrypt480<Sha256, Ed25519, RandomBytes<CR>> {
+    /// Construct a Recrypt480 with the given RNG. Unless you have specific needs using `new()` is recommended.
     pub fn new_with_rand(r: CR) -> Recrypt480<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = pairing::Pairing::new();
         let curve_points = &*curve::FP_480_CURVE_POINTS;

@@ -1,5 +1,5 @@
 pub use crate::api_common::RecryptErr;
-use crate::api_common::Result;
+use crate::api_common::{DefaultRng, Result};
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
@@ -39,8 +39,6 @@ pub struct Recrypt<H, S, R> {
     curve_points: &'static internal::curve::CurvePoints<Monty256>,
     schnorr_signing: SchnorrSign<Monty256, Fr256, H>,
 }
-
-type DefaultRng = ReseedingRng<rand_chacha::ChaChaCore, EntropyRng>;
 
 impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     /// Construct a new Recrypt with pre-selected CSPRNG implementation.
