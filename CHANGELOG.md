@@ -1,12 +1,19 @@
 # Changelog
 
-## 0.7.1
-
-- [[#80](#80)] Added a default set of features to enable `ed2559-dalek`s 64 bit backend and added a `wasm` feature that will instead use a 32 bit backend
+## 0.8.0
 
 ### Public API changes
 
-None
+- [[#82](#82)]
+  - Public API no longer contains mutable references. This makes sharing a single Recrypt among threads possible.
+  - Default RNG changed from `ThreadRng` to `ReseedingRng<rand_chacha::ChaChaCore, EntropyRng>`
+  - `DefaultRng` type alias added to public API
+
+## 0.7.1
+
+### Notable Internal Changes
+
+- [[#80](#80)] Added a default set of features to enable `ed2559-dalek`s 64 bit backend and added a `wasm` feature that will instead use a 32 bit backend
 
 ## 0.7.0
 
