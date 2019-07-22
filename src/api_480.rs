@@ -1,5 +1,6 @@
+pub use crate::api_common::DefaultRng;
+use crate::api_common::RecryptErr;
 use crate::api_common::Result;
-use crate::api_common::{DefaultRng, RecryptErr};
 use crate::internal;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::curve;
