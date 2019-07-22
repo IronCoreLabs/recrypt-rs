@@ -22,6 +22,8 @@ use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
+use rand::rngs::adapter::ReseedingRng;
+use rand::rngs::EntropyRng;
 use rand::FromEntropy;
 use rand_chacha;
 use std;
@@ -38,19 +40,31 @@ pub struct Recrypt<H, S, R> {
     schnorr_signing: SchnorrSign<Monty256, Fr256, H>,
 }
 
-impl Recrypt<Sha256, Ed25519, RandomBytes<rand_chacha::ChaChaRng>> {
-    pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<rand_chacha::ChaChaRng>> {
-        Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_entropy())
+type DefaultRng = ReseedingRng<rand_chacha::ChaChaCore, EntropyRng>;
+
+impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
+    /// Construct a new Recrypt with pre-selected CSPRNG implementation.
+    ///
+    /// The RNG will periodically reseed itself from the system's best entropy source.
+    pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
+        // 32 KB
+        const BYTES_BEFORE_RESEEDING: u64 = 32 * 1024;
+        Recrypt::new_with_rand(ReseedingRng::new(
+            rand_chacha::ChaChaCore::from_entropy(),
+            BYTES_BEFORE_RESEEDING,
+            EntropyRng::new(),
+        ))
     }
 }
 
-impl Default for Recrypt<Sha256, Ed25519, RandomBytes<rand_chacha::ChaChaRng>> {
+impl Default for Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     fn default() -> Self {
-        Self::new()
+        Recrypt::new()
     }
 }
 
 impl<CR: rand::CryptoRng + rand::RngCore> Recrypt<Sha256, Ed25519, RandomBytes<CR>> {
+    /// Construct a Recrypt with the given RNG. Unless you have specific needs using `new()` is recommended.
     pub fn new_with_rand(r: CR) -> Recrypt<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = internal::pairing::Pairing::new();
         let curve_points = &*curve::FP_256_CURVE_POINTS;
@@ -1137,7 +1151,7 @@ pub(crate) mod test {
         random_bytes: Option<R>,
         ed25519: S,
     ) -> Recrypt<Sha256, S, R> {
-        let api = Recrypt::new();
+        let api = Recrypt::default();
         Recrypt::<Sha256, S, R> {
             random_bytes: random_bytes.unwrap_or_default(),
             schnorr_signing: internal::schnorr::SchnorrSign::new_256(),
