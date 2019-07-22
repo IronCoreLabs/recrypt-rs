@@ -45,8 +45,8 @@ impl Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     ///
     /// The RNG will periodically reseed itself from the system's best entropy source.
     pub fn new() -> Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
-        // 32 KB
-        const BYTES_BEFORE_RESEEDING: u64 = 32 * 1024;
+        // 2 MB
+        const BYTES_BEFORE_RESEEDING: u64 = 2 * 1024 * 1024;
         Recrypt480::new_with_rand(ReseedingRng::new(
             rand_chacha::ChaChaCore::from_entropy(),
             BYTES_BEFORE_RESEEDING,
