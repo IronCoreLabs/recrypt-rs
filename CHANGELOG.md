@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1
+
+### Notable Internal Changes
+
+Bumped lazy_static version to 1.3.
+
 ## 0.8.0
 
 ### Public API changes
