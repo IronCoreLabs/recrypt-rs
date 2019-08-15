@@ -28,6 +28,7 @@ use rand::rngs::EntropyRng;
 use rand::FromEntropy;
 use std;
 use std::fmt;
+use std::ops::{Add, Sub};
 
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
@@ -1123,6 +1124,22 @@ impl From<internal::PrivateKey<Monty480>> for PrivateKey {
     }
 }
 
+impl Add for PrivateKey {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self::from(self._internal_key + other._internal_key)
+    }
+}
+
+impl Sub for PrivateKey {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self::from(self._internal_key - other._internal_key)
+    }
+}
+
 // use Drop to call clear on members of PrivateKey to zero memory before moving the stack pointer
 impl Drop for PrivateKey {
     fn drop(&mut self) {
@@ -1238,6 +1255,34 @@ pub(crate) mod test {
 
         assert_eq!(priv_key_api, roundtrip);
         assert_eq!(internal_pk, priv_key_api._internal_key)
+    }
+
+    #[test]
+    fn private_key_addition_under_p() -> Result<()> {
+        let priv_key_sum = PrivateKey::new([73u8; 60]) + PrivateKey::new([12u8; 60]);
+        assert_eq!(priv_key_sum, PrivateKey::new([85u8; 60]));
+        Ok(())
+    }
+
+    #[test]
+    fn private_key_addition_over_p() -> Result<()> {
+        let priv_key_sum = PrivateKey::new([56u8; 60]) + PrivateKey::new([199u8; 60]);
+        assert_eq!(priv_key_sum, PrivateKey::new([255u8; 60]));
+        Ok(())
+    }
+
+    #[test]
+    fn private_key_subtraction_under_p() -> Result<()> {
+        let priv_key_sum = PrivateKey::new([144u8; 60]) - PrivateKey::new([121u8; 60]);
+        assert_eq!(priv_key_sum, PrivateKey::new([23u8; 60]));
+        Ok(())
+    }
+
+    #[test]
+    fn private_key_subtraction_over_p() -> Result<()> {
+        let priv_key_sum = PrivateKey::new([255u8; 60]) - PrivateKey::new([127u8; 60]);
+        assert_eq!(priv_key_sum, PrivateKey::new([128u8; 60]));
+        Ok(())
     }
 
     #[test]

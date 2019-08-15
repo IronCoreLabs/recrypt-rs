@@ -24,7 +24,7 @@ use gridiron::fp_480::Fp480;
 use log::error;
 use num_traits::{One, Zero};
 use quick_error::quick_error;
-use std::ops::{Add, Mul, Neg};
+use std::ops::{Add, Mul, Neg, Sub};
 #[macro_use]
 pub mod macros;
 pub mod bit_repr;
@@ -147,6 +147,26 @@ impl<'a> From<&'a api_480::PrivateKey> for PrivateKey<fp_480::Monty> {
 impl PrivateKey<fp_480::Monty> {
     pub fn from_fp480(fp480: fp_480::Monty) -> PrivateKey<fp_480::Monty> {
         PrivateKey { value: fp480 }
+    }
+}
+
+impl<T: Add<Output = T>> Add for PrivateKey<T> {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            value: self.value + other.value,
+        }
+    }
+}
+
+impl<T: Sub<Output = T>> Sub for PrivateKey<T> {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            value: self.value - other.value,
+        }
     }
 }
 

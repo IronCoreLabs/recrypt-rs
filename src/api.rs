@@ -29,6 +29,7 @@ use rand::FromEntropy;
 use rand_chacha;
 use std;
 use std::fmt;
+use std::ops::{Add, Sub};
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
@@ -1085,6 +1086,22 @@ impl From<internal::PrivateKey<Monty256>> for PrivateKey {
     }
 }
 
+impl Add for PrivateKey {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self::from(self._internal_key + other._internal_key)
+    }
+}
+
+impl Sub for PrivateKey {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self::from(self._internal_key - other._internal_key)
+    }
+}
+
 // use Drop to call clear on members of PrivateKey to zero memory before moving the stack pointer
 impl Drop for PrivateKey {
     fn drop(&mut self) {
@@ -1201,6 +1218,34 @@ pub(crate) mod test {
 
         assert_eq!(priv_key_api, roundtrip);
         assert_eq!(internal_pk, priv_key_api._internal_key)
+    }
+
+    #[test]
+    fn private_key_addition_under_p() -> Result<()> {
+        let priv_key_sum = PrivateKey::new([42u8; 32]) + PrivateKey::new([37u8; 32]);
+        assert_eq!(priv_key_sum, PrivateKey::new([79u8; 32]));
+        Ok(())
+    }
+
+    #[test]
+    fn private_key_addition_over_p() -> Result<()> {
+        let priv_key_sum = PrivateKey::new([100u8; 32]) + PrivateKey::new([155u8; 32]);
+        assert_eq!(priv_key_sum, PrivateKey::new([255u8; 32]));
+        Ok(())
+    }
+
+    #[test]
+    fn private_key_subtraction_under_p() -> Result<()> {
+        let priv_key_sum = PrivateKey::new([42u8; 32]) - PrivateKey::new([37u8; 32]);
+        assert_eq!(priv_key_sum, PrivateKey::new([5u8; 32]));
+        Ok(())
+    }
+
+    #[test]
+    fn private_key_subtraction_over_p() -> Result<()> {
+        let priv_key_sum = PrivateKey::new([255u8; 32]) - PrivateKey::new([42u8; 32]);
+        assert_eq!(priv_key_sum, PrivateKey::new([213u8; 32]));
+        Ok(())
     }
 
     #[test]
