@@ -1128,7 +1128,7 @@ impl Add for PrivateKey {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Self::from(self._internal_key + other._internal_key)
+        (self._internal_key + other._internal_key).into()
     }
 }
 
@@ -1136,7 +1136,7 @@ impl Sub for PrivateKey {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        Self::from(self._internal_key - other._internal_key)
+        (self._internal_key - other._internal_key).into()
     }
 }
 
@@ -1258,31 +1258,27 @@ pub(crate) mod test {
     }
 
     #[test]
-    fn private_key_addition_under_p() -> Result<()> {
+    fn private_key_addition_under_p() {
         let priv_key_sum = PrivateKey::new([73u8; 60]) + PrivateKey::new([12u8; 60]);
         assert_eq!(priv_key_sum, PrivateKey::new([85u8; 60]));
-        Ok(())
     }
 
     #[test]
-    fn private_key_addition_over_p() -> Result<()> {
+    fn private_key_addition_over_p() {
         let priv_key_sum = PrivateKey::new([56u8; 60]) + PrivateKey::new([199u8; 60]);
         assert_eq!(priv_key_sum, PrivateKey::new([255u8; 60]));
-        Ok(())
     }
 
     #[test]
-    fn private_key_subtraction_under_p() -> Result<()> {
+    fn private_key_subtraction_under_p() {
         let priv_key_sum = PrivateKey::new([144u8; 60]) - PrivateKey::new([121u8; 60]);
         assert_eq!(priv_key_sum, PrivateKey::new([23u8; 60]));
-        Ok(())
     }
 
     #[test]
-    fn private_key_subtraction_over_p() -> Result<()> {
+    fn private_key_subtraction_over_p() {
         let priv_key_sum = PrivateKey::new([255u8; 60]) - PrivateKey::new([127u8; 60]);
         assert_eq!(priv_key_sum, PrivateKey::new([128u8; 60]));
-        Ok(())
     }
 
     #[test]
