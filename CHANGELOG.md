@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.2
+
+### Public API changes
+
+- [#87](#87)
+  - Adding add/sub to PrivateKey type to support key augmentation.
+
 ## 0.8.1
 
 ### Notable Internal Changes
