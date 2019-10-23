@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.4
+
+### Notable Internal Changes
+- Fixes a regression introduced in 0.8.0 where the randomness for some operations was reduced.
+  
+  Affected 256-bit operations in 0.8.0 through 0.8.3 were:
+  * CryptoOps::gen_plaintext
+  * CryptoOps::transform
+  * KeyGenOps::generate_transform_key
+  
+  480-bit operations were not affected.
+
 ## 0.8.3
 
 ### Notable Internal Changes
