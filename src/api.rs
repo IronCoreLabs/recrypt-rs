@@ -1629,10 +1629,6 @@ pub(crate) mod test {
 
     #[test]
     fn gen_random_fp12_not_same() {
-        use internal::fp::fr_256;
-        use internal::fp2elem::Fp2Elem;
-        use internal::fp6elem::Fp6Elem;
-
         let recrypt = Recrypt::new();
         let fp12_one = gen_random_fp12(&recrypt.pairing, &recrypt.random_bytes);
         let fp12_two = gen_random_fp12(&recrypt.pairing, &recrypt.random_bytes);
