@@ -940,24 +940,22 @@ fn gen_random_fp12<R: RandomBytesGen>(
     pairing: &pairing::Pairing<Monty256>,
     random_bytes: &R,
 ) -> Fp12Elem<Monty256> {
-    let rand_bytes_arr = [random_bytes.random_bytes_32(); 12];
-
     // generate 12 random Fp values
     internal::gen_rth_root(
         pairing,
         Fp12Elem::create_from_t(
-            Fp256::from(rand_bytes_arr[0]),
-            Fp256::from(rand_bytes_arr[1]),
-            Fp256::from(rand_bytes_arr[2]),
-            Fp256::from(rand_bytes_arr[3]),
-            Fp256::from(rand_bytes_arr[4]),
-            Fp256::from(rand_bytes_arr[5]),
-            Fp256::from(rand_bytes_arr[6]),
-            Fp256::from(rand_bytes_arr[7]),
-            Fp256::from(rand_bytes_arr[8]),
-            Fp256::from(rand_bytes_arr[9]),
-            Fp256::from(rand_bytes_arr[10]),
-            Fp256::from(rand_bytes_arr[11]),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
+            Fp256::from(random_bytes.random_bytes_32()),
         )
         .map(&|fp256| fp256.to_monty()),
     )
@@ -1627,5 +1625,13 @@ pub(crate) mod test {
         priv_key.clear();
         assert_eq!(priv_key.bytes(), &[0u8; 32]);
         assert_eq!(priv_key._internal_key, Default::default())
+    }
+
+    #[test]
+    fn gen_random_fp12_not_same() {
+        let recrypt = Recrypt::new();
+        let fp12_one = gen_random_fp12(&recrypt.pairing, &recrypt.random_bytes);
+        let fp12_two = gen_random_fp12(&recrypt.pairing, &recrypt.random_bytes);
+        assert_ne!(fp12_one, fp12_two);
     }
 }
