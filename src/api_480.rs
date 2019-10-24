@@ -1100,7 +1100,7 @@ impl PrivateKey {
     ///just using `+` if you need to rely on the order of the curve and the mod
     ///on the private keys lining up.
     pub fn augment_plus(&self, other: &PrivateKey) -> PrivateKey {
-        PrivateKey::augment(self, other, true)
+        PrivateKey::augment(self, other, false)
     }
     ///Augment the private key with another. This function should be preferred over
     ///just using `-` if you need to rely on the order of the curve and the mod
@@ -1595,5 +1595,25 @@ pub(crate) mod test {
         priv_key.clear();
         assert_eq!(SixtyBytes(priv_key.bytes().clone()), SixtyBytes([0u8; 60]));
         assert_eq!(priv_key._internal_key, Default::default())
+    }
+
+    #[test]
+    fn private_key_augment_plus() {
+        let priv_key_sum = PrivateKey::new(Fp480::from(1u8).to_bytes_array())
+            .augment_plus(&PrivateKey::new(Fp480::from(2u8).to_bytes_array()));
+        assert_eq!(
+            priv_key_sum,
+            PrivateKey::new((Fr480::from(1u8) + Fr480::from(2u8)).to_bytes_60())
+        );
+    }
+
+    #[test]
+    fn private_key_augment_minus() {
+        let priv_key_sum = PrivateKey::new(Fp480::from(1u8).to_bytes_array())
+            .augment_minus(&PrivateKey::new(Fp480::from(2u8).to_bytes_array()));
+        assert_eq!(
+            priv_key_sum,
+            PrivateKey::new((Fr480::from(1u8) - Fr480::from(2u8)).to_bytes_60())
+        );
     }
 }
