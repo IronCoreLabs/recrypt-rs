@@ -1061,6 +1061,30 @@ impl PrivateKey {
     }
 
     new_from_slice!(PrivateKey);
+
+    ///Augment the private key with another. This function should be preferred over
+    ///just using `+` if you need to rely on the order of the curve and the mod
+    ///on the private keys lining up.
+    pub fn augment_plus(&self, other: &PrivateKey) -> PrivateKey {
+        PrivateKey::augment(self, other, true)
+    }
+    ///Augment the private key with another. This function should be preferred over
+    ///just using `-` if you need to rely on the order of the curve and the mod
+    ///on the private keys lining up.
+    pub fn augment_minus(&self, other: &PrivateKey) -> PrivateKey {
+        PrivateKey::augment(self, other, true)
+    }
+    ///Convert the keys to Frs and either add or subtract them, then turn it back into a PrivateKey.
+    fn augment(first: &PrivateKey, second: &PrivateKey, subtract: bool) -> PrivateKey {
+        let first_fr = Fr256::from(first.bytes);
+        let second_fr = Fr256::from(second.bytes);
+        let fr_result = if subtract {
+            first_fr - second_fr
+        } else {
+            first_fr + second_fr
+        };
+        PrivateKey::new(fr_result.to_bytes_32())
+    }
 }
 
 impl PartialEq for Revealed<PrivateKey> {
