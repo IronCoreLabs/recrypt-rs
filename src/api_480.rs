@@ -1095,15 +1095,15 @@ impl PrivateKey {
 
     new_from_slice!(PrivateKey);
 
-    ///Augment the private key with another. This function should be preferred over
-    ///just using `+` if you need to rely on the order of the curve and the mod
-    ///on the private keys lining up.
+    ///Augment the private key with another. This function performs the addition in Fr,
+    ///which matches the cycle of the elliptic curve. This allows augmented private keys to line up
+    ///correctly with public keys generated from them.
     pub fn augment_plus(&self, other: &PrivateKey) -> PrivateKey {
         PrivateKey::augment(self, other, false)
     }
-    ///Augment the private key with another. This function should be preferred over
-    ///just using `-` if you need to rely on the order of the curve and the mod
-    ///on the private keys lining up.
+    ///Augment the private key with another. This function performs the subtraction in Fr,
+    ///which matches the cycle of the elliptic curve. This allows augmented private keys to line up
+    ///correctly with public keys generated from them.
     pub fn augment_minus(&self, other: &PrivateKey) -> PrivateKey {
         PrivateKey::augment(self, other, true)
     }
