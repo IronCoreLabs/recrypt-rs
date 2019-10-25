@@ -28,7 +28,6 @@ use rand::rngs::EntropyRng;
 use rand::FromEntropy;
 use std;
 use std::fmt;
-use std::ops::{Add, Sub};
 
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
@@ -1095,6 +1094,30 @@ impl PrivateKey {
     }
 
     new_from_slice!(PrivateKey);
+
+    ///Augment the private key with another. This function performs the addition in Fr,
+    ///which matches the cycle of the elliptic curve. This allows augmented private keys to line up
+    ///correctly with public keys generated from them.
+    pub fn augment_plus(&self, other: &PrivateKey) -> PrivateKey {
+        PrivateKey::augment(self, other, false)
+    }
+    ///Augment the private key with another. This function performs the subtraction in Fr,
+    ///which matches the cycle of the elliptic curve. This allows augmented private keys to line up
+    ///correctly with public keys generated from them.
+    pub fn augment_minus(&self, other: &PrivateKey) -> PrivateKey {
+        PrivateKey::augment(self, other, true)
+    }
+    ///Convert the keys to Frs and either add or subtract them, then turn it back into a PrivateKey.
+    fn augment(first: &PrivateKey, second: &PrivateKey, subtract: bool) -> PrivateKey {
+        let first_fr = Fr480::from(first.bytes.0);
+        let second_fr = Fr480::from(second.bytes.0);
+        let fr_result = if subtract {
+            first_fr - second_fr
+        } else {
+            first_fr + second_fr
+        };
+        PrivateKey::new(fr_result.to_bytes_60())
+    }
 }
 
 impl PartialEq for Revealed<PrivateKey> {
@@ -1121,22 +1144,6 @@ impl From<internal::PrivateKey<Monty480>> for PrivateKey {
             bytes: SixtyBytes(internal_pk.value.to_bytes_60()),
             _internal_key: internal_pk,
         }
-    }
-}
-
-impl Add for PrivateKey {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        (self._internal_key + other._internal_key).into()
-    }
-}
-
-impl Sub for PrivateKey {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        (self._internal_key - other._internal_key).into()
     }
 }
 
@@ -1255,30 +1262,6 @@ pub(crate) mod test {
 
         assert_eq!(priv_key_api, roundtrip);
         assert_eq!(internal_pk, priv_key_api._internal_key)
-    }
-
-    #[test]
-    fn private_key_addition_under_p() {
-        let priv_key_sum = PrivateKey::new([73u8; 60]) + PrivateKey::new([12u8; 60]);
-        assert_eq!(priv_key_sum, PrivateKey::new([85u8; 60]));
-    }
-
-    #[test]
-    fn private_key_addition_over_p() {
-        let priv_key_sum = PrivateKey::new([56u8; 60]) + PrivateKey::new([199u8; 60]);
-        assert_eq!(priv_key_sum, PrivateKey::new([255u8; 60]));
-    }
-
-    #[test]
-    fn private_key_subtraction_under_p() {
-        let priv_key_sum = PrivateKey::new([144u8; 60]) - PrivateKey::new([121u8; 60]);
-        assert_eq!(priv_key_sum, PrivateKey::new([23u8; 60]));
-    }
-
-    #[test]
-    fn private_key_subtraction_over_p() {
-        let priv_key_sum = PrivateKey::new([255u8; 60]) - PrivateKey::new([127u8; 60]);
-        assert_eq!(priv_key_sum, PrivateKey::new([128u8; 60]));
     }
 
     #[test]
@@ -1571,5 +1554,25 @@ pub(crate) mod test {
         priv_key.clear();
         assert_eq!(SixtyBytes(priv_key.bytes().clone()), SixtyBytes([0u8; 60]));
         assert_eq!(priv_key._internal_key, Default::default())
+    }
+
+    #[test]
+    fn private_key_augment_plus() {
+        let priv_key_sum = PrivateKey::new(Fp480::from(1u8).to_bytes_array())
+            .augment_plus(&PrivateKey::new(Fp480::from(2u8).to_bytes_array()));
+        assert_eq!(
+            priv_key_sum,
+            PrivateKey::new((Fr480::from(1u8) + Fr480::from(2u8)).to_bytes_60())
+        );
+    }
+
+    #[test]
+    fn private_key_augment_minus() {
+        let priv_key_sum = PrivateKey::new(Fp480::from(1u8).to_bytes_array())
+            .augment_minus(&PrivateKey::new(Fp480::from(2u8).to_bytes_array()));
+        assert_eq!(
+            priv_key_sum,
+            PrivateKey::new((Fr480::from(1u8) - Fr480::from(2u8)).to_bytes_60())
+        );
     }
 }

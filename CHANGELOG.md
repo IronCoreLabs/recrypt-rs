@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.5
+
+### Public API changes
+
+- [#95](#95)
+  - Removing ad/sub from PrivateKey types.
+  - Adding `augment` and `augment_minus` to PrivateKey, which correctly support PrivateKey Rotation
+
 ## 0.8.4
 
 ### Notable Internal Changes

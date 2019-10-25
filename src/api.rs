@@ -29,7 +29,6 @@ use rand::FromEntropy;
 use rand_chacha;
 use std;
 use std::fmt;
-use std::ops::{Add, Sub};
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
@@ -1061,6 +1060,30 @@ impl PrivateKey {
     }
 
     new_from_slice!(PrivateKey);
+
+    ///Augment the private key with another. This function performs the addition in Fr,
+    ///which matches the cycle of the elliptic curve. This allows augmented private keys to line up
+    ///correctly with public keys generated from them.
+    pub fn augment_plus(&self, other: &PrivateKey) -> PrivateKey {
+        PrivateKey::augment(self, other, false)
+    }
+    ///Augment the private key with another. This function performs the subtraction in Fr,
+    ///which matches the cycle of the elliptic curve. This allows augmented private keys to line up
+    ///correctly with public keys generated from them.
+    pub fn augment_minus(&self, other: &PrivateKey) -> PrivateKey {
+        PrivateKey::augment(self, other, true)
+    }
+    ///Convert the keys to Frs and either add or subtract them, then turn it back into a PrivateKey.
+    fn augment(first: &PrivateKey, second: &PrivateKey, subtract: bool) -> PrivateKey {
+        let first_fr = Fr256::from(first.bytes);
+        let second_fr = Fr256::from(second.bytes);
+        let fr_result = if subtract {
+            first_fr - second_fr
+        } else {
+            first_fr + second_fr
+        };
+        PrivateKey::new(fr_result.to_bytes_32())
+    }
 }
 
 impl PartialEq for Revealed<PrivateKey> {
@@ -1081,22 +1104,6 @@ impl From<internal::PrivateKey<Monty256>> for PrivateKey {
             bytes: internal_pk.value.to_bytes_32(),
             _internal_key: internal_pk,
         }
-    }
-}
-
-impl Add for PrivateKey {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        (self._internal_key + other._internal_key).into()
-    }
-}
-
-impl Sub for PrivateKey {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        (self._internal_key - other._internal_key).into()
     }
 }
 
@@ -1219,27 +1226,23 @@ pub(crate) mod test {
     }
 
     #[test]
-    fn private_key_addition_under_p() {
-        let priv_key_sum = PrivateKey::new([42u8; 32]) + PrivateKey::new([37u8; 32]);
-        assert_eq!(priv_key_sum, PrivateKey::new([79u8; 32]));
+    fn private_key_augment_plus() {
+        let priv_key_sum = PrivateKey::new(Fp256::from(1u8).to_bytes_array())
+            .augment_plus(&PrivateKey::new(Fp256::from(2u8).to_bytes_array()));
+        assert_eq!(
+            priv_key_sum,
+            PrivateKey::new((Fr256::from(1u8) + Fr256::from(2u8)).to_bytes_32())
+        );
     }
 
     #[test]
-    fn private_key_addition_over_p() {
-        let priv_key_sum = PrivateKey::new([100u8; 32]) + PrivateKey::new([155u8; 32]);
-        assert_eq!(priv_key_sum, PrivateKey::new([255u8; 32]));
-    }
-
-    #[test]
-    fn private_key_subtraction_under_p() {
-        let priv_key_sum = PrivateKey::new([42u8; 32]) - PrivateKey::new([37u8; 32]);
-        assert_eq!(priv_key_sum, PrivateKey::new([5u8; 32]));
-    }
-
-    #[test]
-    fn private_key_subtraction_over_p() {
-        let priv_key_sum = PrivateKey::new([255u8; 32]) - PrivateKey::new([42u8; 32]);
-        assert_eq!(priv_key_sum, PrivateKey::new([213u8; 32]));
+    fn private_key_augment_minus() {
+        let priv_key_sum = PrivateKey::new(Fp256::from(1u8).to_bytes_array())
+            .augment_minus(&PrivateKey::new(Fp256::from(2u8).to_bytes_array()));
+        assert_eq!(
+            priv_key_sum,
+            PrivateKey::new((Fr256::from(1u8) - Fr256::from(2u8)).to_bytes_32())
+        );
     }
 
     #[test]
