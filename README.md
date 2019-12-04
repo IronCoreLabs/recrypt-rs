@@ -54,13 +54,15 @@ _Note: The most accurate way to characterize performance is to [run the benchmar
  
 These benchmarks were done on a Thinkpad X1 Extreme (Gen2)
 
-Abbreviated entry from /proc/cpuinfo
+Abbreviated entry from `/proc/cpuinfo`
 ```
 vendor_id       : GenuineIntel
 cpu family      : 6
 model           : 158
 model name      : Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz
 ```
+
+If you are unfamiliar with the output of criterion.rs benchmarks, please see [the docs](https://bheisler.github.io/criterion.rs/book/user_guide/command_line_output.html) for how to interpret the output.
 
 ```
 $ cargo bench
