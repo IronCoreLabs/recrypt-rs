@@ -46,6 +46,68 @@ NCC Group's [Cryptography Services](https://www.nccgroup.trust/us/our-services/c
 
 To learn more about our approach to cryptography and to read our publications, please [go here](https://docs.ironcorelabs.com/cryptography/).
 
+## Benchmarks
+
+### Results from [79b6e6](https://github.com/IronCoreLabs/recrypt-rs/tree/79b6e62956f524109c8df81c4cf0cdf65291b5c5) (from 2019-12-04)
+
+_Note: The most accurate way to characterize performance is to [run the benchmarks for yourself](#running-benchmarks) in your target environment!_
+ 
+These benchmarks were done on a Thinkpad X1 Extreme (Gen2)
+
+Abbreviated entry from /proc/cpuinfo
+```
+vendor_id       : GenuineIntel
+cpu family      : 6
+model           : 158
+model name      : Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz
+```
+
+```
+$ cargo bench
+
+256-bit generate key pair                                                                            
+                        time:   [757.61 us 760.48 us 764.48 us]
+256-bit generate plaintext                                                                            
+                        time:   [2.9911 ms 2.9962 ms 3.0032 ms]
+256-bit generate ed25519 keypair                                                                            
+                        time:   [15.627 us 15.686 us 15.793 us]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+256-bit generate transform key                                                                           
+                        time:   [15.050 ms 15.072 ms 15.094 ms]
+256-bit compute public key                                                                            
+                        time:   [715.24 us 717.64 us 720.06 us]
+Found 2 outliers among 20 measurements (10.00%)
+  2 (10.00%) high mild
+256-bit derive symmetric key                                                                            
+                        time:   [1.9093 us 1.9625 us 2.0225 us]
+Found 3 outliers among 20 measurements (15.00%)
+  2 (10.00%) high mild
+  1 (5.00%) high severe
+256-bit encrypt (level 0)                                                                           
+                        time:   [7.0845 ms 7.1014 ms 7.1337 ms]
+Found 4 outliers among 20 measurements (20.00%)
+  1 (5.00%) low mild
+  3 (15.00%) high severe
+256-bit decrypt (level 0)                                                                           
+                        time:   [6.4466 ms 6.4530 ms 6.4598 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+256-bit transform (level 1)                                                                           
+                        time:   [18.466 ms 18.492 ms 18.519 ms]
+256-bit decrypt (level 1)                                                                           
+                        time:   [22.856 ms 22.888 ms 22.927 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+256-bit transform (level 2)                                                                           
+                        time:   [41.160 ms 41.339 ms 41.541 ms]
+256-bit decrypt (level 2)                                                                           
+                        time:   [38.508 ms 38.560 ms 38.617 ms]
+Found 2 outliers among 20 measurements (10.00%)
+  1 (5.00%) low mild
+  1 (5.00%) high severe
+  ```
+
 ## Contributing 
 
 #### Building
