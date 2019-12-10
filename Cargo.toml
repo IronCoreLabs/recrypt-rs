@@ -1,6 +1,6 @@
 [package]
 name = "recrypt"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["IronCore Labs <info@ironcorelabs.com>"]
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -19,7 +19,7 @@ num-traits = "~0.2"
 lazy_static = "~1.4"
 arrayvec = "~0.4"
 #Disable all features for ed25519 and enable the proper ones down in the [features] section below
-ed25519-dalek = { version="1.0.0-pre.1", default-features = false }
+ed25519-dalek = { version="=1.0.0-pre.1", default-features = false }
 clear_on_drop = "~0.2"
 gridiron = "^0.6.0"
 quick-error = "~1.2"
