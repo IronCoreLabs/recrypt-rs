@@ -4,7 +4,8 @@
 
 ### Notable internal changes
 
-- Fix the dependency pinning for ed25519 to be exact.
+- [#98](#98)
+  - Fix the dependency pinning for ed25519 to be exact.
 
 ## 0.9.0
 
