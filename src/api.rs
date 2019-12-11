@@ -99,8 +99,7 @@ new_bytes_type!(EncryptedMessage, Fp12Elem::<Monty256>::ENCODED_SIZE_BYTES);
 
 // Not hashed, not encrypted Fp12Elem
 // See DecryptedSymmetricKey and EncryptedMessage
-// we don't derive Copy or Clone here on purpose. Plaintext is a sensitive value and should be passed by reference
-// to avoid needless duplication
+#[derive(Clone)]
 pub struct Plaintext {
     bytes: [u8; Plaintext::ENCODED_SIZE_BYTES],
     _internal_fp12: Fp12Elem<Monty256>,
