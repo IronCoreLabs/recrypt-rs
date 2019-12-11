@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.2
+
+### Public API changes
+
+- [#99](#99)
+  - Provide `Clone` for `Plaintext`
+
 ## 0.9.1
 
 ### Notable internal changes
