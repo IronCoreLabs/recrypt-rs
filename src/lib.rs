@@ -28,7 +28,7 @@
 //! let decrypted_val = recrypt.decrypt(encrypted_val, &priv_key).unwrap();
 //!
 //! // plaintext recovered.
-//! assert_eq!(Revealed(pt), Revealed(decrypted_val))
+//! assert_eq!(pt, decrypted_val)
 //! ```
 
 //! ## Single-hop Transform Encryption Example
@@ -74,7 +74,7 @@
 //! let decrypted_val = recrypt.decrypt(transformed_val, &target_priv_key).unwrap();
 //!
 //! // plaintext recovered.
-//! assert_eq!(Revealed(pt), Revealed(decrypted_val));
+//! assert_eq!(pt, decrypted_val);
 //! ```
 //!
 //! ## Constant Time and Equality

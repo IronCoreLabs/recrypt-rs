@@ -18,7 +18,6 @@ use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
-use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
@@ -80,12 +79,13 @@ impl<CR: rand::CryptoRng + rand::RngCore> Recrypt<Sha256, Ed25519, RandomBytes<C
 }
 
 // Hashed but not encrypted Plaintext used for envelope encryption
-// If you are looking for PartialEq for DerivedSymmetricKey, see PartialEq for Revealed<DerivedSymmetricKey>
 new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
 
-impl PartialEq for Revealed<DerivedSymmetricKey> {
-    fn eq(&self, other: &Revealed<DerivedSymmetricKey>) -> bool {
-        self.0.bytes == other.0.bytes
+// Constant-time data-invariant implementation of eq for DerivedSymmetricKey.
+impl PartialEq for DerivedSymmetricKey {
+    fn eq(&self, other: &DerivedSymmetricKey) -> bool {
+        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
+        return byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0;
     }
 }
 
@@ -130,17 +130,11 @@ impl Plaintext {
 
 bytes_only_debug!(Plaintext);
 
-impl PartialEq for Revealed<Plaintext> {
-    fn eq(&self, other: &Revealed<Plaintext>) -> bool {
-        self.0.bytes[..] == other.0.bytes[..]
-    }
-}
-
-/// If you are looking for PartialEq for Plaintext, see PartialEq for Revealed<Plaintext>
-#[cfg(test)]
+// Constant-time data-invariant implementation of eq for Plaintext.
 impl PartialEq for Plaintext {
     fn eq(&self, other: &Plaintext) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
+        return byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0;
     }
 }
 
@@ -1036,8 +1030,6 @@ impl PartialEq for PublicKey {
 }
 
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(test, derive(PartialEq))]
-// If you are looking for PartialEq for PrivateKey, see PartialEq for Revealed<PrivateKey>
 pub struct PrivateKey {
     bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES],
     _internal_key: internal::PrivateKey<Monty256>,
@@ -1085,9 +1077,11 @@ impl PrivateKey {
     }
 }
 
-impl PartialEq for Revealed<PrivateKey> {
-    fn eq(&self, other: &Revealed<PrivateKey>) -> bool {
-        self.0.bytes[..] == other.0.bytes
+// Constant-time data-invariant implementation of eq for PrivateKey.
+impl PartialEq for PrivateKey {
+    fn eq(&self, other: &PrivateKey) -> bool {
+        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
+        return byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0;
     }
 }
 
@@ -1405,7 +1399,7 @@ pub(crate) mod test {
         dest.copy_from_slice(src);
         let expected_result = DerivedSymmetricKey::new(dest);
         let result = Recrypt::new().derive_symmetric_key(&pt);
-        assert_eq!(Revealed(expected_result), Revealed(result))
+        assert_eq!(expected_result, result)
     }
 
     #[test]
@@ -1421,7 +1415,7 @@ pub(crate) mod test {
         dest.copy_from_slice(src);
         let expected_result = DerivedSymmetricKey::new(dest);
         let result = api.derive_symmetric_key(&pt);
-        assert_eq!(Revealed(expected_result), Revealed(result));
+        assert_eq!(expected_result, result);
         //This hashes, but also mods the value so it's not the same.
         let private_key_result = api.derive_private_key(&pt);
         assert_ne!(private_key_result.bytes(), result.bytes());
@@ -1538,24 +1532,24 @@ pub(crate) mod test {
     fn generate_ed25519_key_pair() {
         use rand::SeedableRng;
         let api = Recrypt::new_with_rand(rand_chacha::ChaChaRng::from_seed([0u8; 32]));
-        let signing_keypair = Revealed(api.generate_ed25519_key_pair());
-        let expected_signing_keypair = Revealed(SigningKeypair::new_unchecked([
+        let signing_keypair = api.generate_ed25519_key_pair();
+        let expected_signing_keypair = SigningKeypair::new_unchecked([
             118, 184, 224, 173, 160, 241, 61, 144, 64, 93, 106, 229, 83, 134, 189, 40, 189, 210,
             25, 184, 160, 141, 237, 26, 168, 54, 239, 204, 139, 119, 13, 199, 32, 253, 186, 201,
             177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150, 215, 30, 78, 212,
             76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
-        ]));
+        ]);
         let expected_pub = PublicSigningKey::new([
             32, 253, 186, 201, 177, 11, 117, 135, 187, 167, 181, 188, 22, 59, 206, 105, 231, 150,
             215, 30, 78, 212, 76, 16, 252, 180, 72, 134, 137, 247, 161, 68,
         ]);
         assert_eq!(signing_keypair, expected_signing_keypair);
-        assert_eq!(signing_keypair.0.public_key(), expected_pub);
+        assert_eq!(signing_keypair.public_key(), expected_pub);
 
         //Assert that the generation doesn't just return the same value.
-        let keypair_two = Revealed(api.generate_ed25519_key_pair());
+        let keypair_two = api.generate_ed25519_key_pair();
         assert_ne!(keypair_two, expected_signing_keypair);
-        assert_ne!(keypair_two.0.public_key(), expected_pub);
+        assert_ne!(keypair_two.public_key(), expected_pub);
     }
     #[test]
     //written against AuthHash, but valid for all types generated from that macro
@@ -1627,6 +1621,55 @@ pub(crate) mod test {
         priv_key.clear();
         assert_eq!(priv_key.bytes(), &[0u8; 32]);
         assert_eq!(priv_key._internal_key, Default::default())
+    }
+
+    // check the equality functions for private keys, plaintexts, and derived symmetric keys
+    #[test]
+    fn private_keys_equal() -> Result<()> {
+        let priv_key1 = PrivateKey::new_from_slice(&hex::decode(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        )?)?;
+        let priv_key2 = PrivateKey::new_from_slice(&hex::decode(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        )?)?;
+        assert_eq!(priv_key1, priv_key2);
+        Ok(())
+    }
+
+    #[test]
+    fn private_keys_not_equal() -> Result<()> {
+        let priv_key1 = PrivateKey::new_from_slice(&hex::decode(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        )?)?;
+        let priv_key2 = PrivateKey::new_from_slice(&hex::decode(
+            "ef0123456789abcd0123456789abcdef0123456789abcdef0123456789abcdef",
+        )?)?;
+        assert_ne!(priv_key1, priv_key2);
+        Ok(())
+    }
+
+    // Also derives symmetric keys from the plaintexts and compares those.
+    #[test]
+    fn plaintexts_equal() -> Result<()> {
+        let pt1 = Plaintext::new_from_slice(&hex::decode("3e0348980131e4db298445c3ef424ad60ebfa816069689be559f5ffeecf5e635201172f1bc931833b431a8d7a118e90d516de84e6e4de2f3105695b7699104ee18dd4598f93417ed736b40515a4817499a748be1bf126c132a8a4e8da83780a9054d6e1de22e21e446dbaa3a121d103fdf813a31afac09881beb0a3ae974ffdd537049eea02dade975525c720d152c87b4f0e76645c4cf46ee0e731378ad5c5d12630a32d0610c52c3c56fc0d7666ad6464adeca698a2ee4c44666c05d2e58154b961a595a445b156ce0bdd3e13ffa5b296e8c364aecec6208a0aa54cdea40455032a11458b08d143a51013dcdb8febd01bd93966bff2fc8bbd121efc19fedcb576d82e70838f8f987c5cb887a857d4a6d68c8bbf9196d72b98bea0a62d3fda109a46c28c6d87851223f38712226ba8a5c36197ee016baa27051c398a95c184820e6493c972f7e53936a2abd9c22483d3595fee87ad2a2771af0cc847548bc233f258d4bf77df8265b566ef54c288ad3a8034d18b3af4cb1d71b2da649200fa1")?)?;
+        let pt2 = Plaintext::new_from_slice(&hex::decode("3e0348980131e4db298445c3ef424ad60ebfa816069689be559f5ffeecf5e635201172f1bc931833b431a8d7a118e90d516de84e6e4de2f3105695b7699104ee18dd4598f93417ed736b40515a4817499a748be1bf126c132a8a4e8da83780a9054d6e1de22e21e446dbaa3a121d103fdf813a31afac09881beb0a3ae974ffdd537049eea02dade975525c720d152c87b4f0e76645c4cf46ee0e731378ad5c5d12630a32d0610c52c3c56fc0d7666ad6464adeca698a2ee4c44666c05d2e58154b961a595a445b156ce0bdd3e13ffa5b296e8c364aecec6208a0aa54cdea40455032a11458b08d143a51013dcdb8febd01bd93966bff2fc8bbd121efc19fedcb576d82e70838f8f987c5cb887a857d4a6d68c8bbf9196d72b98bea0a62d3fda109a46c28c6d87851223f38712226ba8a5c36197ee016baa27051c398a95c184820e6493c972f7e53936a2abd9c22483d3595fee87ad2a2771af0cc847548bc233f258d4bf77df8265b566ef54c288ad3a8034d18b3af4cb1d71b2da649200fa1")?)?;
+        assert_eq!(pt1, pt2);
+        let dk1 = Recrypt::new().derive_symmetric_key(&pt1);
+        let dk2 = Recrypt::new().derive_symmetric_key(&pt2);
+        assert_eq!(dk1, dk2);
+        Ok(())
+    }
+
+    // Also derives symmetric keys from the plaintexts and compares those.
+    #[test]
+    fn plaintexts_not_equal() -> Result<()> {
+        let pt1 = Plaintext::new_from_slice(&hex::decode("3e0348980131e4db298445c3ef424ad60ebfa816069689be559f5ffeecf5e635201172f1bc931833b431a8d7a118e90d516de84e6e4de2f3105695b7699104ee18dd4598f93417ed736b40515a4817499a748be1bf126c132a8a4e8da83780a9054d6e1de22e21e446dbaa3a121d103fdf813a31afac09881beb0a3ae974ffdd537049eea02dade975525c720d152c87b4f0e76645c4cf46ee0e731378ad5c5d12630a32d0610c52c3c56fc0d7666ad6464adeca698a2ee4c44666c05d2e58154b961a595a445b156ce0bdd3e13ffa5b296e8c364aecec6208a0aa54cdea40455032a11458b08d143a51013dcdb8febd01bd93966bff2fc8bbd121efc19fedcb576d82e70838f8f987c5cb887a857d4a6d68c8bbf9196d72b98bea0a62d3fda109a46c28c6d87851223f38712226ba8a5c36197ee016baa27051c398a95c184820e6493c972f7e53936a2abd9c22483d3595fee87ad2a2771af0cc847548bc233f258d4bf77df8265b566ef54c288ad3a8034d18b3af4cb1d71b2da649200fa1")?)?;
+        let pt2 = Plaintext::new_from_slice(&hex::decode("3e0348980131e4db298445c3ef424ad60ebfa816069689be559f5ffeecf5e635201172f1bc931833b431a8d7a118e90d516de84e6e4de2f3105695b7699104ee18dd4598f93417ed736b40515a4817499a748be1bf126c132a8a4e8da83780a9054d6e1de22e21e446dbaa3a121d103fdf813a31afac09881beb0a3ae974ffdd537049efa02dade975525c720d152c87b4f0e76645c4cf46ee0e731378ad5c5d12630a32d0610c52c3c56fc0d7666ad6464adeca698a2ee4c44666c05d2e58154b961a595a445b156ce0bdd3e13ffa5b296e8c364aecec6208a0aa54cdea40455032a11458b08d143a51013dcdb8febd01bd93966bff2fc8bbd121efc19fedcb576d82e70838f8f987c5cb887a857d4a6d68c8bbf9196d72b98bea0a62d3fda109a46c28c6d87851223f38712226ba8a5c36197ee016baa27051c398a95c184820e6493c972f7e53936a2abd9c22483d3595fee87ad2a2771af0cc847548bc233f258d4bf77df8265b566ef54c288ad3a8034d18b3af4cb1d71b2da649200fa1")?)?;
+        assert_ne!(pt1, pt2);
+        let dk1 = Recrypt::new().derive_symmetric_key(&pt1);
+        let dk2 = Recrypt::new().derive_symmetric_key(&pt2);
+        assert_ne!(dk1, dk2);
+        Ok(())
     }
 
     #[test]

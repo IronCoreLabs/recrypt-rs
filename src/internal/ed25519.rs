@@ -2,7 +2,6 @@ use crate::api_common::RecryptErr;
 use crate::internal::hashable::Hashable;
 use crate::internal::ByteVector;
 use crate::internal::{array_split_64, take_lock};
-use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use ed25519_dalek;
 use ed25519_dalek::PublicKey;
@@ -127,9 +126,11 @@ impl SigningKeypair {
     }
 }
 
-impl PartialEq for Revealed<SigningKeypair> {
-    fn eq(&self, other: &Revealed<SigningKeypair>) -> bool {
-        self.0.bytes[..] == other.0.bytes[..]
+// Constant-time data-invariant implementation of eq for SigningKeyPair, which includes a private key.
+impl PartialEq for SigningKeypair {
+    fn eq(&self, other: &SigningKeypair) -> bool {
+        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
+        return byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0;
     }
 }
 
@@ -246,5 +247,23 @@ pub(crate) mod test {
         let key_pair_bytes = key_pair.bytes().clone();
         let bytes: [u8; 64] = key_pair.into();
         assert_eq!(key_pair_bytes[..], bytes[..])
+    }
+
+    #[test]
+    fn signing_keypairs_equal() {
+        let sk1 = good_signing_keypair();
+        let sk2 = good_signing_keypair();
+        assert_eq!(sk1, sk2)
+    }
+
+    #[test]
+    fn signing_keypairs_not_equal() {
+        let sk1 = good_signing_keypair();
+        let sk2 = SigningKeypair::new_unchecked([
+            1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 138, 136, 227, 221, 116, 9, 241, 149, 253, 82, 219, 45, 60, 186, 93, 114, 202,
+            103, 9, 191, 29, 148, 18, 27, 243, 116, 136, 1, 180, 15, 111, 92,
+        ]);
+        assert_ne!(sk1, sk2)
     }
 }
