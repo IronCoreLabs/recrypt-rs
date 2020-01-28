@@ -85,7 +85,7 @@ new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
 impl PartialEq for DerivedSymmetricKey {
     fn eq(&self, other: &DerivedSymmetricKey) -> bool {
         let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        return byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0;
+        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
     }
 }
 
@@ -134,7 +134,7 @@ bytes_only_debug!(Plaintext);
 impl PartialEq for Plaintext {
     fn eq(&self, other: &Plaintext) -> bool {
         let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        return byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0;
+        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
     }
 }
 
@@ -1081,7 +1081,7 @@ impl PrivateKey {
 impl PartialEq for PrivateKey {
     fn eq(&self, other: &PrivateKey) -> bool {
         let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        return byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0;
+        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
     }
 }
 

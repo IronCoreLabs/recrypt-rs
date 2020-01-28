@@ -130,7 +130,7 @@ impl SigningKeypair {
 impl PartialEq for SigningKeypair {
     fn eq(&self, other: &SigningKeypair) -> bool {
         let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        return byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0;
+        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
     }
 }
 
