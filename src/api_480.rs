@@ -18,7 +18,6 @@ use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
 pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
-use crate::Revealed;
 use clear_on_drop::clear::Clear;
 use gridiron::fp_480::Fp480;
 use gridiron::fp_480::Monty as Monty480;
@@ -80,12 +79,13 @@ impl<CR: rand::CryptoRng + rand::RngCore> Recrypt480<Sha256, Ed25519, RandomByte
 }
 
 // Hashed but not encrypted Plaintext used for envelope encryption
-// If you are looking for PartialEq for DerivedSymmetricKey, see PartialEq for Revealed<DerivedSymmetricKey>
 new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
 
-impl PartialEq for Revealed<DerivedSymmetricKey> {
-    fn eq(&self, other: &Revealed<DerivedSymmetricKey>) -> bool {
-        self.0.bytes == other.0.bytes
+// Constant-time data-invariant implementation of eq for DerivedSymmetricKey.
+impl PartialEq for DerivedSymmetricKey {
+    fn eq(&self, other: &DerivedSymmetricKey) -> bool {
+        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
+        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
     }
 }
 
@@ -131,17 +131,11 @@ impl Plaintext {
 
 bytes_only_debug!(Plaintext);
 
-impl PartialEq for Revealed<Plaintext> {
-    fn eq(&self, other: &Revealed<Plaintext>) -> bool {
-        self.0.bytes[..] == other.0.bytes[..]
-    }
-}
-
-/// If you are looking for PartialEq for Plaintext, see PartialEq for Revealed<Plaintext>
-#[cfg(test)]
+// Constant-time data-invariant implementation of eq for Plaintext.
 impl PartialEq for Plaintext {
     fn eq(&self, other: &Plaintext) -> bool {
-        self.bytes[..] == other.bytes[..] && self._internal_fp12 == other._internal_fp12
+        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
+        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
     }
 }
 
@@ -1071,8 +1065,6 @@ impl PartialEq for PublicKey {
 }
 
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(test, derive(PartialEq))]
-// If you are looking for PartialEq for PrivateKey, see PartialEq for Revealed<PrivateKey>
 pub struct PrivateKey {
     bytes: SixtyBytes,
     _internal_key: internal::PrivateKey<Monty480>,
@@ -1120,9 +1112,11 @@ impl PrivateKey {
     }
 }
 
-impl PartialEq for Revealed<PrivateKey> {
-    fn eq(&self, other: &Revealed<PrivateKey>) -> bool {
-        self.0.bytes == other.0.bytes
+// Constant-time data-invariant implementation of eq for PrivateKey.
+impl PartialEq for PrivateKey {
+    fn eq(&self, other: &PrivateKey) -> bool {
+        let byte_pairs = self.bytes.0.iter().zip(other.bytes.0.iter());
+        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
     }
 }
 
@@ -1575,4 +1569,54 @@ pub(crate) mod test {
             PrivateKey::new((Fr480::from(1u8) - Fr480::from(2u8)).to_bytes_60())
         );
     }
+
+    // check the equality functions for private keys, plaintexts, and derived symmetric keys
+    #[test]
+    fn private_keys_equal() -> Result<()> {
+        let priv_key1 = PrivateKey::new_from_slice(&hex::decode(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+        )?)?;
+        let priv_key2 = PrivateKey::new_from_slice(&hex::decode(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+        )?)?;
+        assert_eq!(priv_key1, priv_key2);
+        Ok(())
+    }
+
+    #[test]
+    fn private_keys_not_equal() -> Result<()> {
+        let priv_key1 = PrivateKey::new_from_slice(&hex::decode(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+        )?)?;
+        let priv_key2 = PrivateKey::new_from_slice(&hex::decode(
+            "ef0123456789abcd0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+        )?)?;
+        assert_ne!(priv_key1, priv_key2);
+        Ok(())
+    }
+
+    // Also derives symmetric keys from the plaintexts and compares those.
+    #[test]
+    fn plaintexts_equal() -> Result<()> {
+        let pt1 = Plaintext::new_from_slice(&hex::decode("a5e480feba36757014d53c9efd823cd69ae0f8a175c1dd8740fa402faaebe6a114fabec5aa4815d20b41ec651df6cb5ab880849b50509234cbae117a6e59eb77959515d01f9f943c70450183c2d72d3b9ec31e65db41fc90978b31f80537f8b77a5a119b83e8f5420837541402ba85d824325b3641f6d3de35c40ea246804db5a68b0d4897b5169488d76d0a32d2006cdf754e15bbfd4813501a2e88fa3beb1a4dcebf4ccf88d8ba9ea0a9f53355fdc8d44b77caca7c73ad939f9e57d3edabb3c3f60328fc2c01b41bcb4cb533a95477107f447e36a12456abf8c550d1ae359d0f7087a16d4528832a3120f28793d2383f2a2574853f19210895d39bf3840ef106729b7fbdff3ba208666c21b657c2fcdae9e9d801dc205922ee25edbdc6b789907b7fb49d41460184e9b570d3ae6c25ee801c2178ed6874c67901d7fbb73838d7433fa9ae7638ce007ed83fb517e5b0bb8b939b22097ff3db80dd647dbfbda0126e1a35270606e1b28936dfcc8decf4992448d567977bda52fbb4d4c147bb73c6aab1195d8f79e4e458141869569e9cee435140cff55224a94b204a4a103ddad3a8082a1665ad7c52cef851a9376efbf07f6310481a04ea49d0a58072f5089db9fdc54022c52b9321b2b10bd94ad1a739ba8fa4f54d3dade5a62c611bcb4362d7dfb8b0913df8d66021a5f2870aa75e334a72a8c77f8dfb0d5e88a5828017289ba62636dbaa95eebda33b79714e594f19dff834510366a89cab27f7d5af4cc496ae109d5eb907cb9386bd126706d963ed9e6d56439e8bbd735f506243aa2e38474cc53c153b37392e5e56b4c271d7182dd4d31395b3c76f0e6ec6fb79cf02498742c265daa98cccab211d0d1eef2e9e7009defd5c5b0fc2e9d6f3c1518fc964cdd98aa019b4b2a1db22f734788f6dcbe6e8b3fdeb9dfea69410c14c039ee6ec4489171f744e2af555773da6886a2a7a3ad5b032b85e91d56d2baf4176004a37a60e6a00b8dc08b99031d316766af541")?)?;
+        let pt2 = Plaintext::new_from_slice(&hex::decode("a5e480feba36757014d53c9efd823cd69ae0f8a175c1dd8740fa402faaebe6a114fabec5aa4815d20b41ec651df6cb5ab880849b50509234cbae117a6e59eb77959515d01f9f943c70450183c2d72d3b9ec31e65db41fc90978b31f80537f8b77a5a119b83e8f5420837541402ba85d824325b3641f6d3de35c40ea246804db5a68b0d4897b5169488d76d0a32d2006cdf754e15bbfd4813501a2e88fa3beb1a4dcebf4ccf88d8ba9ea0a9f53355fdc8d44b77caca7c73ad939f9e57d3edabb3c3f60328fc2c01b41bcb4cb533a95477107f447e36a12456abf8c550d1ae359d0f7087a16d4528832a3120f28793d2383f2a2574853f19210895d39bf3840ef106729b7fbdff3ba208666c21b657c2fcdae9e9d801dc205922ee25edbdc6b789907b7fb49d41460184e9b570d3ae6c25ee801c2178ed6874c67901d7fbb73838d7433fa9ae7638ce007ed83fb517e5b0bb8b939b22097ff3db80dd647dbfbda0126e1a35270606e1b28936dfcc8decf4992448d567977bda52fbb4d4c147bb73c6aab1195d8f79e4e458141869569e9cee435140cff55224a94b204a4a103ddad3a8082a1665ad7c52cef851a9376efbf07f6310481a04ea49d0a58072f5089db9fdc54022c52b9321b2b10bd94ad1a739ba8fa4f54d3dade5a62c611bcb4362d7dfb8b0913df8d66021a5f2870aa75e334a72a8c77f8dfb0d5e88a5828017289ba62636dbaa95eebda33b79714e594f19dff834510366a89cab27f7d5af4cc496ae109d5eb907cb9386bd126706d963ed9e6d56439e8bbd735f506243aa2e38474cc53c153b37392e5e56b4c271d7182dd4d31395b3c76f0e6ec6fb79cf02498742c265daa98cccab211d0d1eef2e9e7009defd5c5b0fc2e9d6f3c1518fc964cdd98aa019b4b2a1db22f734788f6dcbe6e8b3fdeb9dfea69410c14c039ee6ec4489171f744e2af555773da6886a2a7a3ad5b032b85e91d56d2baf4176004a37a60e6a00b8dc08b99031d316766af541")?)?;
+        assert_eq!(pt1, pt2);
+        let dk1 = Recrypt480::new().derive_symmetric_key(&pt1);
+        let dk2 = Recrypt480::new().derive_symmetric_key(&pt2);
+        assert_eq!(dk1, dk2);
+        Ok(())
+    }
+
+    // Also derives symmetric keys from the plaintexts and compares those.
+    #[test]
+    fn plaintexts_not_equal() -> Result<()> {
+        let pt1 = Plaintext::new_from_slice(&hex::decode("a5e480feba36757014d53c9efd823cd69ae0f8a175c1dd8740fa402faaebe6a114fabec5aa4815d20b41ec651df6cb5ab880849b50509234cbae117a6e59eb77959515d01f9f943c70450183c2d72d3b9ec31e65db41fc90978b31f80537f8b77a5a119b83e8f5420837541402ba85d824325b3641f6d3de35c40ea246804db5a68b0d4897b5169488d76d0a32d2006cdf754e15bbfd4813501a2e88fa3beb1a4dcebf4ccf88d8ba9ea0a9f53355fdc8d44b77caca7c73ad939f9e57d3edabb3c3f60328fc2c01b41bcb4cb533a95477107f447e36a12456abf8c550d1ae359d0f7087a16d4528832a3120f28793d2383f2a2574853f19210895d39bf3840ef106729b7fbdff3ba208666c21b657c2fcdae9e9d801dc205922ee25edbdc6b789907b7fb49d41460184e9b570d3ae6c25ee801c2178ed6874c67901d7fbb73838d7433fa9ae7638ce007ed83fb517e5b0bb8b939b22097ff3db80dd647dbfbda0126e1a35270606e1b28936dfcc8decf4992448d567977bda52fbb4d4c147bb73c6aab1195d8f79e4e458141869569e9cee435140cff55224a94b204a4a103ddad3a8082a1665ad7c52cef851a9376efbf07f6310481a04ea49d0a58072f5089db9fdc54022c52b9321b2b10bd94ad1a739ba8fa4f54d3dade5a62c611bcb4362d7dfb8b0913df8d66021a5f2870aa75e334a72a8c77f8dfb0d5e88a5828017289ba62636dbaa95eebda33b79714e594f19dff834510366a89cab27f7d5af4cc496ae109d5eb907cb9386bd126706d963ed9e6d56439e8bbd735f506243aa2e38474cc53c153b37392e5e56b4c271d7182dd4d31395b3c76f0e6ec6fb79cf02498742c265daa98cccab211d0d1eef2e9e7009defd5c5b0fc2e9d6f3c1518fc964cdd98aa019b4b2a1db22f734788f6dcbe6e8b3fdeb9dfea69410c14c039ee6ec4489171f744e2af555773da6886a2a7a3ad5b032b85e91d56d2baf4176004a37a60e6a00b8dc08b99031d316766af541")?)?;
+        let pt2 = Plaintext::new_from_slice(&hex::decode("a5e480feba36757014d53c9efd823cd69ae0f8a175c1dd8740fa402faaebe6a114fabec5aa4815d20b41ec651df6cb5ab880849b50509234cbae117a6e59eb77959515d01f9f943c70450183c2d72d3b9ec31e65db41fc90978b31f80537f8b77a5a119b83e8f5420837541402ba85d824325b3641f6d3de35c40ea246804db5a68b0d4897b5169488d76d0a32d2006cdf754e15bbfd4813501a2e88fa3beb1a4dcebf4ccf88d8ba9ea0a9f53355fdc8d44b77caca7c73ad939f9e57d3edabb3c3f60328fc2c01b41bcb4cb533a95477107f447e36a12456abf8c550d1ae359d0f7087a16d4528832a3120f28793d2383f2a2574853f19210895d39bf3840ef106729b7fbdff3ba208666c21b657c2fcdae9e9d801dc205922ee25edbdc6b789907b7fb49d41460184e9b570d3ae6c25ee801c2178ed6874c67901d7fbb73838d7433fa9ae7638ce007ed83fb517e5b0bb8b939b22097ff3db80dd647dbfbda0126e1a35270606e1b28936dfcc8decf4992448d567977bda52fbb4d4c147bb73c6aab1195d8f79e4e458141869569e9cee435140cff55224a94b204a4a103ddad3a8082a1665ad7c52cef851a9376efbf07f6310481a04ea49d0a58072f5089db9fdc54022c52b9321b2b10bd94ad1a739ba8fa4f54d3dade5a62c611bcb4362d7dfb8b0913df8d66021a5f2870aa75e334a72a8c77f8dfb0d5e88a5828017289ba62636dbaa95eebda33b79714e594f19dff834510366a89cab27f7d5af4cc496ae109d5eb907cb9386bd126706d963ed9e6d56439e8bbd735f506243aa2e38474cc53c153b37392e5e56b4c271d7182dd4d31395b3c76f0e6ec6fb79cf02498742c265daa98cccab211d0d1eef2e9e7009defd5c5b0fc2e9d6f3c1518fc964cdd98aa019b4b2a1db22f734788f6dcbe6e8b3fdeb9dfea69410c14c039ee6ec4489171f744e2af555773da6886a2a7a3ad5b032b85e91d56d2baf4176004a37a60e6a00b8dc08b99031d316766af641")?)?;
+        assert_ne!(pt1, pt2);
+        let dk1 = Recrypt480::new().derive_symmetric_key(&pt1);
+        let dk2 = Recrypt480::new().derive_symmetric_key(&pt2);
+        assert_ne!(dk1, dk2);
+        Ok(())
+    }
+
 }
