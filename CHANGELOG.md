@@ -1,5 +1,17 @@
 # Changelog
 
+## NEXT RELEASE
+
+### Public API changes
+- [[#101](https://github.com/IronCoreLabs/recrypt-rs/pull/101)]
+  - Eliminate the `Revealed` wrappers for `PrivateKey`, `Plaintext`, and `DerivedSymmetricKey`
+  - Implement `PartialEq` for `PrivateKey`, `Plaintext`, and `DerivedSymmetricKey`
+
+### Notable internal changes
+- [#100](#100)
+  - Eliminate the `Revealed` wrapper for `SigningKeypair`
+  - Implement `PartialEq` for `SigningKeypair`
+
 ## 0.9.2
 
 ### Public API changes
