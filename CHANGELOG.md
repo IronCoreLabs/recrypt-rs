@@ -5,7 +5,7 @@
 ### Public API changes
 - [#100](#100)
   - Eliminate the `Revealed` wrappers for `PrivateKey`, `Plaintext`, and `DerivedSymmetricKey`
-  - Implement `PartialEq` for  `PrivateKey`, `Plaintext`, and `DerivedSymmetricKey`
+  - Implement `PartialEq` for `PrivateKey`, `Plaintext`, and `DerivedSymmetricKey`
 
 ### Notable internal changes
 - [#100](#100)
