@@ -28,6 +28,7 @@ use rand::FromEntropy;
 use rand_chacha;
 use std;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
@@ -79,15 +80,7 @@ impl<CR: rand::CryptoRng + rand::RngCore> Recrypt<Sha256, Ed25519, RandomBytes<C
 }
 
 // Hashed but not encrypted Plaintext used for envelope encryption
-new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
-
-// Constant-time data-invariant implementation of eq for DerivedSymmetricKey.
-impl PartialEq for DerivedSymmetricKey {
-    fn eq(&self, other: &DerivedSymmetricKey) -> bool {
-        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+new_bytes_type_no_copy!(DerivedSymmetricKey, 32);
 
 // A value included in an encrypted message that can be used when the message is decrypted
 // to ensure that you got the same value out as the one that was originally encrypted.
@@ -129,14 +122,7 @@ impl Plaintext {
 }
 
 bytes_only_debug!(Plaintext);
-
-// Constant-time data-invariant implementation of eq for Plaintext.
-impl PartialEq for Plaintext {
-    fn eq(&self, other: &Plaintext) -> bool {
-        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+bytes_eq_and_hash!(Plaintext);
 
 impl From<Fp12Elem<Monty256>> for Plaintext {
     fn from(fp12: Fp12Elem<Monty256>) -> Self {
@@ -243,9 +229,20 @@ impl PartialEq for TransformBlock {
             && self.encrypted_random_transform_temp_key == other.encrypted_random_transform_temp_key
     }
 }
+
+impl Eq for TransformBlock {}
+
+impl Hash for TransformBlock {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.public_key.hash(state);
+        self.encrypted_temp_key.hash(state);
+        self.random_transform_public_key.hash(state);
+        self.encrypted_random_transform_temp_key.hash(state);
+    }
+}
 /// Encrypted value that is either initially encrypted or one that has been
 /// transformed one or more times
-#[derive(Debug, Clone, PartialEq)] //cannot derive Copy because of NonEmptyVec
+#[derive(Debug, Clone, PartialEq, Eq, Hash)] //cannot derive Copy because of NonEmptyVec
 pub enum EncryptedValue {
     /// Value which has been encrypted, but not transformed
     /// `ephemeral_public_key`  - public key of the ephemeral private key that was used to encrypt
@@ -444,12 +441,7 @@ impl EncryptedTempKey {
 }
 
 bytes_only_debug!(EncryptedTempKey);
-
-impl PartialEq for EncryptedTempKey {
-    fn eq(&self, other: &EncryptedTempKey) -> bool {
-        self.bytes[..] == other.bytes[..]
-    }
-}
+bytes_eq_and_hash!(EncryptedTempKey);
 
 /// A combination of the hash of `EncryptedTempKey` and the `PrivateKey` of the delegator.
 /// Used to recover the plaintext from an `EncryptedTempKey`
@@ -494,11 +486,7 @@ impl HashedValue {
 }
 
 bytes_only_debug!(HashedValue);
-impl PartialEq for HashedValue {
-    fn eq(&self, other: &HashedValue) -> bool {
-        self.bytes[..] == other.bytes[..]
-    }
-}
+bytes_eq_and_hash!(HashedValue);
 
 impl From<TwistedHPoint<Monty256>> for HashedValue {
     fn from(hp: TwistedHPoint<Monty256>) -> Self {
@@ -638,6 +626,16 @@ impl PartialEq for TransformKey {
             && self.hashed_temp_key == other.hashed_temp_key
             && self.public_signing_key == other.public_signing_key
             && self.signature == other.signature
+    }
+}
+impl Hash for TransformKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ephemeral_public_key.hash(state);
+        self.to_public_key.hash(state);
+        self.encrypted_temp_key.hash(state);
+        self.hashed_temp_key.hash(state);
+        self.public_signing_key.hash(state);
+        self.signature.hash(state);
     }
 }
 
@@ -1023,11 +1021,21 @@ impl PublicKey {
     }
 }
 
+impl Hash for PublicKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let (x_bytes, y_bytes) = self.bytes_x_y();
+        for x in x_bytes.iter().chain(y_bytes.iter()) {
+            x.hash(state)
+        }
+    }
+}
+
 impl PartialEq for PublicKey {
     fn eq(&self, other: &PublicKey) -> bool {
         self.x == other.x && self.y == other.y
     }
 }
+impl Eq for PublicKey {}
 
 #[derive(Default, Debug, Clone)]
 pub struct PrivateKey {
@@ -1077,13 +1085,7 @@ impl PrivateKey {
     }
 }
 
-// Constant-time data-invariant implementation of eq for PrivateKey.
-impl PartialEq for PrivateKey {
-    fn eq(&self, other: &PrivateKey) -> bool {
-        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+bytes_eq_and_hash!(PrivateKey);
 
 impl Hashable32 for PrivateKey {
     fn to_bytes_32(&self) -> [u8; 32] {

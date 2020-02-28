@@ -79,15 +79,7 @@ impl<CR: rand::CryptoRng + rand::RngCore> Recrypt480<Sha256, Ed25519, RandomByte
 }
 
 // Hashed but not encrypted Plaintext used for envelope encryption
-new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
-
-// Constant-time data-invariant implementation of eq for DerivedSymmetricKey.
-impl PartialEq for DerivedSymmetricKey {
-    fn eq(&self, other: &DerivedSymmetricKey) -> bool {
-        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+new_bytes_type_no_copy!(DerivedSymmetricKey, 32);
 
 // A value included in an encrypted message that can be used when the message is decrypted
 // to ensure that you got the same value out as the one that was originally encrypted.
@@ -1618,5 +1610,4 @@ pub(crate) mod test {
         assert_ne!(dk1, dk2);
         Ok(())
     }
-
 }

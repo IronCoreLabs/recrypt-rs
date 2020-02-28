@@ -1359,7 +1359,7 @@ mod test {
                 fp256_unsafe_from("5404b493123a5b087cb6cc363116a9fc393c27dac3efa3df778ec974b8bdfa76"),
                 //49941783284737700171954796486309114156831309184207470337019703077683277143423
                 fp256_unsafe_from("6e6a0c315c47fa2990268bc2010eeda17b78cc32e7ab6f093bf1aa2234491d7f")
-            ) .map(&|fp| fp.to_monty());;
+            ) .map(&|fp| fp.to_monty());
 
             let good_hashed_k = TwistedHPoint {
                 x: fp2elem::Fp2Elem {
@@ -1380,7 +1380,7 @@ mod test {
                     //18358874287282838450918898019272385250887285769392485811015731318886010089831
                     elem2: fp256_unsafe_from("2896c12e42c82648d4e553e82b32abe95618f0e5ad7f8ba14d6180b78ae67167")
                 }
-            } .map(&|fp| fp.to_monty());;
+            } .map(&|fp| fp.to_monty());
 
             assert_eq!(good_encrypted_k, re_key.encrypted_k);
             assert_eq!(good_hashed_k, re_key.hashed_k)
