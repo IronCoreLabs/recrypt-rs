@@ -60,7 +60,7 @@ macro_rules! bytes_eq_and_hash {
 
         impl std::hash::Hash for $t {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                self.bytes.len().hash(state);
+                self.bytes().len().hash(state);
                 std::hash::Hash::hash_slice(&self.bytes()[..], state)
             }
         }

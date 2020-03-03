@@ -27,6 +27,7 @@ use rand::rngs::EntropyRng;
 use rand::FromEntropy;
 use std;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
@@ -91,8 +92,7 @@ new_bytes_type!(EncryptedMessage, Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES);
 
 // Not hashed, not encrypted Fp12Elem
 // See DecryptedSymmetricKey and EncryptedMessage
-// we don't derive Copy or Clone here on purpose. Plaintext is a sensitive value and should be passed by reference
-// to avoid needless duplication
+#[derive(Clone)]
 pub struct Plaintext {
     bytes: [u8; Plaintext::ENCODED_SIZE_BYTES],
     _internal_fp12: Fp12Elem<Monty480>,
@@ -122,14 +122,7 @@ impl Plaintext {
 }
 
 bytes_only_debug!(Plaintext);
-
-// Constant-time data-invariant implementation of eq for Plaintext.
-impl PartialEq for Plaintext {
-    fn eq(&self, other: &Plaintext) -> bool {
-        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+bytes_eq_and_hash!(Plaintext);
 
 impl From<Fp12Elem<Monty480>> for Plaintext {
     fn from(fp12: Fp12Elem<Monty480>) -> Self {
@@ -234,6 +227,16 @@ impl PartialEq for TransformBlock {
             && self.encrypted_temp_key == other.encrypted_temp_key
             && self.random_transform_public_key == other.random_transform_public_key
             && self.encrypted_random_transform_temp_key == other.encrypted_random_transform_temp_key
+    }
+}
+impl Eq for TransformBlock {}
+
+impl Hash for TransformBlock {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.public_key.hash(state);
+        self.encrypted_temp_key.hash(state);
+        self.random_transform_public_key.hash(state);
+        self.encrypted_random_transform_temp_key.hash(state);
     }
 }
 /// Encrypted value that is either initially encrypted or one that has been
@@ -438,11 +441,7 @@ impl EncryptedTempKey {
 
 bytes_only_debug!(EncryptedTempKey);
 
-impl PartialEq for EncryptedTempKey {
-    fn eq(&self, other: &EncryptedTempKey) -> bool {
-        self.bytes[..] == other.bytes[..]
-    }
-}
+bytes_eq_and_hash!(EncryptedTempKey);
 
 /// A combination of the hash of `EncryptedTempKey` and the `PrivateKey` of the delegator.
 /// Used to recover the plaintext from an `EncryptedTempKey`
@@ -487,11 +486,7 @@ impl HashedValue {
 }
 
 bytes_only_debug!(HashedValue);
-impl PartialEq for HashedValue {
-    fn eq(&self, other: &HashedValue) -> bool {
-        self.bytes[..] == other.bytes[..]
-    }
-}
+bytes_eq_and_hash!(HashedValue);
 
 impl From<TwistedHPoint<Monty480>> for HashedValue {
     fn from(hp: TwistedHPoint<Monty480>) -> Self {
@@ -630,6 +625,19 @@ impl PartialEq for TransformKey {
             && self.hashed_temp_key == other.hashed_temp_key
             && self.public_signing_key == other.public_signing_key
             && self.signature == other.signature
+    }
+}
+
+impl Eq for TransformKey {}
+
+impl Hash for TransformKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ephemeral_public_key.hash(state);
+        self.to_public_key.hash(state);
+        self.encrypted_temp_key.hash(state);
+        self.hashed_temp_key.hash(state);
+        self.public_signing_key.hash(state);
+        self.signature.hash(state);
     }
 }
 
@@ -951,6 +959,12 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &R) -> Fp12Elem<Monty480> {
 #[derive(Clone, Copy)]
 struct SixtyBytes([u8; Monty480::ENCODED_SIZE_BYTES]);
 
+impl SixtyBytes {
+    fn bytes(&self) -> &[u8; Monty480::ENCODED_SIZE_BYTES] {
+        &self.0
+    }
+}
+
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.0.to_vec())
@@ -969,11 +983,7 @@ impl Default for SixtyBytes {
     }
 }
 
-impl PartialEq for SixtyBytes {
-    fn eq(&self, other: &SixtyBytes) -> bool {
-        self.0[..] == other.0[..]
-    }
-}
+bytes_eq_and_hash!(SixtyBytes);
 
 #[derive(Clone, Copy, Debug)]
 pub struct PublicKey {
@@ -1050,11 +1060,21 @@ impl PublicKey {
     }
 }
 
+impl Hash for PublicKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let (x_bytes, y_bytes) = self.bytes_x_y();
+        for x in x_bytes.iter().chain(y_bytes.iter()) {
+            x.hash(state)
+        }
+    }
+}
+
 impl PartialEq for PublicKey {
     fn eq(&self, other: &PublicKey) -> bool {
         self.x == other.x && self.y == other.y
     }
 }
+impl Eq for PublicKey {}
 
 #[derive(Default, Debug, Clone)]
 pub struct PrivateKey {
@@ -1104,13 +1124,7 @@ impl PrivateKey {
     }
 }
 
-// Constant-time data-invariant implementation of eq for PrivateKey.
-impl PartialEq for PrivateKey {
-    fn eq(&self, other: &PrivateKey) -> bool {
-        let byte_pairs = self.bytes.0.iter().zip(other.bytes.0.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+bytes_eq_and_hash!(PrivateKey);
 
 impl Hashable60 for PrivateKey {
     fn to_bytes_60(&self) -> [u8; 60] {

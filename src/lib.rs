@@ -92,8 +92,3 @@ pub mod api;
 pub mod api_480;
 mod api_common;
 pub mod nonemptyvec;
-
-/// Marker struct to show potential weakness to side-channel attacks for normally secure types.
-/// Never wrapped around u8, u32, u64 as those are always assumed to be revealed.
-#[derive(Debug)]
-pub struct Revealed<T>(pub T);

@@ -628,6 +628,8 @@ impl PartialEq for TransformKey {
             && self.signature == other.signature
     }
 }
+impl Eq for TransformKey {}
+
 impl Hash for TransformKey {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.ephemeral_public_key.hash(state);
