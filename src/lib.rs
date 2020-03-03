@@ -9,7 +9,7 @@
 //! ## Basic Encrypt/Decrypt Example
 //! ```
 //! use recrypt::prelude::*;
-//! use recrypt::Revealed;
+
 //!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();
@@ -36,7 +36,6 @@
 //! after transforming the encrypted message.
 //! ```
 //! use recrypt::prelude::*;
-//! use recrypt::Revealed;
 //!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();
