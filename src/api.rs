@@ -19,6 +19,7 @@ pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
+use derivative::*;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
@@ -28,7 +29,6 @@ use rand::FromEntropy;
 use rand_chacha;
 use std;
 use std::fmt;
-use std::hash::{Hash, Hasher};
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
@@ -162,7 +162,8 @@ impl Hashable for Plaintext {
 }
 
 /// Describes a single transform. Multiple `TransformBlocks` (in series) describe multi-hop transforms.
-#[derive(Debug, Clone, Copy)]
+#[derivative(PartialEq, Eq, Hash)]
+#[derive(Derivative, Debug, Clone, Copy)]
 pub struct TransformBlock {
     /// public key corresponding to private key used to encrypt the temp key.
     public_key: PublicKey,
@@ -172,6 +173,8 @@ pub struct TransformBlock {
     random_transform_public_key: PublicKey,
     /// encrypted temp key value. Used to go from the transformed value to the encrypted value
     encrypted_random_transform_temp_key: EncryptedTempKey,
+    #[derivative(PartialEq = "ignore")]
+    #[derivative(Hash = "ignore")]
     _internal_re_block: internal::ReencryptionBlock<Monty256>,
 }
 
@@ -221,25 +224,6 @@ impl TransformBlock {
     }
 }
 
-impl PartialEq for TransformBlock {
-    fn eq(&self, other: &TransformBlock) -> bool {
-        self.public_key == other.public_key
-            && self.encrypted_temp_key == other.encrypted_temp_key
-            && self.random_transform_public_key == other.random_transform_public_key
-            && self.encrypted_random_transform_temp_key == other.encrypted_random_transform_temp_key
-    }
-}
-
-impl Eq for TransformBlock {}
-
-impl Hash for TransformBlock {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.public_key.hash(state);
-        self.encrypted_temp_key.hash(state);
-        self.random_transform_public_key.hash(state);
-        self.encrypted_random_transform_temp_key.hash(state);
-    }
-}
 /// Encrypted value that is either initially encrypted or one that has been
 /// transformed one or more times
 #[derive(Debug, Clone, PartialEq, Eq, Hash)] //cannot derive Copy because of NonEmptyVec
@@ -512,7 +496,8 @@ impl From<TwistedHPoint<Monty256>> for HashedValue {
 /// `to_public_key`         - public key of the delagatee
 /// `encrypted_k`           - random value K, encrypted to the delegatee; used to un-roll successive levels of multi-hop transform encryption
 /// `hashed_k`              - combination of the hash of K and the secret key of the delegator; used to recover K from `encrypted_k`
-#[derive(Debug, Clone)] //can't derive Copy because of NonEmptyVec
+#[derive(Derivative, Debug, Clone)] //can't derive Copy because of NonEmptyVec
+#[derivative(PartialEq, Hash, Eq)]
 pub struct TransformKey {
     ephemeral_public_key: PublicKey,
     to_public_key: PublicKey,
@@ -520,6 +505,8 @@ pub struct TransformKey {
     hashed_temp_key: HashedValue,
     public_signing_key: PublicSigningKey,
     signature: Ed25519Signature,
+    #[derivative(PartialEq = "ignore")]
+    #[derivative(Hash = "ignore")]
     _internal_key: internal::SignedValue<internal::ReencryptionKey<Monty256>>,
 }
 
@@ -615,29 +602,6 @@ impl TransformKey {
             payload: new_internal,
             ..self._internal_key
         })
-    }
-}
-
-impl PartialEq for TransformKey {
-    fn eq(&self, other: &TransformKey) -> bool {
-        self.ephemeral_public_key == other.ephemeral_public_key
-            && self.to_public_key == other.to_public_key
-            && self.encrypted_temp_key == other.encrypted_temp_key
-            && self.hashed_temp_key == other.hashed_temp_key
-            && self.public_signing_key == other.public_signing_key
-            && self.signature == other.signature
-    }
-}
-impl Eq for TransformKey {}
-
-impl Hash for TransformKey {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.ephemeral_public_key.hash(state);
-        self.to_public_key.hash(state);
-        self.encrypted_temp_key.hash(state);
-        self.hashed_temp_key.hash(state);
-        self.public_signing_key.hash(state);
-        self.signature.hash(state);
     }
 }
 
@@ -953,10 +917,13 @@ fn gen_random_fp12<R: RandomBytesGen>(
     )
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Derivative, Debug, Clone, Copy)]
+#[derivative(PartialEq, Hash, Eq)]
 pub struct PublicKey {
     x: [u8; 32],
     y: [u8; 32],
+    #[derivative(PartialEq = "ignore")]
+    #[derivative(Hash = "ignore")]
     _internal_key: internal::PublicKey<Monty256>,
 }
 
@@ -1022,22 +989,6 @@ impl PublicKey {
         PublicKey::try_from(&internal::PublicKey::new(new_point))
     }
 }
-
-impl Hash for PublicKey {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        let (x_bytes, y_bytes) = self.bytes_x_y();
-        for x in x_bytes.iter().chain(y_bytes.iter()) {
-            x.hash(state)
-        }
-    }
-}
-
-impl PartialEq for PublicKey {
-    fn eq(&self, other: &PublicKey) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
-impl Eq for PublicKey {}
 
 #[derive(Default, Debug, Clone)]
 pub struct PrivateKey {

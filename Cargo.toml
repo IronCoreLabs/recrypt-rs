@@ -26,6 +26,7 @@ quick-error = "~1.2"
 hex="~0.3"
 arrayref = "^0.3.5"
 log = "~0.4"
+derivative = "1.0.3"
 
 [profile.dev]
 opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
