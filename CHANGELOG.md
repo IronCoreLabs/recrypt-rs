@@ -1,8 +1,14 @@
 # Changelog
 
-## NEXT RELEASE
+## 0.10.0
 
 ### Public API changes
+
+- [[#104](https://github.com/IronCoreLabs/recrypt-rs/pull/104)]
+
+  - Eliminate the `Revealed` struct.
+  - Add `Hash` for all public types except `Recrypt`.
+  - Add `Eq` for all types which had `PartialEq`.
 
 - [[#101](https://github.com/IronCoreLabs/recrypt-rs/pull/101)]
   - Eliminate the `Revealed` wrappers for `PrivateKey`, `Plaintext`, and `DerivedSymmetricKey`.
@@ -11,8 +17,13 @@
 ### Notable internal changes
 
 - [[#101](https://github.com/IronCoreLabs/recrypt-rs/pull/101)]
+
   - Eliminate the `Revealed` wrapper for `SigningKeypair`.
   - Implement `PartialEq` for `SigningKeypair`.
+
+- [[#104](https://github.com/IronCoreLabs/recrypt-rs/pull/104)]
+  - Move to use constant time eq for all properties that have `bytes()`.
+  - Use derivative to derive `PartialEq` and `Hash` instead of hand crafted implementations.
 
 ## 0.9.2
 

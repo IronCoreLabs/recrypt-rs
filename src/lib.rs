@@ -9,7 +9,7 @@
 //! ## Basic Encrypt/Decrypt Example
 //! ```
 //! use recrypt::prelude::*;
-//! use recrypt::Revealed;
+
 //!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();
@@ -36,7 +36,6 @@
 //! after transforming the encrypted message.
 //! ```
 //! use recrypt::prelude::*;
-//! use recrypt::Revealed;
 //!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();
@@ -81,9 +80,7 @@
 //!
 //! We have done a lot of work in recrypt-rs to ensure that operations dealing with secret data
 //! are [constant time](https://www.bearssl.org/constanttime.html) and not susceptible to [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
-//! The public API is also constant time, except for equality. In the future we might implement
-//! constant time `PartialEq`, but until then secret API values (`Plaintext`, `PrivateKey`, `DerivedSymmetricKey`)
-//! have equality only when wrapped in the `Revealed` type.
+//! The public API is also constant time.
 
 pub mod prelude;
 #[macro_use] // this is still required in Rust 2018
@@ -92,8 +89,3 @@ pub mod api;
 pub mod api_480;
 mod api_common;
 pub mod nonemptyvec;
-
-/// Marker struct to show potential weakness to side-channel attacks for normally secure types.
-/// Never wrapped around u8, u32, u64 as those are always assumed to be revealed.
-#[derive(Debug)]
-pub struct Revealed<T>(pub T);

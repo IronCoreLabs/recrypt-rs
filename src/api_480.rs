@@ -19,6 +19,7 @@ pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
+use derivative::Derivative;
 use gridiron::fp_480::Fp480;
 use gridiron::fp_480::Monty as Monty480;
 use rand;
@@ -27,7 +28,6 @@ use rand::rngs::EntropyRng;
 use rand::FromEntropy;
 use std;
 use std::fmt;
-
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
 #[derive(Debug)]
@@ -79,15 +79,7 @@ impl<CR: rand::CryptoRng + rand::RngCore> Recrypt480<Sha256, Ed25519, RandomByte
 }
 
 // Hashed but not encrypted Plaintext used for envelope encryption
-new_bytes_type_no_eq!(DerivedSymmetricKey, 32);
-
-// Constant-time data-invariant implementation of eq for DerivedSymmetricKey.
-impl PartialEq for DerivedSymmetricKey {
-    fn eq(&self, other: &DerivedSymmetricKey) -> bool {
-        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+new_bytes_type_no_copy!(DerivedSymmetricKey, 32);
 
 // A value included in an encrypted message that can be used when the message is decrypted
 // to ensure that you got the same value out as the one that was originally encrypted.
@@ -99,8 +91,7 @@ new_bytes_type!(EncryptedMessage, Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES);
 
 // Not hashed, not encrypted Fp12Elem
 // See DecryptedSymmetricKey and EncryptedMessage
-// we don't derive Copy or Clone here on purpose. Plaintext is a sensitive value and should be passed by reference
-// to avoid needless duplication
+#[derive(Clone)]
 pub struct Plaintext {
     bytes: [u8; Plaintext::ENCODED_SIZE_BYTES],
     _internal_fp12: Fp12Elem<Monty480>,
@@ -130,14 +121,7 @@ impl Plaintext {
 }
 
 bytes_only_debug!(Plaintext);
-
-// Constant-time data-invariant implementation of eq for Plaintext.
-impl PartialEq for Plaintext {
-    fn eq(&self, other: &Plaintext) -> bool {
-        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+bytes_eq_and_hash!(Plaintext);
 
 impl From<Fp12Elem<Monty480>> for Plaintext {
     fn from(fp12: Fp12Elem<Monty480>) -> Self {
@@ -177,7 +161,8 @@ impl Hashable for Plaintext {
 }
 
 /// Describes a single transform. Multiple `TransformBlocks` (in series) describe multi-hop transforms.
-#[derive(Debug, Clone, Copy)]
+#[derivative(PartialEq, Eq, Hash)]
+#[derive(Derivative, Debug, Clone, Copy)]
 pub struct TransformBlock {
     /// public key corresponding to private key used to encrypt the temp key.
     public_key: PublicKey,
@@ -187,6 +172,7 @@ pub struct TransformBlock {
     random_transform_public_key: PublicKey,
     /// encrypted temp key value. Used to go from the transformed value to the encrypted value
     encrypted_random_transform_temp_key: EncryptedTempKey,
+    #[derivative(Hash = "ignore", PartialEq = "ignore")]
     _internal_re_block: internal::ReencryptionBlock<Monty480>,
 }
 
@@ -236,14 +222,6 @@ impl TransformBlock {
     }
 }
 
-impl PartialEq for TransformBlock {
-    fn eq(&self, other: &TransformBlock) -> bool {
-        self.public_key == other.public_key
-            && self.encrypted_temp_key == other.encrypted_temp_key
-            && self.random_transform_public_key == other.random_transform_public_key
-            && self.encrypted_random_transform_temp_key == other.encrypted_random_transform_temp_key
-    }
-}
 /// Encrypted value that is either initially encrypted or one that has been
 /// transformed one or more times
 #[derive(Debug, Clone, PartialEq)] //cannot derive Copy because of NonEmptyVec
@@ -446,11 +424,7 @@ impl EncryptedTempKey {
 
 bytes_only_debug!(EncryptedTempKey);
 
-impl PartialEq for EncryptedTempKey {
-    fn eq(&self, other: &EncryptedTempKey) -> bool {
-        self.bytes[..] == other.bytes[..]
-    }
-}
+bytes_eq_and_hash!(EncryptedTempKey);
 
 /// A combination of the hash of `EncryptedTempKey` and the `PrivateKey` of the delegator.
 /// Used to recover the plaintext from an `EncryptedTempKey`
@@ -495,11 +469,7 @@ impl HashedValue {
 }
 
 bytes_only_debug!(HashedValue);
-impl PartialEq for HashedValue {
-    fn eq(&self, other: &HashedValue) -> bool {
-        self.bytes[..] == other.bytes[..]
-    }
-}
+bytes_eq_and_hash!(HashedValue);
 
 impl From<TwistedHPoint<Monty480>> for HashedValue {
     fn from(hp: TwistedHPoint<Monty480>) -> Self {
@@ -525,7 +495,8 @@ impl From<TwistedHPoint<Monty480>> for HashedValue {
 /// `to_public_key`         - public key of the delagatee
 /// `encrypted_k`           - random value K, encrypted to the delegatee; used to un-roll successive levels of multi-hop transform encryption
 /// `hashed_k`              - combination of the hash of K and the secret key of the delegator; used to recover K from `encrypted_k`
-#[derive(Debug, Clone)] //can't derive Copy because of NonEmptyVec
+#[derivative(PartialEq, Eq, Hash)]
+#[derive(Derivative, Debug, Clone)] //can't derive Copy because of NonEmptyVec
 pub struct TransformKey {
     ephemeral_public_key: PublicKey,
     to_public_key: PublicKey,
@@ -533,6 +504,7 @@ pub struct TransformKey {
     hashed_temp_key: HashedValue,
     public_signing_key: PublicSigningKey,
     signature: Ed25519Signature,
+    #[derivative(Hash = "ignore", PartialEq = "ignore")]
     _internal_key: internal::SignedValue<internal::ReencryptionKey<Monty480>>,
 }
 
@@ -628,16 +600,6 @@ impl TransformKey {
             payload: new_internal,
             ..self._internal_key
         })
-    }
-}
-impl PartialEq for TransformKey {
-    fn eq(&self, other: &TransformKey) -> bool {
-        self.ephemeral_public_key == other.ephemeral_public_key
-            && self.to_public_key == other.to_public_key
-            && self.encrypted_temp_key == other.encrypted_temp_key
-            && self.hashed_temp_key == other.hashed_temp_key
-            && self.public_signing_key == other.public_signing_key
-            && self.signature == other.signature
     }
 }
 
@@ -959,6 +921,12 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &R) -> Fp12Elem<Monty480> {
 #[derive(Clone, Copy)]
 struct SixtyBytes([u8; Monty480::ENCODED_SIZE_BYTES]);
 
+impl SixtyBytes {
+    fn bytes(&self) -> &[u8; Monty480::ENCODED_SIZE_BYTES] {
+        &self.0
+    }
+}
+
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.0.to_vec())
@@ -977,16 +945,14 @@ impl Default for SixtyBytes {
     }
 }
 
-impl PartialEq for SixtyBytes {
-    fn eq(&self, other: &SixtyBytes) -> bool {
-        self.0[..] == other.0[..]
-    }
-}
+bytes_eq_and_hash!(SixtyBytes);
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Derivative, Debug, Clone, Copy)]
+#[derivative(PartialEq, Hash, Eq)]
 pub struct PublicKey {
     x: SixtyBytes,
     y: SixtyBytes,
+    #[derivative(Hash = "ignore", PartialEq = "ignore")]
     _internal_key: internal::PublicKey<Monty480>,
 }
 
@@ -1058,12 +1024,6 @@ impl PublicKey {
     }
 }
 
-impl PartialEq for PublicKey {
-    fn eq(&self, other: &PublicKey) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
-
 #[derive(Default, Debug, Clone)]
 pub struct PrivateKey {
     bytes: SixtyBytes,
@@ -1112,13 +1072,7 @@ impl PrivateKey {
     }
 }
 
-// Constant-time data-invariant implementation of eq for PrivateKey.
-impl PartialEq for PrivateKey {
-    fn eq(&self, other: &PrivateKey) -> bool {
-        let byte_pairs = self.bytes.0.iter().zip(other.bytes.0.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+bytes_eq_and_hash!(PrivateKey);
 
 impl Hashable60 for PrivateKey {
     fn to_bytes_60(&self) -> [u8; 60] {
@@ -1618,5 +1572,4 @@ pub(crate) mod test {
         assert_ne!(dk1, dk2);
         Ok(())
     }
-
 }

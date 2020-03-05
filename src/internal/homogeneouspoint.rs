@@ -572,7 +572,7 @@ pub mod test {
                 "0000000000000000000000000000000000000000000000000000000000000040",
             ),
         }
-        .map(&|fp: gridiron::fp_256::Fp256| fp.to_monty());;
+        .map(&|fp: gridiron::fp_256::Fp256| fp.to_monty());
 
         let computed_g2 = FP_256_CURVE_POINTS.generator + FP_256_CURVE_POINTS.generator;
         assert_eq!(g2, computed_g2);

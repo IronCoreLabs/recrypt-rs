@@ -46,16 +46,24 @@ macro_rules! _bytes_struct {
     };
 }
 
-macro_rules! _bytes_eq {
+macro_rules! bytes_eq_and_hash {
     ($t: ident) => {
-        // PartialEq and Eq are Not constant time
+        // Constant time eq
         impl PartialEq for $t {
             fn eq(&self, other: &$t) -> bool {
-                self.bytes[..] == other.bytes[..]
+                let byte_pairs = self.bytes().iter().zip(other.bytes().iter());
+                byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
             }
         }
 
         impl Eq for $t {}
+
+        impl std::hash::Hash for $t {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                self.bytes().len().hash(state);
+                std::hash::Hash::hash_slice(&self.bytes()[..], state)
+            }
+        }
     };
 }
 
@@ -90,23 +98,15 @@ macro_rules! new_bytes_type {
     ($t: ident, $n: expr) => {
         _bytes_struct!($t, derive(Copy, Clone));
         _bytes_core!($t, $n);
-        _bytes_eq!($t);
-    };
-    ($t: ident, $n: expr, $derive: meta) => {
-        _bytes_struct!($t, $n, $derive);
-        _bytes_core!($t, $n);
-        _bytes_eq!($t);
+        bytes_eq_and_hash!($t);
     };
 }
 
-macro_rules! new_bytes_type_no_eq {
+macro_rules! new_bytes_type_no_copy {
     ($t: ident, $n: expr) => {
-        _bytes_struct!($t, derive(Copy, Clone));
+        _bytes_struct!($t, derive(Clone));
         _bytes_core!($t, $n);
-    };
-    ($t: ident, $n: expr, $derive: meta) => {
-        _bytes_struct!($t, $n, $derive);
-        _bytes_core!($t, $n);
+        bytes_eq_and_hash!($t);
     };
 }
 

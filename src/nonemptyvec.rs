@@ -1,7 +1,7 @@
 use quick_error::quick_error;
 
 /// A simple-minded NonEmptyVec implementation
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct NonEmptyVec<T> {
     first: T,
     rest: Vec<T>,

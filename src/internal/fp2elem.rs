@@ -388,7 +388,7 @@ pub mod test {
             elem1: Fp256::from(4u32),
             elem2: Fp256::from(2u32),
         };
-        let fp2_monty = fp2.map(&|fp| fp.to_monty());;
+        let fp2_monty = fp2.map(&|fp| fp.to_monty());
         let five_times = fp2 * fp2 * fp2 * fp2 * fp2;
         let five_times_monty = fp2_monty * fp2_monty * fp2_monty * fp2_monty * fp2_monty;
         assert_eq!(five_times_monty, five_times.map(&|fp| fp.to_monty()));
@@ -401,7 +401,7 @@ pub mod test {
             elem1: Fp256::from(4u32),
             elem2: Fp256::from(2u32),
         };
-        let fp2_monty = fp2.map(&|fp| fp.to_monty());;
+        let fp2_monty = fp2.map(&|fp| fp.to_monty());
         let five_times_monty = fp2_monty * fp2_monty * fp2_monty * fp2_monty * fp2_monty;
         assert_eq!(five_times_monty, fp2_monty.pow(five));
     }

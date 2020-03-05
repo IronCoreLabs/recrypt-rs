@@ -125,14 +125,7 @@ impl SigningKeypair {
         Ed25519.sign(message, self)
     }
 }
-
-// Constant-time data-invariant implementation of eq for SigningKeyPair, which includes a private key.
-impl PartialEq for SigningKeypair {
-    fn eq(&self, other: &SigningKeypair) -> bool {
-        let byte_pairs = self.bytes.iter().zip(other.bytes.iter());
-        byte_pairs.fold(0, |acc, (next_a, next_b)| acc | (next_a ^ next_b)) == 0
-    }
-}
+bytes_eq_and_hash!(SigningKeypair);
 
 impl<'a> From<&'a SigningKeypair> for PublicSigningKey {
     fn from(kp: &SigningKeypair) -> PublicSigningKey {
