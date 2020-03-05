@@ -1,5 +1,4 @@
 use quick_error::quick_error;
-use std::hash::Hash;
 
 /// A simple-minded NonEmptyVec implementation
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]

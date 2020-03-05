@@ -19,7 +19,7 @@ pub use crate::internal::sha256::{Sha256, Sha256Hashing};
 pub use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use clear_on_drop::clear::Clear;
-use derivative::*;
+use derivative::Derivative;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
@@ -173,8 +173,7 @@ pub struct TransformBlock {
     random_transform_public_key: PublicKey,
     /// encrypted temp key value. Used to go from the transformed value to the encrypted value
     encrypted_random_transform_temp_key: EncryptedTempKey,
-    #[derivative(PartialEq = "ignore")]
-    #[derivative(Hash = "ignore")]
+    #[derivative(Hash = "ignore", PartialEq = "ignore")]
     _internal_re_block: internal::ReencryptionBlock<Monty256>,
 }
 
@@ -505,8 +504,7 @@ pub struct TransformKey {
     hashed_temp_key: HashedValue,
     public_signing_key: PublicSigningKey,
     signature: Ed25519Signature,
-    #[derivative(PartialEq = "ignore")]
-    #[derivative(Hash = "ignore")]
+    #[derivative(Hash = "ignore", PartialEq = "ignore")]
     _internal_key: internal::SignedValue<internal::ReencryptionKey<Monty256>>,
 }
 
@@ -922,8 +920,7 @@ fn gen_random_fp12<R: RandomBytesGen>(
 pub struct PublicKey {
     x: [u8; 32],
     y: [u8; 32],
-    #[derivative(PartialEq = "ignore")]
-    #[derivative(Hash = "ignore")]
+    #[derivative(Hash = "ignore", PartialEq = "ignore")]
     _internal_key: internal::PublicKey<Monty256>,
 }
 
