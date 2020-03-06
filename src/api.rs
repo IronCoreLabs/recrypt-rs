@@ -24,8 +24,7 @@ use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
 use rand::rngs::adapter::ReseedingRng;
-use rand::rngs::EntropyRng;
-use rand::FromEntropy;
+use rand::SeedableRng;
 use rand_chacha;
 use std;
 use std::fmt;
@@ -49,9 +48,9 @@ impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         // 1 MB
         const BYTES_BEFORE_RESEEDING: u64 = 1 * 1024 * 1024;
         Recrypt::new_with_rand(ReseedingRng::new(
-            rand_chacha::ChaChaCore::from_entropy(),
+            rand_chacha::ChaCha20Rng::from_entropy(),
             BYTES_BEFORE_RESEEDING,
-            EntropyRng::new(),
+            rand::rngs::OsRng::new(),
         ))
     }
 }

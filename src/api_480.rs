@@ -24,8 +24,7 @@ use gridiron::fp_480::Fp480;
 use gridiron::fp_480::Monty as Monty480;
 use rand;
 use rand::rngs::adapter::ReseedingRng;
-use rand::rngs::EntropyRng;
-use rand::FromEntropy;
+use rand::SeedableRng;
 use std;
 use std::fmt;
 /// Recrypt public API - 480-bit
@@ -48,9 +47,9 @@ impl Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         // 2 MB
         const BYTES_BEFORE_RESEEDING: u64 = 2 * 1024 * 1024;
         Recrypt480::new_with_rand(ReseedingRng::new(
-            rand_chacha::ChaChaCore::from_entropy(),
+            rand_chacha::ChaCha20Rng::from_entropy(),
             BYTES_BEFORE_RESEEDING,
-            EntropyRng::new(),
+            rand::rngs::OsRng::new(),
         ))
     }
 }
