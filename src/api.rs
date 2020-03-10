@@ -48,7 +48,7 @@ impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         // 1 MB
         const BYTES_BEFORE_RESEEDING: u64 = 1 * 1024 * 1024;
         Recrypt::new_with_rand(ReseedingRng::new(
-            rand_chacha::ChaCha20Core::from_entropy(),
+            rand_chacha::ChaChaCore::from_entropy(),
             BYTES_BEFORE_RESEEDING,
             rand::rngs::OsRng::default(),
         ))
