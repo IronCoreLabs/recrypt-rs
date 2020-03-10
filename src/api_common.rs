@@ -35,7 +35,7 @@ quick_error! {
     }
 }
 
-pub type DefaultRng = ReseedingRng<rand_chacha::ChaChaRng, OsRng>;
+pub type DefaultRng = ReseedingRng<rand_chacha::ChaCha20Core, OsRng>;
 pub type Result<T> = std::result::Result<T, RecryptErr>;
 
 impl From<internal::InternalError> for RecryptErr {

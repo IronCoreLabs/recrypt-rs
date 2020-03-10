@@ -47,9 +47,9 @@ impl Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         // 2 MB
         const BYTES_BEFORE_RESEEDING: u64 = 2 * 1024 * 1024;
         Recrypt480::new_with_rand(ReseedingRng::new(
-            rand_chacha::ChaCha20Rng::from_entropy(),
+            rand_chacha::ChaCha20Core::from_entropy(),
             BYTES_BEFORE_RESEEDING,
-            rand::rngs::OsRng::new(),
+            rand::rngs::OsRng::default(),
         ))
     }
 }
