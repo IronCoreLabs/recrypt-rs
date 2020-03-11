@@ -1,4 +1,4 @@
-use rand::FromEntropy;
+use rand::SeedableRng;
 use rand_chacha;
 use recrypt::prelude::*;
 use std::sync::Arc;

@@ -2,7 +2,7 @@ use rand;
 use rand::{CryptoRng, RngCore};
 
 use crate::internal::take_lock;
-use rand::FromEntropy;
+use rand::SeedableRng;
 use std::default::Default;
 use std::ops::DerefMut;
 use std::sync::Mutex;

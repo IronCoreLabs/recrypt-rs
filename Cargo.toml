@@ -1,6 +1,6 @@
 [package]
 name = "recrypt"
-version = "0.10.0"
+version = "0.11.0"
 authors = ["IronCore Labs <info@ironcorelabs.com>"]
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -12,16 +12,18 @@ description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-en
 edition = "2018"
 
 [dependencies]
-rand = "~0.6"
-rand_chacha = "~0.1"
+#Explicit dependency so we can pass the wasm-bindgen flag to it
+getrandom = {version = "~0.1.1", optional = true}
+rand = "~0.7.3"
+rand_chacha = "~0.2.2"
 sha2 = "~0.8"
 num-traits = "~0.2"
 lazy_static = "~1.4"
 arrayvec = "~0.4"
 #Disable all features for ed25519 and enable the proper ones down in the [features] section below
-ed25519-dalek = { version="=1.0.0-pre.1", default-features = false }
+ed25519-dalek = { version="=1.0.0-pre.3", default-features = false, features = ["std"] }
 clear_on_drop = "~0.2"
-gridiron = "^0.6.0"
+gridiron = "~0.7.0"
 quick-error = "~1.2"
 hex="~0.3"
 arrayref = "^0.3.5"
@@ -29,11 +31,11 @@ log = "~0.4"
 derivative = "1.0.3"
 
 [profile.dev]
-opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
+opt-level = 2
 debug = true
 
 [profile.test]
-opt-level = 2 # Build deps with optimization, don't build ourselves with optimization
+opt-level = 2
 debug = true
 
 [profile.release]
@@ -43,13 +45,12 @@ lto = true
 
 [dev-dependencies]
 proptest = "~0.9"
-
 criterion = "~0.2"
 
 [features]
 unstable = []
-default = ["ed25519-dalek/std", "ed25519-dalek/u64_backend"]
-wasm = ["ed25519-dalek/std", "ed25519-dalek/u32_backend", "clear_on_drop/no_cc"]
+default = ["ed25519-dalek/u64_backend"]
+wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
 
 [[bench]]
 name = "api_benchmark"
