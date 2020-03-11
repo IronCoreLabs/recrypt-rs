@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0
+
+### Public API changes
+
+- [[#105](https://github.com/IronCoreLabs/recrypt-rs/pull/105)]
+  - Upgrade dependencies (`rand`, `rand_chacha`, `ed25519-dalek`, `gridiron`)
+
 ## 0.10.0
 
 ### Public API changes
