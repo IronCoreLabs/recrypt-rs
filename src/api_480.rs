@@ -28,9 +28,9 @@ use rand::SeedableRng;
 use std;
 use std::fmt;
 // Optional serde for PrivateKey and PublicKey structs
+use serde_big_array::big_array;
 #[cfg(feature = "serde")]
 use serde_crate::{Deserialize, Serialize};
-use serde_big_array::big_array;
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
 #[derive(Debug)]
@@ -926,8 +926,12 @@ big_array! {
     60,
 }
 #[derive(Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
-struct SixtyBytes{
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
+struct SixtyBytes {
     #[serde(with = "BigArray")]
     arr: [u8; Monty480::ENCODED_SIZE_BYTES],
 }
@@ -952,7 +956,10 @@ impl fmt::LowerHex for SixtyBytes {
 
 impl Default for SixtyBytes {
     fn default() -> Self {
-        SixtyBytes([0u8; 60])
+        SixtyBytes {
+            #[serde(with = "BigArray")]
+            arr: [u8; 60],
+        }
     }
 }
 
@@ -960,7 +967,11 @@ bytes_eq_and_hash!(SixtyBytes);
 
 #[derive(Derivative, Debug, Clone, Copy)]
 #[derivative(PartialEq, Hash, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct PublicKey {
     x: SixtyBytes,
     y: SixtyBytes,
@@ -1037,7 +1048,11 @@ impl PublicKey {
 }
 
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct PrivateKey {
     bytes: SixtyBytes,
     _internal_key: internal::PrivateKey<Monty480>,
