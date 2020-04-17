@@ -12,6 +12,7 @@ description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-en
 edition = "2018"
 
 [dependencies]
+libc = "0.2"
 #Explicit dependency so we can pass the wasm-bindgen flag to it
 getrandom = {version = "~0.1.1", optional = true}
 rand = "~0.7.3"
