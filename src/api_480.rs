@@ -30,8 +30,6 @@ use std::fmt;
 // Optional serde for PrivateKey and PublicKey structs
 #[cfg(feature = "serde")]
 use serde_crate::{Deserialize, Serialize};
-#[macro_use]
-extern crate serde_big_array;
 big_array! { BigArray; }
 
 
