@@ -944,19 +944,21 @@ impl SixtyBytes {
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.arr[0]to_vec())
+        write!(f, "{:?}", self.arr[0].to_vec())
     }
 }
 
 impl fmt::LowerHex for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", hex::encode(self.arr[0]to_vec()))
+        write!(f, "{}", hex::encode(self.arr[0].to_vec()))
     }
 }
 
 impl Default for SixtyBytes {
     fn default() -> Self {
-       arr: [u8; 60],
+        SixtyBytes {
+            arr: [u8; 60],
+        }
     }
 }
 
@@ -1031,7 +1033,7 @@ impl PublicKey {
         &[u8; Monty480::ENCODED_SIZE_BYTES],
         &[u8; Monty480::ENCODED_SIZE_BYTES],
     ) {
-        (&self.x.arr[0], &self.y.arr[0])
+        (&self.x.arr, &self.y.arr)
     }
 
     ///Augment the PublicKey so that messages encrypted to that key cannot be decrypted by this PublicKey's PrivateKey.
@@ -1059,7 +1061,7 @@ impl PrivateKey {
     pub const ENCODED_SIZE_BYTES: usize = Monty480::ENCODED_SIZE_BYTES;
 
     pub fn bytes(&self) -> &[u8; PrivateKey::ENCODED_SIZE_BYTES] {
-        &self.bytes.arr[0]
+        &self.bytes.arr
     }
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
@@ -1101,7 +1103,7 @@ bytes_eq_and_hash!(PrivateKey);
 
 impl Hashable60 for PrivateKey {
     fn to_bytes_60(&self) -> [u8; 60] {
-        self.bytes.arr[0]
+        self.bytes.arr
     }
 }
 
