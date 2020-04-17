@@ -28,6 +28,9 @@ use rand::SeedableRng;
 use rand_chacha;
 use std;
 use std::fmt;
+// Optional serde for PrivateKey and PublicKey structs
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]
@@ -916,6 +919,11 @@ fn gen_random_fp12<R: RandomBytesGen>(
 
 #[derive(Derivative, Debug, Clone, Copy)]
 #[derivative(PartialEq, Hash, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct PublicKey {
     x: [u8; 32],
     y: [u8; 32],
@@ -987,6 +995,11 @@ impl PublicKey {
 }
 
 #[derive(Default, Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct PrivateKey {
     bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES],
     _internal_key: internal::PrivateKey<Monty256>,

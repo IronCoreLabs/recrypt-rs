@@ -27,6 +27,10 @@ use rand::rngs::adapter::ReseedingRng;
 use rand::SeedableRng;
 use std;
 use std::fmt;
+// Optional serde for PrivateKey and PublicKey structs
+use serde_big_array::big_array;
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
 #[derive(Debug)]
@@ -916,31 +920,42 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &R) -> Fp12Elem<Monty480> {
     )
 }
 
-/// Wrapper around 60 byte array so what we can add Debug, Eq, etc
+big_array! {
+    BigArray;
+    60,
+}
 #[derive(Clone, Copy)]
-struct SixtyBytes([u8; Monty480::ENCODED_SIZE_BYTES]);
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
+struct SixtyBytes {
+    #[cfg_attr(feature = "serde", serde(with = "BigArray"))]
+    arr: [u8; Monty480::ENCODED_SIZE_BYTES],
+}
 
 impl SixtyBytes {
     fn bytes(&self) -> &[u8; Monty480::ENCODED_SIZE_BYTES] {
-        &self.0
+        &self.arr
     }
 }
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.0.to_vec())
+        write!(f, "{:?}", self.arr.to_vec())
     }
 }
 
 impl fmt::LowerHex for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", hex::encode(self.0.to_vec()))
+        write!(f, "{}", hex::encode(self.arr.to_vec()))
     }
 }
 
 impl Default for SixtyBytes {
     fn default() -> Self {
-        SixtyBytes([0u8; 60])
+        SixtyBytes { arr: [0u8; 60] }
     }
 }
 
@@ -948,6 +963,11 @@ bytes_eq_and_hash!(SixtyBytes);
 
 #[derive(Derivative, Debug, Clone, Copy)]
 #[derivative(PartialEq, Hash, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct PublicKey {
     x: SixtyBytes,
     y: SixtyBytes,
@@ -968,8 +988,8 @@ impl PublicKey {
         Ok(internal_key
             .to_byte_vectors_60()
             .map(|(x, y)| PublicKey {
-                x: SixtyBytes(x),
-                y: SixtyBytes(y),
+                x: SixtyBytes { arr: x },
+                y: SixtyBytes { arr: y },
                 _internal_key: *internal_key,
             })
             .ok_or_else(|| internal::homogeneouspoint::PointErr::ZeroPoint)?)
@@ -1010,7 +1030,7 @@ impl PublicKey {
         &[u8; Monty480::ENCODED_SIZE_BYTES],
         &[u8; Monty480::ENCODED_SIZE_BYTES],
     ) {
-        (&self.x.0, &self.y.0)
+        (&self.x.arr, &self.y.arr)
     }
 
     ///Augment the PublicKey so that messages encrypted to that key cannot be decrypted by this PublicKey's PrivateKey.
@@ -1024,6 +1044,11 @@ impl PublicKey {
 }
 
 #[derive(Default, Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct PrivateKey {
     bytes: SixtyBytes,
     _internal_key: internal::PrivateKey<Monty480>,
@@ -1033,13 +1058,15 @@ impl PrivateKey {
     pub const ENCODED_SIZE_BYTES: usize = Monty480::ENCODED_SIZE_BYTES;
 
     pub fn bytes(&self) -> &[u8; PrivateKey::ENCODED_SIZE_BYTES] {
-        &self.bytes.0
+        &self.bytes.arr
     }
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
         let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes).to_monty());
         PrivateKey {
-            bytes: SixtyBytes(internal_key.value.to_bytes_60()),
+            bytes: SixtyBytes {
+                arr: internal_key.value.to_bytes_60(),
+            },
             _internal_key: internal_key,
         }
     }
@@ -1060,8 +1087,8 @@ impl PrivateKey {
     }
     ///Convert the keys to Frs and either add or subtract them, then turn it back into a PrivateKey.
     fn augment(first: &PrivateKey, second: &PrivateKey, subtract: bool) -> PrivateKey {
-        let first_fr = Fr480::from(first.bytes.0);
-        let second_fr = Fr480::from(second.bytes.0);
+        let first_fr = Fr480::from(first.bytes.arr);
+        let second_fr = Fr480::from(second.bytes.arr);
         let fr_result = if subtract {
             first_fr - second_fr
         } else {
@@ -1075,7 +1102,7 @@ bytes_eq_and_hash!(PrivateKey);
 
 impl Hashable60 for PrivateKey {
     fn to_bytes_60(&self) -> [u8; 60] {
-        self.bytes.0
+        self.bytes.arr
     }
 }
 
@@ -1088,7 +1115,9 @@ impl Hashable for PrivateKey {
 impl From<internal::PrivateKey<Monty480>> for PrivateKey {
     fn from(internal_pk: internal::PrivateKey<Monty480>) -> Self {
         PrivateKey {
-            bytes: SixtyBytes(internal_pk.value.to_bytes_60()),
+            bytes: SixtyBytes {
+                arr: internal_pk.value.to_bytes_60(),
+            },
             _internal_key: internal_pk,
         }
     }
@@ -1465,7 +1494,7 @@ pub(crate) mod test {
     fn publickey_new_from_slice() {
         let api = Recrypt480::new();
         let (_, pk1) = api.generate_key_pair().unwrap();
-        let input = (pk1.x.0, pk1.y.0);
+        let input = (pk1.x.arr, pk1.y.arr);
         let slice: (&[u8], &[u8]) = (&input.0, &input.1);
         let pk_from_fixed = PublicKey::new(input);
         let pk_from_slice = PublicKey::new_from_slice(slice);
@@ -1499,7 +1528,12 @@ pub(crate) mod test {
     fn private_key_clear() {
         let (mut priv_key, _) = Recrypt480::new().generate_key_pair().unwrap();
         priv_key.clear();
-        assert_eq!(SixtyBytes(priv_key.bytes().clone()), SixtyBytes([0u8; 60]));
+        assert_eq!(
+            SixtyBytes {
+                arr: priv_key.bytes().clone()
+            },
+            SixtyBytes { arr: [0u8; 60] }
+        );
         assert_eq!(priv_key._internal_key, Default::default())
     }
 

@@ -14,6 +14,9 @@ use num_traits::Pow;
 use quick_error::quick_error;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::option::Option;
+// Optional serde for PrivateKey and PublicKey structs
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
 
 quick_error! {
     #[derive(Clone, Debug, PartialEq, Eq)]
@@ -30,6 +33,11 @@ quick_error! {
 ///along. In order to get the real x,y you must call `normalize` which divides out by the z.
 #[derive(Clone, Debug, Copy)]
 #[repr(C)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct HomogeneousPoint<T> {
     pub x: T,
     pub y: T,

@@ -46,6 +46,9 @@ pub mod sha256;
 use crate::api;
 use crate::api_480;
 use std::sync::{Mutex, MutexGuard};
+// Optional serde for PrivateKey and PublicKey structs
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
@@ -65,6 +68,11 @@ quick_error! {
 
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct PublicKey<T: Field> {
     pub value: HomogeneousPoint<T>,
 }
@@ -103,6 +111,11 @@ impl<T: Field + Hashable> Hashable for PublicKey<T> {
 
 #[derive(Copy, Clone, Debug, Default)]
 #[cfg_attr(test, derive(PartialEq))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct PrivateKey<T> {
     pub value: T,
 }
