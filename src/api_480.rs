@@ -928,7 +928,7 @@ big_array! {
 #[derive(Clone, Copy)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize, Default),
+    derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
 struct SixtyBytes {
