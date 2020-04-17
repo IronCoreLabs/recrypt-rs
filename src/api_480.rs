@@ -938,19 +938,19 @@ struct SixtyBytes {
 
 impl SixtyBytes {
     fn bytes(&self) -> &[u8; Monty480::ENCODED_SIZE_BYTES] {
-        &self.arr[0]
+        &self.arr
     }
 }
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.arr[0].to_vec())
+        write!(f, "{:?}", self.arr.to_vec())
     }
 }
 
 impl fmt::LowerHex for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", hex::encode(self.arr[0].to_vec()))
+        write!(f, "{}", hex::encode(self.arr.to_vec()))
     }
 }
 
