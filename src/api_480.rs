@@ -922,6 +922,7 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &R) -> Fp12Elem<Monty480> {
 
 /// Wrapper around 60 byte array so what we can add Debug, Eq, etc
 #[derive(Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
 struct SixtyBytes([u8; Monty480::ENCODED_SIZE_BYTES]);
 
 impl SixtyBytes {
