@@ -47,10 +47,18 @@ lto = true
 proptest = "~0.9"
 criterion = "~0.2"
 
+[dependencies.serde_crate]
+package = "serde"
+optional = true
+version = "1.0.89"
+default-features = false
+features = ["std", "derive"]
+
 [features]
 unstable = []
 default = ["ed25519-dalek/u64_backend"]
 wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
+serde = ["serde_crate"]
 
 [[bench]]
 name = "api_benchmark"

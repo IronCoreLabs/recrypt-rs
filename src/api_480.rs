@@ -948,6 +948,7 @@ bytes_eq_and_hash!(SixtyBytes);
 
 #[derive(Derivative, Debug, Clone, Copy)]
 #[derivative(PartialEq, Hash, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
 pub struct PublicKey {
     x: SixtyBytes,
     y: SixtyBytes,
@@ -1024,6 +1025,7 @@ impl PublicKey {
 }
 
 #[derive(Default, Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
 pub struct PrivateKey {
     bytes: SixtyBytes,
     _internal_key: internal::PrivateKey<Monty480>,
