@@ -957,7 +957,6 @@ impl fmt::LowerHex for SixtyBytes {
 impl Default for SixtyBytes {
     fn default() -> Self {
         SixtyBytes {
-            #[serde(with = "BigArray")]
             arr: [u8; 60],
         }
     }
