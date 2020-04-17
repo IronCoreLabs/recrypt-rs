@@ -30,9 +30,6 @@ use std::fmt;
 // Optional serde for PrivateKey and PublicKey structs
 #[cfg(feature = "serde")]
 use serde_crate::{Deserialize, Serialize};
-big_array! { BigArray; }
-
-
 
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
@@ -924,26 +921,32 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &R) -> Fp12Elem<Monty480> {
 }
 
 /// Wrapper around 60 byte array so what we can add Debug, Eq, etc
+big_array! {
+    BigArray;
+    60,
+}
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
-#[serde(with = "BigArray")]
-struct SixtyBytes([u8; Monty480::ENCODED_SIZE_BYTES]);
+struct SixtyBytes{
+    #[serde(with = "BigArray")]
+    arr: [u8; Monty480::ENCODED_SIZE_BYTES],
+}
 
 impl SixtyBytes {
     fn bytes(&self) -> &[u8; Monty480::ENCODED_SIZE_BYTES] {
-        &self.0
+        &self.arr.0
     }
 }
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.0.to_vec())
+        write!(f, "{:?}", self.arr.0.to_vec())
     }
 }
 
 impl fmt::LowerHex for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", hex::encode(self.0.to_vec()))
+        write!(f, "{}", hex::encode(self.arr.0.to_vec()))
     }
 }
 
