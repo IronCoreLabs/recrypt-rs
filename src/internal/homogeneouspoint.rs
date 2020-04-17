@@ -14,6 +14,9 @@ use num_traits::Pow;
 use quick_error::quick_error;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 use std::option::Option;
+// Optional serde for PrivateKey and PublicKey structs
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
 
 quick_error! {
     #[derive(Clone, Debug, PartialEq, Eq)]
