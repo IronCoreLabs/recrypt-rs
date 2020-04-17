@@ -928,7 +928,7 @@ big_array! {
 #[derive(Clone, Copy)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(Serialize, Deserialize, Default),
     serde(crate = "serde_crate")
 )]
 struct SixtyBytes {
@@ -956,9 +956,7 @@ impl fmt::LowerHex for SixtyBytes {
 
 impl Default for SixtyBytes {
     fn default() -> Self {
-        SixtyBytes {
-            arr: [u8; 60],
-        }
+        SixtyBytes::default()
     }
 }
 
