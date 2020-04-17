@@ -27,6 +27,10 @@ use rand::rngs::adapter::ReseedingRng;
 use rand::SeedableRng;
 use std;
 use std::fmt;
+// Optional serde for PrivateKey and PublicKey structs
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
+
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
 #[derive(Debug)]

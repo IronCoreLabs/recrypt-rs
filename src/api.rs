@@ -28,6 +28,10 @@ use rand::SeedableRng;
 use rand_chacha;
 use std;
 use std::fmt;
+// Optional serde for PrivateKey and PublicKey structs
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
+
 
 /// Recrypt public API - 256-bit
 #[derive(Debug)]

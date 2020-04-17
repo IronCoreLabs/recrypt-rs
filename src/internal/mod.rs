@@ -46,6 +46,9 @@ pub mod sha256;
 use crate::api;
 use crate::api_480;
 use std::sync::{Mutex, MutexGuard};
+// Optional serde for PrivateKey and PublicKey structs
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
