@@ -30,6 +30,11 @@ use std::fmt;
 // Optional serde for PrivateKey and PublicKey structs
 #[cfg(feature = "serde")]
 use serde_crate::{Deserialize, Serialize};
+#[macro_use]
+extern crate serde_big_array;
+big_array! { BigArray; }
+
+
 
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
@@ -923,6 +928,7 @@ fn gen_random_fp12<R: RandomBytesGen>(random_bytes: &R) -> Fp12Elem<Monty480> {
 /// Wrapper around 60 byte array so what we can add Debug, Eq, etc
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
+#[serde(with = "BigArray")]
 struct SixtyBytes([u8; Monty480::ENCODED_SIZE_BYTES]);
 
 impl SixtyBytes {
