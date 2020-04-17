@@ -65,7 +65,7 @@ default-features = false
 unstable = []
 default = ["ed25519-dalek/u64_backend"]
 wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
-serde = ["serde_crate", serde_big_array]
+serde = ["serde_crate", "serde_big_array"]
 
 [[bench]]
 name = "api_benchmark"
