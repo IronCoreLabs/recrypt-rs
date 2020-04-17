@@ -954,12 +954,6 @@ impl fmt::LowerHex for SixtyBytes {
     }
 }
 
-impl Default for SixtyBytes {
-    fn default() -> Self {
-        SixtyBytes::default()
-    }
-}
-
 bytes_eq_and_hash!(SixtyBytes);
 
 #[derive(Derivative, Debug, Clone, Copy)]
