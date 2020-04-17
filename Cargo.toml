@@ -56,7 +56,7 @@ default-features = false
 features = ["std", "derive"]
 
 [dependencies.serde_big_array]
-package = serde-big-array
+package = "serde-big-array"
 optional = true
 version = "0.2.0"
 default-features = false
