@@ -30,6 +30,8 @@ hex="~0.3"
 arrayref = "^0.3.5"
 log = "~0.4"
 derivative = "1.0.3"
+serde-big-array = "0.2.0"
+
 
 [profile.dev]
 opt-level = 2
@@ -55,17 +57,11 @@ version = "1.0.89"
 default-features = false
 features = ["std", "derive"]
 
-[dependencies.serde_big_array]
-package = "serde-big-array"
-optional = true
-version = "0.2.0"
-default-features = true
-
 [features]
 unstable = []
 default = ["ed25519-dalek/u64_backend"]
 wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
-serde = ["serde_crate", "serde_big_array"]
+serde = ["serde_crate"]
 
 [[bench]]
 name = "api_benchmark"
