@@ -1033,7 +1033,7 @@ impl PublicKey {
         &[u8; Monty480::ENCODED_SIZE_BYTES],
         &[u8; Monty480::ENCODED_SIZE_BYTES],
     ) {
-        (&self.x.0, &self.y.0)
+        (&self.x.arr.0, &self.y.arr.0)
     }
 
     ///Augment the PublicKey so that messages encrypted to that key cannot be decrypted by this PublicKey's PrivateKey.
@@ -1061,7 +1061,7 @@ impl PrivateKey {
     pub const ENCODED_SIZE_BYTES: usize = Monty480::ENCODED_SIZE_BYTES;
 
     pub fn bytes(&self) -> &[u8; PrivateKey::ENCODED_SIZE_BYTES] {
-        &self.bytes.0
+        &self.bytes.arr.0
     }
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
@@ -1088,8 +1088,8 @@ impl PrivateKey {
     }
     ///Convert the keys to Frs and either add or subtract them, then turn it back into a PrivateKey.
     fn augment(first: &PrivateKey, second: &PrivateKey, subtract: bool) -> PrivateKey {
-        let first_fr = Fr480::from(first.bytes.0);
-        let second_fr = Fr480::from(second.bytes.0);
+        let first_fr = Fr480::from(first.bytes.arr.0);
+        let second_fr = Fr480::from(second.bytes.arr.0);
         let fr_result = if subtract {
             first_fr - second_fr
         } else {
@@ -1103,7 +1103,7 @@ bytes_eq_and_hash!(PrivateKey);
 
 impl Hashable60 for PrivateKey {
     fn to_bytes_60(&self) -> [u8; 60] {
-        self.bytes.0
+        self.bytes.arr.0
     }
 }
 
