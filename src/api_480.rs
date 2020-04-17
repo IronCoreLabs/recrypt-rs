@@ -30,7 +30,7 @@ use std::fmt;
 // Optional serde for PrivateKey and PublicKey structs
 #[cfg(feature = "serde")]
 use serde_crate::{Deserialize, Serialize};
-
+use serde_big_array;
 /// Recrypt public API - 480-bit
 /// If you are looking better performance, you might consider the 256-bit API in `api.rs`
 #[derive(Debug)]
