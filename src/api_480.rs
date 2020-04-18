@@ -991,8 +991,8 @@ impl PublicKey {
         Ok(internal_key
             .to_byte_vectors_60()
             .map(|(x, y)| PublicKey {
-                x: SixtyBytes(x),
-                y: SixtyBytes(y),
+                x: SixtyBytes(arr: x),
+                y: SixtyBytes(arr: y),
                 _internal_key: *internal_key,
             })
             .ok_or_else(|| internal::homogeneouspoint::PointErr::ZeroPoint)?)
