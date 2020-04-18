@@ -1067,7 +1067,7 @@ impl PrivateKey {
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
         let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes).to_monty());
         PrivateKey {
-            bytes: SixtyBytes(internal_key.value.to_bytes_60()),
+            bytes: SixtyBytes{arr: internal_key.value.to_bytes_60()},
             _internal_key: internal_key,
         }
     }
@@ -1116,7 +1116,7 @@ impl Hashable for PrivateKey {
 impl From<internal::PrivateKey<Monty480>> for PrivateKey {
     fn from(internal_pk: internal::PrivateKey<Monty480>) -> Self {
         PrivateKey {
-            bytes: SixtyBytes(internal_pk.value.to_bytes_60()),
+            bytes: SixtyBytes{arr: internal_pk.value.to_bytes_60()},
             _internal_key: internal_pk,
         }
     }
