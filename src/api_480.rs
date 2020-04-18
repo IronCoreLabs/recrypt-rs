@@ -1493,7 +1493,7 @@ pub(crate) mod test {
     fn publickey_new_from_slice() {
         let api = Recrypt480::new();
         let (_, pk1) = api.generate_key_pair().unwrap();
-        let input = (pk1.x.0, pk1.y.0);
+        let input = (pk1.x.arr, pk1.y.arr);
         let slice: (&[u8], &[u8]) = (&input.0, &input.1);
         let pk_from_fixed = PublicKey::new(input);
         let pk_from_slice = PublicKey::new_from_slice(slice);
@@ -1527,7 +1527,7 @@ pub(crate) mod test {
     fn private_key_clear() {
         let (mut priv_key, _) = Recrypt480::new().generate_key_pair().unwrap();
         priv_key.clear();
-        assert_eq!(SixtyBytes(priv_key.bytes().clone()), SixtyBytes([0u8; 60]));
+        assert_eq!(SixtyBytes{arr: priv_key.bytes().clone()}, SixtyBytes{arr: [0u8; 60]});
         assert_eq!(priv_key._internal_key, Default::default())
     }
 
