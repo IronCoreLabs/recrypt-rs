@@ -11,8 +11,16 @@ keywords = ["cryptography", "proxy-re-encryption", "PRE", "ECC", "transform-encr
 description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
 edition = "2018"
 
+[target.'cfg(all(unix, not(target_arch = "wasm32")))'.dependencies]
+libc = { version = "0.2" }
+
+[target.'cfg(all(windows, not(target_arch = "wasm32")))'.dependencies]
+winapi = { version = "0.3", features = [ "memoryapi", "sysinfoapi" ] }
+
+[target.'cfg(all(any(target_os = "macos", target_os = "ios"), not(target_arch = "wasm32")))'.dependencies]
+mach_o_sys = { version = "0.1" }
+
 [dependencies]
-libc = "0.2"
 #Explicit dependency so we can pass the wasm-bindgen flag to it
 getrandom = {version = "~0.1.1", optional = true}
 rand = "~0.7.3"
@@ -52,6 +60,7 @@ criterion = "~0.2"
 unstable = []
 default = ["ed25519-dalek/u64_backend"]
 wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
+
 
 [[bench]]
 name = "api_benchmark"
