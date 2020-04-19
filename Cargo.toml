@@ -14,7 +14,7 @@ edition = "2018"
 [dependencies]
 #Explicit dependency so we can pass the wasm-bindgen flag to it
 getrandom = {version = "~0.1.1", optional = true, features = ["wasm-bindgen", "stdweb"]}
-rand = "~0.7.3"
+rand = {version = "~0.7.3", features = ["wasm-bindgen", "stdweb"]}
 rand_chacha = "~0.2.2"
 sha2 = "~0.8"
 num-traits = "~0.2"
@@ -62,7 +62,7 @@ features = ["std", "derive"]
 [features]
 unstable = []
 default = ["ed25519-dalek/u64_backend"]
-wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
+wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen", "getrandom/stdweb"]
 serde = ["serde_crate"]
 
 [[bench]]
