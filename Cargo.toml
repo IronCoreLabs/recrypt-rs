@@ -13,7 +13,7 @@ edition = "2018"
 
 [dependencies]
 #Explicit dependency so we can pass the wasm-bindgen flag to it
-getrandom = {version = "~0.1.1", optional = true}
+getrandom = {version = "~0.1.1", optional = true, features = ["wasm-bindgen", "stdweb"]}
 rand = "~0.7.3"
 rand_chacha = "~0.2.2"
 sha2 = "~0.8"
@@ -31,6 +31,8 @@ arrayref = "^0.3.5"
 log = "~0.4"
 derivative = "1.0.3"
 serde-big-array = "0.2.0"
+# fix for bindgen
+stdweb = "0.4.20"
 
 
 [profile.dev]
