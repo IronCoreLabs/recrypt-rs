@@ -1273,7 +1273,7 @@ pub(crate) mod test {
         }
 
         fn random_bytes_60(&self) -> [u8; 60] {
-            [0u8; 60]
+            [std::u8::MAX; 60]
         }
     }
 
