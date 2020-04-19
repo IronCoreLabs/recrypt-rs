@@ -932,7 +932,7 @@ big_array! {
     serde(crate = "serde_crate")
 )]
 struct SixtyBytes {
-    #[serde(with = "BigArray")]
+    //#[serde(with = "BigArray")]
     arr: [u8; Monty480::ENCODED_SIZE_BYTES],
 }
 
