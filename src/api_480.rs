@@ -1087,8 +1087,10 @@ impl PrivateKey {
     }
     ///Convert the keys to Frs and either add or subtract them, then turn it back into a PrivateKey.
     fn augment(first: &PrivateKey, second: &PrivateKey, subtract: bool) -> PrivateKey {
-        let first_fr = Fr480::from(first.bytes.arr[0]);
-        let second_fr = Fr480::from(second.bytes.arr[0]);
+        println!("{:?}", first);
+        println!("{:?}", second);
+        let first_fr = Fr480::from(first.bytes.arr);
+        let second_fr = Fr480::from(second.bytes.arr);
         let fr_result = if subtract {
             first_fr - second_fr
         } else {
