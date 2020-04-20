@@ -955,9 +955,7 @@ impl fmt::LowerHex for SixtyBytes {
 
 impl Default for SixtyBytes {
     fn default() -> Self {
-        SixtyBytes {
-            arr: [0u8; 60],
-        }
+        SixtyBytes { arr: [0u8; 60] }
     }
 }
 
@@ -990,8 +988,8 @@ impl PublicKey {
         Ok(internal_key
             .to_byte_vectors_60()
             .map(|(x, y)| PublicKey {
-                x: SixtyBytes{arr: x},
-                y: SixtyBytes{arr: y},
+                x: SixtyBytes { arr: x },
+                y: SixtyBytes { arr: y },
                 _internal_key: *internal_key,
             })
             .ok_or_else(|| internal::homogeneouspoint::PointErr::ZeroPoint)?)
@@ -1066,7 +1064,9 @@ impl PrivateKey {
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
         let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes).to_monty());
         PrivateKey {
-            bytes: SixtyBytes{arr: internal_key.value.to_bytes_60()},
+            bytes: SixtyBytes {
+                arr: internal_key.value.to_bytes_60(),
+            },
             _internal_key: internal_key,
         }
     }
@@ -1117,7 +1117,9 @@ impl Hashable for PrivateKey {
 impl From<internal::PrivateKey<Monty480>> for PrivateKey {
     fn from(internal_pk: internal::PrivateKey<Monty480>) -> Self {
         PrivateKey {
-            bytes: SixtyBytes{arr: internal_pk.value.to_bytes_60()},
+            bytes: SixtyBytes {
+                arr: internal_pk.value.to_bytes_60(),
+            },
             _internal_key: internal_pk,
         }
     }
@@ -1528,7 +1530,12 @@ pub(crate) mod test {
     fn private_key_clear() {
         let (mut priv_key, _) = Recrypt480::new().generate_key_pair().unwrap();
         priv_key.clear();
-        assert_eq!(SixtyBytes{arr: priv_key.bytes().clone()}, SixtyBytes{arr: [0u8; 60]});
+        assert_eq!(
+            SixtyBytes {
+                arr: priv_key.bytes().clone()
+            },
+            SixtyBytes { arr: [0u8; 60] }
+        );
         assert_eq!(priv_key._internal_key, Default::default())
     }
 
