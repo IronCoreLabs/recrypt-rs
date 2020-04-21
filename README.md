@@ -1,26 +1,26 @@
-recrypt
-=======
-[![](https://img.shields.io/crates/v/recrypt.svg)](https://crates.io/crates/recrypt) [![](https://docs.rs/recrypt/badge.svg)](https://docs.rs/recrypt) [![Build Status](https://travis-ci.org/IronCoreLabs/recrypt-rs.svg?branch=master)](https://travis-ci.org/IronCoreLabs/recrypt-rs) 
+# recrypt
 
-A pure-Rust library that implements a set of cryptographic primitives for building a _multi-hop Proxy Re-encryption_ scheme, known as Transform Encryption. 
+[![](https://img.shields.io/crates/v/recrypt.svg)](https://crates.io/crates/recrypt) [![](https://docs.rs/recrypt/badge.svg)](https://docs.rs/recrypt) [![Build Status](https://travis-ci.org/IronCoreLabs/recrypt-rs.svg?branch=master)](https://travis-ci.org/IronCoreLabs/recrypt-rs)
+
+A pure-Rust library that implements a set of cryptographic primitives for building a _multi-hop Proxy Re-encryption_ scheme, known as Transform Encryption.
 
 ## What is Transform Encryption?
 
 Suppose you have two (public, private) key pairs: **(A, AA)** and **(B, BB)**.
 
-Transform Encryption allows data encrypted to one public key (A) to be _transformed_ so that it can be decrypted using another user's private key (BB).  This transformation process requires a special _transform key_ (A -> B) that is computed using the first user's private key (AA) and the second user's public key (B). **Having a transform key and performing the transformation does not allow the person doing this process to decrypt the data or to recover either user's private key.**
+Transform Encryption allows data encrypted to one public key (A) to be _transformed_ so that it can be decrypted using another user's private key (BB). This transformation process requires a special _transform key_ (A -> B) that is computed using the first user's private key (AA) and the second user's public key (B). **Having a transform key and performing the transformation does not allow the person doing this process to decrypt the data or to recover either user's private key.**
 
 See the [Single-hop Transform Encryption Example](https://docs.rs/recrypt/) for more details on computing a transform key and applying a transform using recrypt.
 
-## Usage 
+## Usage
 
 If you are building an application and would like to use Transform Encryption, you might try looking at the IronCore SDKs as they provide higher level of abstraction as part of the IronCore Privacy Platform:
+
 - [ironweb](https://github.com/IronCoreLabs/ironweb) - Javascript implementation of IronCore's Privacy Platform. Appropriate for all modern browsers.
 - [ironoxide](https://github.com/IronCoreLabs/ironoxide) - Pure Rust implementation of IronCore's Privacy Platform.
 - [ironoxide-java](https://github.com/IronCoreLabs/ironoxide-java) - Java bindings for `ironoxide`. Appropriate for all JVM languages.
 - [ironoxide-scala](https://github.com/IronCoreLabs/ironoxide-scala) - Scala wrappers around `ironoxide-java`.
 - [ironode](https://github.com/IronCoreLabs/ironnode) - NodeJS implementation of IronCore's Privacy Platform.
-
 
 All SDKs are intended to be compatible with one another.
 
@@ -29,10 +29,11 @@ All SDKs are intended to be compatible with one another.
 See https://crates.io/crates/recrypt for the most recent version.
 
 ### Other bindings
-In addition to the native Rust implementation, we provide additional bindings to Recrypt: 
 
-* [Node.js](https://github.com/IronCoreLabs/recrypt-node-binding)
-* [WebAssembly](https://github.com/IronCoreLabs/recrypt-wasm-binding)
+In addition to the native Rust implementation, we provide additional bindings to Recrypt:
+
+- [Node.js](https://github.com/IronCoreLabs/recrypt-node-binding)
+- [WebAssembly](https://github.com/IronCoreLabs/recrypt-wasm-binding)
 
 A [Scala implementation](https://github.com/IronCoreLabs/recrypt) of recrypt is also available.
 
@@ -48,7 +49,7 @@ To learn more about our approach to cryptography and to read our publications, p
 
 ### Memory Protection
 
-We do support memory protection via mlock. This will be detected and turned on automatically for supported platforms. If you need to disable this you can use the `no_memprotect` feature flag
+We do support memory protection via mlock. This will be detected and turned on automatically for supported platforms. If you need to disable this you can use the `disable_memlock` feature flag
 which is disabled by default.
 
 ## Benchmarks
@@ -56,10 +57,11 @@ which is disabled by default.
 ### Results from [79b6e6](https://github.com/IronCoreLabs/recrypt-rs/tree/79b6e62956f524109c8df81c4cf0cdf65291b5c5) (from 2019-12-04)
 
 _Note: The most accurate way to characterize performance is to [run the benchmarks for yourself](#running-benchmarks) in your target environment!_
- 
+
 These benchmarks were done on a Thinkpad X1 Extreme (Gen2)
 
 Abbreviated entry from `/proc/cpuinfo`
+
 ```
 vendor_id       : GenuineIntel
 cpu family      : 6
@@ -72,50 +74,50 @@ If you are unfamiliar with the output of criterion.rs benchmarks, please see [th
 ```
 $ cargo bench
 
-256-bit generate key pair                                                                            
+256-bit generate key pair
                         time:   [757.61 us 760.48 us 764.48 us]
-256-bit generate plaintext                                                                            
+256-bit generate plaintext
                         time:   [2.9911 ms 2.9962 ms 3.0032 ms]
-256-bit generate ed25519 keypair                                                                            
+256-bit generate ed25519 keypair
                         time:   [15.627 us 15.686 us 15.793 us]
 Found 1 outliers among 20 measurements (5.00%)
   1 (5.00%) high severe
-256-bit generate transform key                                                                           
+256-bit generate transform key
                         time:   [15.050 ms 15.072 ms 15.094 ms]
-256-bit compute public key                                                                            
+256-bit compute public key
                         time:   [715.24 us 717.64 us 720.06 us]
 Found 2 outliers among 20 measurements (10.00%)
   2 (10.00%) high mild
-256-bit derive symmetric key                                                                            
+256-bit derive symmetric key
                         time:   [1.9093 us 1.9625 us 2.0225 us]
 Found 3 outliers among 20 measurements (15.00%)
   2 (10.00%) high mild
   1 (5.00%) high severe
-256-bit encrypt (level 0)                                                                           
+256-bit encrypt (level 0)
                         time:   [7.0845 ms 7.1014 ms 7.1337 ms]
 Found 4 outliers among 20 measurements (20.00%)
   1 (5.00%) low mild
   3 (15.00%) high severe
-256-bit decrypt (level 0)                                                                           
+256-bit decrypt (level 0)
                         time:   [6.4466 ms 6.4530 ms 6.4598 ms]
 Found 1 outliers among 20 measurements (5.00%)
   1 (5.00%) high mild
-256-bit transform (level 1)                                                                           
+256-bit transform (level 1)
                         time:   [18.466 ms 18.492 ms 18.519 ms]
-256-bit decrypt (level 1)                                                                           
+256-bit decrypt (level 1)
                         time:   [22.856 ms 22.888 ms 22.927 ms]
 Found 1 outliers among 20 measurements (5.00%)
   1 (5.00%) high severe
-256-bit transform (level 2)                                                                           
+256-bit transform (level 2)
                         time:   [41.160 ms 41.339 ms 41.541 ms]
-256-bit decrypt (level 2)                                                                           
+256-bit decrypt (level 2)
                         time:   [38.508 ms 38.560 ms 38.617 ms]
 Found 2 outliers among 20 measurements (10.00%)
   1 (5.00%) low mild
   1 (5.00%) high severe
-  ```
+```
 
-## Contributing 
+## Contributing
 
 #### Building
 
@@ -132,6 +134,7 @@ $ cargo test
 ```
 
 #### Running benchmarks
+
 ```
 $ cargo bench
 ```
@@ -140,12 +143,11 @@ $ cargo bench
 
 In the academic literature, _transform encryption_ is referred to as _proxy re-encryption_. A proxy re-encryption (PRE) scheme is a public-key encryption scheme, where each participant has a pair of related keys, one public and one private, which are mathematically related. Alice encrypts a message to Bob using his public key, and Bob decrypts the encrypted message using his public key to retrieve the original message.
 
-PRE allows someone (the _delegator_) to delegate the ability to decrypt her messages to another person (the _delegatee_). Rather than just sharing her private key with the delegatee, the delegator computes a _transform key_ (or _re-encryption key_) that allows messages encrypted to her public key to be transformed so they appear can be decrypted using the delegatee's private key. Computing this transform key requires the delegator's private key and the delegatee's public key; once it is computed, the key is stored on a _semi-trusted proxy_. 
+PRE allows someone (the _delegator_) to delegate the ability to decrypt her messages to another person (the _delegatee_). Rather than just sharing her private key with the delegatee, the delegator computes a _transform key_ (or _re-encryption key_) that allows messages encrypted to her public key to be transformed so they appear can be decrypted using the delegatee's private key. Computing this transform key requires the delegator's private key and the delegatee's public key; once it is computed, the key is stored on a _semi-trusted proxy_.
 
-When the proxy receives a message encrypted to the delegator, it applies the transform algorithm using the transform key and delivers the transformed message to the delegatee. __The proxy does not need to be trusted, because possession of the transform key does not allow the proxy to decrypt the message or to recover any information about either the delegator's or the delegatee's private keys, even if it collaborates with the delegatee.__
+When the proxy receives a message encrypted to the delegator, it applies the transform algorithm using the transform key and delivers the transformed message to the delegatee. **The proxy does not need to be trusted, because possession of the transform key does not allow the proxy to decrypt the message or to recover any information about either the delegator's or the delegatee's private keys, even if it collaborates with the delegatee.**
 
 When the delegator no longer wants to allow access, she just requests that the proxy discard the transform key. She must trust the proxy to perform this action.
-
 
 ### PRE Scheme Properties
 
@@ -195,5 +197,5 @@ _Guide to Pairing-Based Cryptography_ by N.E. Mrabet and M. Joye, Chapman and Ha
 Recrypt-rust is licensed under the [GNU Affero General Public License](LICENSE).
 We also offer commercial licenses - [email](mailto:info@ironcorelabs.com) for more information.
 
-Copyright (c)  2018-present  IronCore Labs, Inc.
+Copyright (c) 2018-present IronCore Labs, Inc.
 All rights reserved.

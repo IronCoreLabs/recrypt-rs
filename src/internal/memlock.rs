@@ -7,7 +7,7 @@ use cfg_if::cfg_if;
 cfg_if! {
     //If we are targeting wasm or not unix/windows we need to set the lock and unlock functions
     //to empty. This will also happen if you've enabled "disable_memlock" feature flag
-    if #[cfg(any(feature="disable_memlock", target_arch = "wasm32", all(not(unix), not(windows))))] {
+    if #[cfg(any(feature="disable_memlock", target_arch = "wasm32"))] {
         #[inline(always)]
         pub fn mlock<T: Sized>(_cont: &T) {}
         #[inline(always)]
@@ -103,7 +103,7 @@ cfg_if! {
     }
 }
 
-//This allow is here so we don't get unused code warnings if the disable_memprotect is set.
+//This allow is here so we don't get unused code warnings if the disable_memlock is set.
 #[allow(dead_code)]
 fn size_of_slice<T: Sized>(slice: &[T]) -> usize {
     slice.len() * std::mem::size_of::<T>()
