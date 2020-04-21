@@ -38,6 +38,7 @@ hex="~0.3"
 arrayref = "^0.3.5"
 log = "~0.4"
 derivative = "1.0.3"
+cfg-if = "~0.1.10"
 
 [profile.dev]
 opt-level = 2

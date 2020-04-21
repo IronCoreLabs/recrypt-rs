@@ -994,7 +994,7 @@ impl PublicKey {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct PrivateKey {
     bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES],
     _internal_key: internal::PrivateKey<Monty256>,
@@ -1049,20 +1049,6 @@ bytes_eq_and_hash!(PrivateKey);
 impl Hashable32 for PrivateKey {
     fn to_bytes_32(&self) -> [u8; 32] {
         self.bytes
-    }
-}
-
-/// Avoid accidental logging of secrets
-impl fmt::Debug for PrivateKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("!!PRIVATE!!").map_err(|_| fmt::Error)
-    }
-}
-
-/// Avoid accidental logging of secrets
-impl fmt::Display for PrivateKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("!!PRIVATE!!").map_err(|_| fmt::Error)
     }
 }
 
