@@ -4,27 +4,19 @@ use cfg_if::cfg_if;
 // https://github.com/myfreeweb/secstr
 // Which was generously released into the public domain.
 // The functions were modified to deal with structs rather than slices.
-
 cfg_if! {
-    //
-    if #[cfg(target_arch = "wasm32")]{
-
-    } else if #[cfg(unix)] {
-        extern crate libc;
-    } else if #[cfg(all(apple, not(target_arch = "wasm32")))]{
-        extern crate mach_o_sys;
-    } else if #[cfg(all(windows, not(target_arch = "wasm32")))]{
-        extern crate winapi;
-    }
-}
-
-cfg_if! {
+    //If we are targeting wasm or not unix/windows we need to set the lock and unlock functions
+    //to empty
     if #[cfg(any(target_arch = "wasm32", all(not(unix), not(windows))))] {
+        #[inline(always)]
         pub fn mlock<T: Sized>(cont: &T) {}
+        #[inline(always)]
         pub fn munlock<T: Sized>(cont: &T) {}
+        #[inline(always)]
         pub fn mlock_slice<T: Sized>(cont: &[T]) {}
+        #[inline(always)]
         pub fn munlock_slice<T: Sized>(cont: &[T]) {}
-    } else if #[cfg(all(unix, not(target_arch = "wasm32")))]{
+    } else if #[cfg(unix)]{
         pub fn mlock<T: Sized>(cont: &T) {
             let ptr: *const T = cont;
             let size = std::mem::size_of::<T>();
@@ -70,7 +62,7 @@ cfg_if! {
                 libc::madvise(ptr, size, libc::MADV_DODUMP);
             }
         }
-    } else if #[cfg(all(windows, not(target_arch = "wasm32")))]{
+    } else if #[cfg(windows)]{
         pub fn mlock<T: Sized>(cont: &T) {
             let addr: *const T = cont;
             let len = std::mem::size_of::<T>();

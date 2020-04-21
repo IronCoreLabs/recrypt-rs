@@ -1,6 +1,6 @@
 language: rust
 rust:
-  - 1.36.0
+  - 1.42.0
 # hopefully prevent the cache from becoming huge - https://levans.fr/rust_travis_cache.html
 cache:
   directories:
