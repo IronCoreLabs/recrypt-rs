@@ -6,9 +6,10 @@ use cfg_if::cfg_if;
 // The functions were modified to deal with structs rather than slices.
 
 cfg_if! {
+    //
     if #[cfg(target_arch = "wasm32")]{
 
-    } else if #[cfg(all(unix, not(target_arch = "wasm32")))] {
+    } else if #[cfg(unix)] {
         extern crate libc;
     } else if #[cfg(all(apple, not(target_arch = "wasm32")))]{
         extern crate mach_o_sys;
