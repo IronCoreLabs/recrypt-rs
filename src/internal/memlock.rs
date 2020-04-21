@@ -6,16 +6,16 @@ use cfg_if::cfg_if;
 // The functions were modified to deal with structs rather than slices.
 cfg_if! {
     //If we are targeting wasm or not unix/windows we need to set the lock and unlock functions
-    //to empty
-    if #[cfg(any(target_arch = "wasm32", all(not(unix), not(windows))))] {
+    //to empty. This will also happen if you've enabled "disable_memlock" feature flag
+    if #[cfg(any(feature="disable_memlock", target_arch = "wasm32", all(not(unix), not(windows))))] {
         #[inline(always)]
-        pub fn mlock<T: Sized>(cont: &T) {}
+        pub fn mlock<T: Sized>(_cont: &T) {}
         #[inline(always)]
-        pub fn munlock<T: Sized>(cont: &T) {}
+        pub fn munlock<T: Sized>(_cont: &T) {}
         #[inline(always)]
-        pub fn mlock_slice<T: Sized>(cont: &[T]) {}
+        pub fn mlock_slice<T: Sized>(_cont: &[T]) {}
         #[inline(always)]
-        pub fn munlock_slice<T: Sized>(cont: &[T]) {}
+        pub fn munlock_slice<T: Sized>(_cont: &[T]) {}
     } else if #[cfg(unix)]{
         pub fn mlock<T: Sized>(cont: &T) {
             let ptr: *const T = cont;
@@ -102,6 +102,9 @@ cfg_if! {
         }
     }
 }
+
+//This allow is here so we don't get unused code warnings if the disable_memprotect is set.
+#[allow(dead_code)]
 fn size_of_slice<T: Sized>(slice: &[T]) -> usize {
     slice.len() * std::mem::size_of::<T>()
 }

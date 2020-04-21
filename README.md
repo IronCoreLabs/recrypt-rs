@@ -46,6 +46,11 @@ NCC Group's [Cryptography Services](https://www.nccgroup.trust/us/our-services/c
 
 To learn more about our approach to cryptography and to read our publications, please [go here](https://ironcorelabs.com/docs/concepts/ironcore-cryptography).
 
+### Memory Protection
+
+We do support memory protection via mlock. This will be detected and turned on automatically for supported platforms. If you need to disable this you can use the `no_memprotect` feature flag
+which is disabled by default.
+
 ## Benchmarks
 
 ### Results from [79b6e6](https://github.com/IronCoreLabs/recrypt-rs/tree/79b6e62956f524109c8df81c4cf0cdf65291b5c5) (from 2019-12-04)

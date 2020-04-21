@@ -38,11 +38,6 @@ matrix:
         - TARGET=aarch64-apple-ios
         - TEST=0
         - IOS=1
-    - name: "iOS ARM7"
-      os: "osx"
-      env:
-        - TARGET=armv7-apple-ios
-        - IOS=1
     # Android
     - name: "Android x64"
       os: linux
