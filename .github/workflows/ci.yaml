@@ -58,37 +58,48 @@ jobs:
         with:
           command: test
 
-  bench_build:
-    name: Bench
+  bench:
+    name: Bench compare
     runs-on: ubuntu-18.04
-    strategy:
-      matrix:
-        rust:
-          - stable
     steps:
-      - uses: actions/checkout@v2
+      - name: Find base revision
+        id: base
+        run: |
+          if [ "${{ github.base_ref }}" != "" ] ; then
+            BASE="${{ github.base_ref }}"
+          else
+            BASE=$(git rev-parse master@{1})
+          fi
+          echo "::set-output name=base::${BASE}"
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ matrix.rust }}
+          toolchain: stable
           override: true
       - uses: actions-rs/cargo@v1
         with:
-          command: bench
+          command: install critcmp
+      - uses: actions/checkout@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: bench -- --save-baseline current
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ steps.base.outputs.base }}
+      - uses: actions-rs/cargo@v1
+        with:
+          command: bench -- --save-baseline base
+      - run: critcmp base current -t 2
 
   fmt:
     name: Rustfmt
     runs-on: ubuntu-18.04
-    strategy:
-      matrix:
-        rust:
-          - nightly
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ matrix.rust }}
+          toolchain: nightly
           override: true
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
