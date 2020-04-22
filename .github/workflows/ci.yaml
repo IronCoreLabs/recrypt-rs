@@ -1,0 +1,97 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+name: CI
+
+jobs:
+  build:
+    name: Builds
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-18.04
+            target: aarch64-linux-android # Android x64
+          - os: ubuntu-18.04
+            target: x86_64-unknown-linux-musl # Alpine Linux x86_64
+          - os: ubuntu-18.04
+            target: wasm32-unknown-unknown
+          - os: macos-10.15
+            target: aarch64-apple-ios
+          - os: macos-10.15
+            target: x86_64-apple-darwin # 64-bit OSX
+          - os: windows-2019
+            target: x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target=${{ matrix.target }}
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - 1.38.0
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+  bench_build:
+    name: Bench
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        rust:
+          - stable
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: bench
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        rust:
+          - nightly
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
