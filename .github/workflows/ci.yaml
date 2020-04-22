@@ -78,17 +78,20 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         with:
-          command: install critcmp
+          command: install
+          args: critcmp
       - uses: actions/checkout@v2
       - uses: actions-rs/cargo@v1
         with:
-          command: bench -- --save-baseline current
+          command: bench
+          args: -- --save-baseline current
       - uses: actions/checkout@v2
         with:
           ref: ${{ steps.base.outputs.base }}
       - uses: actions-rs/cargo@v1
         with:
-          command: bench -- --save-baseline base
+          command: bench
+          args: -- --save-baseline base
       - run: critcmp base current -t 2
 
   fmt:
