@@ -81,6 +81,32 @@
 //! We have done a lot of work in recrypt-rs to ensure that operations dealing with secret data
 //! are [constant time](https://www.bearssl.org/constanttime.html) and not susceptible to [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
 //! The public API is also constant time.
+//!
+//! ## Implementing [Serde](https://docs.serde.rs/serde_json/) serialize/deserialize keys
+//!
+//! We provide an optional feature which allows private and public keys to be converted to a JSON string and/or a Vec<u8>. In addition, this optional feature also facilitates the private and public key data structures to be serialized to any `io::Write` i.e. a File or a TCP stream.
+//! ### Configuration examples
+//! Adding the optional Serde feature - 64-bit backend + Serde
+//! ```
+//! cargo build --features serde
+//! ```
+//! Adding the optional Serde feature - 32-bit backend + Serde
+//! ```
+//! cargo build --no-default-features --features serde,ed25519-dalek/u32_backend
+//! ```
+//! Adding the optional Serde feature - WebAssembly(Wasm) + Serde
+//! ```
+//! cargo build --no-default-features --features serde,wasm
+//! ```
+//! ### Usage examples
+//! Convert public key to JSON string
+//! ```
+//! serde_json::to_string(&pub_key).unwrap()
+//! ```
+//! Convert public key to Vec<u8>
+//! ```
+//! serde_json::to_vec(&pub_key).unwrap())
+//! ```
 
 pub mod prelude;
 #[macro_use] // this is still required in Rust 2018
