@@ -204,9 +204,9 @@ jobs:
             echo "# Benchmark blew big budget! Bad!" > comment.md
           fi
           echo "Benchmark results comparing with base:" >> comment.md
-          echo "```" >> comment.md
+          echo '```' >> comment.md
           critcmp bench-base/results.json bench-current/results.json -t 2 >> comment.md || true
-          echo "```" >> comment.md
+          echo '```' >> comment.md
           mv comment.md .github/workflows/comment.md
       - uses: harupy/comment-on-pr@c0522c4
         env:
