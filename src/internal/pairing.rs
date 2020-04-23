@@ -185,7 +185,7 @@ where
         let mut f = initial_f;
         //Easy part
         //"Computing f^((p^6-1)(p^2+1))..."
-        let mut g = (0..6).fold(f, { |acc, _| acc.frobenius() });
+        let mut g = (0..6).fold(f, |acc, _| acc.frobenius());
         f = g * f.inv(); //  f = f^(p^6-1)
         f = f.frobenius().frobenius() * f; //  f = f^(p^2+1)
 
