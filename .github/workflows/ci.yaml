@@ -13,6 +13,9 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-18.04
     steps:
+      # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
+      - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+        name: Fix perms on .cargo so we can restore the cache.
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -60,6 +63,9 @@ jobs:
           - os: windows-2019
             target: x86_64-pc-windows-msvc
     steps:
+      # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
+      - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+        name: Fix perms on .cargo so we can restore the cache.
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -98,6 +104,9 @@ jobs:
           - beta
           - 1.38.0 #MSRV
     steps:
+      # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
+      - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+        name: Fix perms on .cargo so we can restore the cache.
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -136,6 +145,9 @@ jobs:
           - name: base
             ref: ${{ github.base_ref }}
     steps:
+      # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
+      - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+        name: Fix perms on .cargo so we can restore the cache.
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -184,6 +196,9 @@ jobs:
     name: Upload benchmark results
     runs-on: ubuntu-18.04
     steps:
+      # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
+      - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+        name: Fix perms on .cargo so we can restore the cache.
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
