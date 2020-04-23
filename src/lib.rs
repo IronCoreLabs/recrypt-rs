@@ -108,6 +108,8 @@
 //! ```
 //! Convert public key to Vec<u8>
 //! ```
+//! serde_json::to_vec(&pub_key).unwrap()
+//! ```
 
 pub mod prelude;
 #[macro_use] // this is still required in Rust 2018
