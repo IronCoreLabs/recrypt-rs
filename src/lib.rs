@@ -94,12 +94,12 @@
 //! Adding the optional Serde feature - a u32 backend example
 //! ```
 //! [dependencies]
-//! recrypt = { version = "~0.11.0", features = ["serde", "u32"], default-features = false } 
+//! recrypt = { version = "~0.11.0", features = ["serde", "u32"], default-features = false }
 //! ```
 //! Adding the optional Serde feature - a WebAssembly(Wasm) example
 //! ```
 //! [dependencies]
-//! recrypt = { version = "~0.11.0", features = ["serde", "wasm"], default-features = false } 
+//! recrypt = { version = "~0.11.0", features = ["serde", "wasm"], default-features = false }
 //! ```
 //! ### Usage examples
 //! Convert public key to JSON string
