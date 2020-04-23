@@ -137,7 +137,6 @@ jobs:
       - build
       - fmt
       - test
-    if: github.base_ref != ''
     name: Upload benchmark results
     runs-on: ubuntu-18.04
     steps:
@@ -146,6 +145,7 @@ jobs:
         with:
           name: bench-results
       - uses: harupy/comment-on-pr@v1
+        if: github.base_ref != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
