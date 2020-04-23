@@ -8,6 +8,23 @@ name: CI
 
 jobs:
 
+  # Abort if the code isn't formatted according to rustfmt standards from nightly.
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
   # Build on all the architectures we intend to support, including cross compiled ones.
   build:
     name: Builds
@@ -61,21 +78,19 @@ jobs:
         with:
           command: test
 
-  # Benchmark current against the base revision. Base is the previous rev, if we're merging to master; or base is master if this is
-  # a PR.
+  # Benchmark current and base revisions, if this is a PR.
   bench:
-    name: Bench compare
+    name: Bench
     runs-on: ubuntu-18.04
+    if: github.base_ref != ''
+    strategy:
+      matrix:
+        include:
+          - name: current
+            ref: ${{ github.ref }}
+          - name: base
+            ref: ${{ github.base_ref }}
     steps:
-      - name: Find base revision
-        id: base
-        run: |
-          if [ "${{ github.base_ref }}" != "" ] ; then
-            BASE="${{ github.base_ref }}"
-          else
-            BASE=$(git rev-parse master@{1})
-          fi
-          echo "::set-output name=base::${BASE}"
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -86,49 +101,18 @@ jobs:
           command: install
           args: critcmp
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ matrix.ref }}
       - uses: actions-rs/cargo@v1
         with:
           command: bench
-          args: -- --save-baseline current
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ steps.base.outputs.base }}
-          clean: 'false'
-      - uses: actions-rs/cargo@v1
-        with:
-          command: bench
-          args: -- --save-baseline base
-      - name: Compare benchmarks
-        run: |
-          if ! critcmp base current -t 10 ; then
-            echo "# Benchmark blew big budget! Bad!" > comment.md
-          fi
-          echo "Benchmark results comparing with base (${{ steps.base.outputs.base }}):" >> comment.md
-          echo "```" >> comment.md
-          critcmp base current -t 2 >> comment.md || true
-          echo "```" >> comment.md
+          args: -- --save-baseline ${{ matrix.name }}
+      - run: critcmp --export ${{ matrix.name }} > results.json
       - name: Store benchmark results
         uses: actions/upload-artifact@v1
         with:
-          name: bench-results
-          path: comment.md
-
-  # Abort if the code isn't formatted according to rustfmt standards from nightly.
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-      - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+          name: bench-${{ matrix.name }}
+          path: results.json
 
   # Add a comment to the PR with benchmark results. Only if everything else passed, and this is a PR.
   bench_results:
@@ -143,9 +127,30 @@ jobs:
       - name: Retrieve benchmark results
         uses: actions/download-artifact@v1
         with:
-          name: bench-results
-      - uses: harupy/comment-on-pr@v1
-        if: github.base_ref != ''
+          name: bench-current
+      - name: Retrieve benchmark results
+        uses: actions/download-artifact@v1
+        with:
+          name: bench-base
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: critcmp
+      - name: Compare benchmarks
+        run: |
+          if ! critcmp bench-base/results.json bench-current/results.json -t 10 ; then
+            echo "# Benchmark blew big budget! Bad!" > comment.md
+          fi
+          echo "Benchmark results comparing with base:" >> comment.md
+          echo "```" >> comment.md
+          critcmp bench-base/results.json bench-current/results.json -t 2 >> comment.md || true
+          echo "```" >> comment.md
+      - uses: harupy/comment-on-pr@c0522c4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
