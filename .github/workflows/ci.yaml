@@ -57,7 +57,7 @@ jobs:
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
-        if: "!contains(runner.os, 'windows-2019')"
+        if: "!contains(runner.os, 'windows')"
       - name: Cache cargo
         uses: actions/cache@v1
         with:
