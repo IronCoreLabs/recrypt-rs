@@ -17,21 +17,11 @@ jobs:
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
-      - name: Cache cargo registry
+      - name: Cache cargo
         uses: actions/cache@v1
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-nightly
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-nightly
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-nightly
+          path: ~/.cargo/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-nightly
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -68,21 +58,16 @@ jobs:
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
         if: "!contains(runner.os, 'windows-2019')"
-      - name: Cache cargo registry
+      - name: Cache cargo
         uses: actions/cache@v1
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-stable
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-stable
+          path: ~/.cargo/
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.toml') }}-stable
       - name: Cache cargo build
         uses: actions/cache@v1
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-stable
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-stable
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -109,16 +94,11 @@ jobs:
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
-      - name: Cache cargo registry
+      - name: Cache cargo
         uses: actions/cache@v1
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
+          path: ~/.cargo/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
       - name: Cache cargo build
         uses: actions/cache@v1
         with:
@@ -152,16 +132,11 @@ jobs:
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
-      - name: Cache cargo registry
+      - name: Cache cargo
         uses: actions/cache@v1
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-stable
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-stable
+          path: ~/.cargo/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-stable
       - name: Cache cargo build
         uses: actions/cache@v1
         with:
@@ -201,21 +176,11 @@ jobs:
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
-      - name: Cache cargo registry
+      - name: Cache cargo
         uses: actions/cache@v1
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-stable
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-stable
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-stable
+          path: ~/.cargo/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-stable
       - name: Retrieve benchmark results
         uses: actions/download-artifact@v1
         with:
