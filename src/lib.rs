@@ -86,17 +86,20 @@
 //!
 //! We provide an optional feature which allows private and public keys to be converted to a JSON string and/or a Vec<u8>. In addition, this optional feature also facilitates the private and public key data structures to be serialized to any `io::Write` i.e. a File or a TCP stream.
 //! ### Configuration examples
-//! Adding the optional Serde feature - 64-bit backend + Serde
+//! Adding the optional Serde feature - a u64 backend example
 //! ```
-//! cargo build --features serde
+//! [dependencies]
+//! recrypt = { version = "~0.11.0", features = ["serde"] }
 //! ```
-//! Adding the optional Serde feature - 32-bit backend + Serde
+//! Adding the optional Serde feature - a u32 backend example
 //! ```
-//! cargo build --no-default-features --features serde,ed25519-dalek/u32_backend
+//! [dependencies]
+//! recrypt = { version = "~0.11.0", features = ["serde", "u32"], default-features = false } 
 //! ```
-//! Adding the optional Serde feature - WebAssembly(Wasm) + Serde
+//! Adding the optional Serde feature - a WebAssembly(Wasm) example
 //! ```
-//! cargo build --no-default-features --features serde,wasm
+//! [dependencies]
+//! recrypt = { version = "~0.11.0", features = ["serde", "wasm"], default-features = false } 
 //! ```
 //! ### Usage examples
 //! Convert public key to JSON string
@@ -104,8 +107,6 @@
 //! serde_json::to_string(&pub_key).unwrap()
 //! ```
 //! Convert public key to Vec<u8>
-//! ```
-//! serde_json::to_vec(&pub_key).unwrap())
 //! ```
 
 pub mod prelude;
