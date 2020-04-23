@@ -7,6 +7,8 @@ on:
 name: CI
 
 jobs:
+
+  # Build on all the architectures we intend to support, including cross compiled ones.
   build:
     name: Builds
     runs-on: ${{ matrix.os }}
@@ -38,6 +40,7 @@ jobs:
           command: build
           args: --release --target=${{ matrix.target }}
 
+  # Run the tests on only one architecture, against various Rust versions.
   test:
     name: Test Suite
     runs-on: ubuntu-18.04
@@ -58,6 +61,8 @@ jobs:
         with:
           command: test
 
+  # Benchmark current against the base revision. Base is the previous rev, if we're merging to master; or base is master if this is
+  # a PR.
   bench:
     name: Bench compare
     runs-on: ubuntu-18.04
@@ -93,8 +98,22 @@ jobs:
         with:
           command: bench
           args: -- --save-baseline base
-      - run: critcmp base current -t 2
+      - name: Compare benchmarks
+        run: |
+          if ! critcmp base current -t 10 ; then
+            echo "# Benchmark blew big budget! Bad!" > comment.md
+          fi
+          echo "Benchmark results comparing with base (${{ steps.base.outputs.base }}):" >> comment.md
+          echo "```" >> comment.md
+          critcmp base current -t 2 >> comment.md || true
+          echo "```" >> comment.md
+      - name: Store benchmark results
+        uses: actions/upload-artifact@v1
+        with:
+          name: bench-results
+          path: comment.md
 
+  # Abort if the code isn't formatted according to rustfmt standards from nightly.
   fmt:
     name: Rustfmt
     runs-on: ubuntu-18.04
@@ -110,3 +129,24 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+
+  # Add a comment to the PR with benchmark results. Only if everything else passed, and this is a PR.
+  bench_results:
+    needs:
+      - bench
+      - build
+      - fmt
+      - test
+    if: github.base_ref != ''
+    name: Upload benchmark results
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Retrieve benchmark results
+        uses: actions/download-artifact@v1
+        with:
+          name: bench-results
+      - uses: harupy/comment-on-pr@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: bench-results/comment.md
