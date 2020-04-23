@@ -50,6 +50,7 @@ criterion = "~0.2"
 [features]
 unstable = []
 default = ["ed25519-dalek/u64_backend"]
+u32 = ["ed25519-dalek/u32_backend"]
 wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
 
 [[bench]]
