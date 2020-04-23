@@ -103,12 +103,10 @@ impl Plaintext {
     /// Construct a Plaintext from raw bytes
     pub fn new(bytes: [u8; Plaintext::ENCODED_SIZE_BYTES]) -> Plaintext {
         // since new takes a fixed size array, we know it is safe to decode the resultant vector
-        let p = Plaintext::from(
+        Plaintext::from(
             Fp12Elem::<Monty480>::decode(bytes.to_vec())
                 .expect("Developer error: did you change ENCODED_SIZE_BYTES?"),
-        );
-        memlock::mlock(&p);
-        p
+        )
     }
 
     new_from_slice!(Plaintext);
@@ -1046,12 +1044,7 @@ impl PrivateKey {
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
         let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes).to_monty());
-        let pk = PrivateKey {
-            bytes: SixtyBytes(internal_key.value.to_bytes_60()),
-            _internal_key: internal_key,
-        };
-        memlock::mlock(&pk);
-        pk
+        internal_key.into()
     }
 
     new_from_slice!(PrivateKey);

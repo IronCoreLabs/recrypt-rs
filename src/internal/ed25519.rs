@@ -67,9 +67,7 @@ impl SigningKeypair {
         let keypair = ed25519_dalek::Keypair::generate::<CR>(&mut *take_lock(&rng));
 
         //Unchecked is safe because the public is on the curve and the size is statically guaranteed.
-        let skp = SigningKeypair::new_unchecked(keypair.to_bytes());
-        memlock::mlock_slice(&skp.bytes[..]);
-        skp
+        SigningKeypair::new_unchecked(keypair.to_bytes())
     }
     ///
     ///Create a SigningKeypair from a byte array slice. If the array is not the right length or if the public
