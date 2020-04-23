@@ -13,6 +13,21 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-18.04
     steps:
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -45,6 +60,21 @@ jobs:
           - os: windows-2019
             target: x86_64-pc-windows-msvc
     steps:
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -68,6 +98,21 @@ jobs:
           - beta
           - 1.38.0 #MSRV
     steps:
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -91,6 +136,21 @@ jobs:
           - name: base
             ref: ${{ github.base_ref }}
     steps:
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -124,6 +184,21 @@ jobs:
     name: Upload benchmark results
     runs-on: ubuntu-18.04
     steps:
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Retrieve benchmark results
         uses: actions/download-artifact@v1
         with:
