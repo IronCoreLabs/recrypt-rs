@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.cargo/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-nightly
+          key: ${{ github.job }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -62,12 +62,12 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.cargo/
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.toml') }}-stable
+          key: ${{ github.job }}-${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.toml') }}
       - name: Cache cargo build
         uses: actions/cache@v1
         with:
           path: target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-stable
+          key: ${{ github.job }}-${{ runner.os }}-${{ matrix.target }}-target-${{ hashFiles('**/Cargo.toml') }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -98,12 +98,12 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.cargo/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
+          key: ${{ github.job }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
       - name: Cache cargo build
         uses: actions/cache@v1
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
+          key: ${{ github.job }}-${{ runner.os }}-target-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -136,12 +136,12 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.cargo/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-stable
+          key: ${{ github.job }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
       - name: Cache cargo build
         uses: actions/cache@v1
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-stable
+          key: ${{ github.job }}-${{ runner.os }}-target-${{ hashFiles('**/Cargo.toml') }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -180,7 +180,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.cargo/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-stable
+          key: ${{ github.job }}
       - name: Retrieve benchmark results
         uses: actions/download-artifact@v1
         with:
