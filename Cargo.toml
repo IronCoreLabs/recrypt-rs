@@ -60,7 +60,6 @@ features = ["std", "derive"]
 unstable = []
 default = ["ed25519-dalek/u64_backend"]
 wasm = ["ed25519-dalek/u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
-serde = ["serde_crate"]
 
 [[bench]]
 name = "api_benchmark"
