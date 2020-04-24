@@ -62,6 +62,7 @@ default = ["u64_backend"]
 u64_backend = ["ed25519-dalek/u64_backend"]
 u32_backend = ["ed25519-dalek/u32_backend"]
 wasm = ["u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
+serde = ["serde_crate"]
 
 [[bench]]
 name = "api_benchmark"
