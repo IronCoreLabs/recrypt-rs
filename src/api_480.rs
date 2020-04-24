@@ -100,6 +100,7 @@ impl Plaintext {
     const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Monty480>::ENCODED_SIZE_BYTES;
 
     /// Construct a Plaintext from raw bytes
+    /// TODO bobwall
     pub fn new(bytes: [u8; Plaintext::ENCODED_SIZE_BYTES]) -> Plaintext {
         // since new takes a fixed size array, we know it is safe to decode the resultant vector
         Plaintext::from(
@@ -133,10 +134,7 @@ impl From<Fp12Elem<Monty480>> for Plaintext {
 
 impl Default for Plaintext {
     fn default() -> Self {
-        Plaintext {
-            bytes: [0u8; Plaintext::ENCODED_SIZE_BYTES],
-            _internal_fp12: Fp12Elem::default(),
-        }
+        Recrypt480::new().gen_plaintext()
     }
 }
 impl Drop for Plaintext {
