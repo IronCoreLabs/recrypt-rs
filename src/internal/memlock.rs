@@ -1,3 +1,11 @@
+/// Provides a general interface for memory protection across Linux, *BSD (MacOS), and Windows.
+///
+/// The exact functionality depends on the target OS:
+/// - (All) Prevent the the virtual memory page(s) a value is stored on from being written to disk (swap)
+/// - (Linux, *BSD) Prevent the value from showing up in a core dump
+///
+/// On WASM runtimes, no memory protections are implemented.
+/// To disable all memory protections, regardless of OS, use the `disable_memlock` feature.
 use cfg_if::cfg_if;
 
 // The memlock code below is inspired by the secstr project
@@ -103,8 +111,7 @@ cfg_if! {
     }
 }
 
-//This allow is here so we don't get unused code warnings if the disable_memlock is set.
-#[allow(dead_code)]
+#[cfg(not(any(feature = "disable_memlock", target_arch = "wasm32")))]
 fn size_of_slice<T: Sized>(slice: &[T]) -> usize {
     slice.len() * std::mem::size_of::<T>()
 }
