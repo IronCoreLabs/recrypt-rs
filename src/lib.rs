@@ -9,7 +9,7 @@
 //! ## Basic Encrypt/Decrypt Example
 //! ```rust, ignore
 //! use recrypt::prelude::*;
-
+//!
 //!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();
@@ -30,7 +30,7 @@
 //! // plaintext recovered.
 //! assert_eq!(pt, decrypted_val)
 //! ```
-
+//!
 //! ## Single-hop Transform Encryption Example
 //! Encrypt a message to public key `initial_pub_key` and decrypt it with `target_priv_key`
 //! after transforming the encrypted message.
