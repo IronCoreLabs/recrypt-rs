@@ -7,7 +7,7 @@
 //! Start exploring the [Api documentation](api/index.html)
 //!
 //! ## Basic Encrypt/Decrypt Example
-//! ```
+//! ```rust, ignore
 //! use recrypt::prelude::*;
 
 //!
@@ -34,7 +34,7 @@
 //! ## Single-hop Transform Encryption Example
 //! Encrypt a message to public key `initial_pub_key` and decrypt it with `target_priv_key`
 //! after transforming the encrypted message.
-//! ```
+//! ```rust, ignore
 //! use recrypt::prelude::*;
 //!
 //! // create a new recrypt
@@ -87,27 +87,27 @@
 //! We provide an optional feature which allows private and public keys to be converted to a JSON string and/or a Vec<u8>. In addition, this optional feature also facilitates the private and public key data structures to be serialized to any `io::Write` i.e. a File or a TCP stream.
 //! ### Configuration examples
 //! Adding the optional Serde feature - 64-bit + serde
-//! ```
+//! ```rust, ignore
 //! [dependencies]
 //! recrypt = { version = "~0.11.0", features = ["serde"] }
 //! ```
 //! Adding the optional Serde feature - 32-bit + serde
-//! ```
+//! ```rust, ignore
 //! [dependencies]
 //! recrypt = { version = "~0.11.0", features = ["serde", "u32_backend"], default-features = false }
 //! ```
 //! Adding the optional Serde feature - wasm +serde
-//! ```
+//! ```rust, ignore
 //! [dependencies]
 //! recrypt = { version = "~0.11.0", features = ["wasm", "serde"], default-features = false }
 //! ```
 //! ### Usage examples
 //! Convert public key to JSON string
-//! ```
+//! ```rust, ignore
 //! serde_json::to_string(&pub_key).unwrap()
 //! ```
 //! Convert public key to Vec<u8>
-//! ```
+//! ```rust, ignore
 //! serde_json::to_vec(&pub_key).unwrap()
 //! ```
 
