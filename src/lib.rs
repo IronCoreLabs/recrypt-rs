@@ -9,7 +9,6 @@
 //! ## Basic Encrypt/Decrypt Example
 //! ```
 //! use recrypt::prelude::*;
-
 //!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();

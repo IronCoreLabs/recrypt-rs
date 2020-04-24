@@ -101,6 +101,7 @@ impl Plaintext {
     const ENCODED_SIZE_BYTES: usize = Fp12Elem::<Monty256>::ENCODED_SIZE_BYTES;
 
     /// Construct a Plaintext from raw bytes
+    /// TODO bobwall
     pub fn new(bytes: [u8; Plaintext::ENCODED_SIZE_BYTES]) -> Plaintext {
         // since new takes a fixed size array, we know it is safe to decode the resultant vector
         Plaintext::from(
@@ -134,10 +135,8 @@ impl From<Fp12Elem<Monty256>> for Plaintext {
 
 impl Default for Plaintext {
     fn default() -> Self {
-        Plaintext {
-            bytes: [0u8; Plaintext::ENCODED_SIZE_BYTES],
-            _internal_fp12: Fp12Elem::default(),
-        }
+        // a default Plaintext is a random value
+        Recrypt::new().gen_plaintext()
     }
 }
 impl Drop for Plaintext {
@@ -734,7 +733,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recry
         signing_keypair: &SigningKeypair,
     ) -> Result<TransformKey> {
         let ephem_reencryption_private_key = self.random_private_key();
-        let temp_key = internal::KValue(gen_random_fp12(&self.pairing, &self.random_bytes));
+        let temp_key = internal::KValue(gen_random_rth_root(&self.pairing, &self.random_bytes));
         let reencryption_key = internal::generate_reencryption_key(
             from_private_key._internal_key,
             to_public_key._internal_key,
@@ -815,7 +814,7 @@ pub trait CryptoOps {
 
 impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recrypt<H, S, R> {
     fn gen_plaintext(&self) -> Plaintext {
-        let rand_fp12 = gen_random_fp12(&self.pairing, &self.random_bytes);
+        let rand_fp12 = gen_random_rth_root(&self.pairing, &self.random_bytes);
         Plaintext::from(rand_fp12)
     }
 
@@ -889,7 +888,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
     }
 }
 
-fn gen_random_fp12<R: RandomBytesGen>(
+fn gen_random_rth_root<R: RandomBytesGen>(
     pairing: &pairing::Pairing<Monty256>,
     random_bytes: &R,
 ) -> Fp12Elem<Monty256> {
@@ -1626,8 +1625,8 @@ pub(crate) mod test {
     #[test]
     fn gen_random_fp12_not_same() {
         let recrypt = Recrypt::new();
-        let fp12_one = gen_random_fp12(&recrypt.pairing, &recrypt.random_bytes);
-        let fp12_two = gen_random_fp12(&recrypt.pairing, &recrypt.random_bytes);
+        let fp12_one = gen_random_rth_root(&recrypt.pairing, &recrypt.random_bytes);
+        let fp12_two = gen_random_rth_root(&recrypt.pairing, &recrypt.random_bytes);
         assert_ne!(fp12_one, fp12_two);
     }
 }

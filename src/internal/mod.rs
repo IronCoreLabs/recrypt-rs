@@ -503,7 +503,7 @@ where
 ///
 /// # Arguments
 /// `to_public_key`         - the public key to encrypt to
-/// `plaintext`             - the value to encrypt - must be an element of G_T
+/// `plaintext`             - the value to encrypt - must be an element of G_T (rth root of unity)
 /// `encrypting_key`        - a random private key value chosen just for this plaintext
 /// `signing_keypair`       - the public portion of the encrypter's signing key pair
 /// `pairing`               - Optimal Ate Pairing
@@ -516,7 +516,7 @@ where
 /// along with the authHash, public signing key, and signature
 pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     to_public_key: PublicKey<T>,
-    plaintext: Fp12Elem<T>, // @clintfred can this be any fp12? or an rth root?
+    plaintext: Fp12Elem<T>,
     encrypting_key: PrivateKey<T>,
     signing_keypair: &SigningKeypair,
     pairing: &Pairing<T>,
