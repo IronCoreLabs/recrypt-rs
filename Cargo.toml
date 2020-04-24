@@ -23,14 +23,12 @@ arrayvec = "~0.4"
 #Disable all features for ed25519 and enable the proper ones down in the [features] section below
 ed25519-dalek = { version="=1.0.0-pre.3", default-features = false, features = ["std"] }
 clear_on_drop = "~0.2"
-#gridiron = "~0.7.0"
-gridiron = { git= "https://github.com/tpmccallum/gridiron", branch = "optional_serde_feature", version = "~0.7.0", features = ["serde"], default-features = false }
+gridiron = "~0.7.0"
 quick-error = "~1.2"
 hex="~0.3"
 arrayref = "^0.3.5"
 log = "~0.4"
 derivative = "1.0.3"
-serde-big-array = "~0.2.0"
 
 [profile.dev]
 opt-level = 2
@@ -48,13 +46,6 @@ lto = true
 [dev-dependencies]
 proptest = "~0.9"
 criterion = "~0.2"
-
-[dependencies.serde_crate]
-package = "serde"
-optional = true
-version = "~1.0.89"
-default-features = false
-features = ["std", "derive"]
 
 [features]
 unstable = []
