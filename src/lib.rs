@@ -102,13 +102,27 @@
 //! recrypt = { version = "~0.11.0", features = ["wasm", "serde"], default-features = false }
 //! ```
 //! ### Usage examples
-//! Convert public key to JSON string
+//! Convert public key (x and y values) to JSON string
 //! ```rust, ignore
-//! serde_json::to_string(&pub_key).unwrap()
+//! serde_json::to_string(&pub_key.bytes_x_y()).unwrap()
+//! // returns "[[137, ... 78,107,146],[59, ... 34,71,16]]"
+//! // note nested [[], []] structure
 //! ```
-//! Convert public key to Vec<u8>
+//! Convert private key (bytes) to JSON string
 //! ```rust, ignore
-//! serde_json::to_vec(&pub_key).unwrap()
+//! serde_json::to_string(&priv_key.bytes()).unwrap()
+//! // returns "[91, ... 178,104,87]"
+//! ```
+//! Convert public key (x and y values) to Vec<u8>
+//! ```rust, ignore
+//! serde_json::to_vec(&pub_key.bytes_x_y()).unwrap()
+//! // returns [91, ...  54, 93, 93]
+//! // note single [] structure
+//! ```
+//! Convert private key (bytes) to Vec<u8>
+//! ```rust, ignore
+//! serde_json::to_vec(&priv_key.bytes()).unwrap()
+//! // returns [91, ... 56, 55, 93]
 //! ```
 
 pub mod prelude;
