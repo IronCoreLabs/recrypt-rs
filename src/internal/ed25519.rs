@@ -1,5 +1,6 @@
 use crate::api_common::RecryptErr;
 use crate::internal::hashable::Hashable;
+use crate::internal::memlock;
 use crate::internal::ByteVector;
 use crate::internal::{array_split_64, take_lock};
 use clear_on_drop::clear::Clear;
@@ -105,7 +106,9 @@ impl SigningKeypair {
     }
 
     pub(crate) fn new_unchecked(bytes: [u8; 64]) -> SigningKeypair {
-        SigningKeypair { bytes }
+        let skp = SigningKeypair { bytes };
+        memlock::mlock_slice(&skp.bytes[..]);
+        skp
     }
 
     ///Get the public_key portion of this SigningKeypair.
@@ -137,7 +140,8 @@ impl<'a> From<&'a SigningKeypair> for PublicSigningKey {
 
 impl Drop for SigningKeypair {
     fn drop(&mut self) {
-        self.bytes.clear()
+        self.bytes.clear();
+        memlock::munlock_slice(&self.bytes[..])
     }
 }
 new_bytes_type!(Ed25519Signature, 64);

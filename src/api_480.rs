@@ -12,6 +12,7 @@ use crate::internal::fp12elem::Fp12Elem;
 pub use crate::internal::hashable::Hashable;
 use crate::internal::hashable::Hashable60;
 use crate::internal::homogeneouspoint::TwistedHPoint;
+use crate::internal::memlock;
 use crate::internal::pairing;
 pub use crate::internal::rand_bytes::*;
 use crate::internal::schnorr::{SchnorrSign, SchnorrSigning};
@@ -124,25 +125,30 @@ bytes_eq_and_hash!(Plaintext);
 
 impl From<Fp12Elem<Monty480>> for Plaintext {
     fn from(fp12: Fp12Elem<Monty480>) -> Self {
-        Plaintext {
+        let p = Plaintext {
             bytes: fp12.to_bytes_fp480(),
             _internal_fp12: fp12,
-        }
+        };
+        memlock::mlock(&p);
+        p
     }
 }
 
 impl Default for Plaintext {
     fn default() -> Self {
-        Plaintext {
+        let p = Plaintext {
             bytes: [0u8; Plaintext::ENCODED_SIZE_BYTES],
             _internal_fp12: Fp12Elem::default(),
-        }
+        };
+        memlock::mlock(&p);
+        p
     }
 }
 impl Drop for Plaintext {
     fn drop(&mut self) {
         self.bytes.clear();
         self._internal_fp12.clear();
+        memlock::munlock(&self);
     }
 }
 impl BytesDecoder for Plaintext {
@@ -1038,10 +1044,7 @@ impl PrivateKey {
 
     pub fn new(bytes: [u8; PrivateKey::ENCODED_SIZE_BYTES]) -> PrivateKey {
         let internal_key = internal::PrivateKey::from_fp480(Fp480::from(bytes).to_monty());
-        PrivateKey {
-            bytes: SixtyBytes(internal_key.value.to_bytes_60()),
-            _internal_key: internal_key,
-        }
+        internal_key.into()
     }
 
     new_from_slice!(PrivateKey);
@@ -1087,10 +1090,12 @@ impl Hashable for PrivateKey {
 
 impl From<internal::PrivateKey<Monty480>> for PrivateKey {
     fn from(internal_pk: internal::PrivateKey<Monty480>) -> Self {
-        PrivateKey {
+        let pk = PrivateKey {
             bytes: SixtyBytes(internal_pk.value.to_bytes_60()),
             _internal_key: internal_pk,
-        }
+        };
+        memlock::mlock(&pk);
+        pk
     }
 }
 
@@ -1098,7 +1103,8 @@ impl From<internal::PrivateKey<Monty480>> for PrivateKey {
 impl Drop for PrivateKey {
     fn drop(&mut self) {
         self.bytes.clear();
-        self._internal_key.clear()
+        self._internal_key.clear();
+        memlock::munlock(&self)
     }
 }
 new_bytes_type!(SchnorrSignature, 120);

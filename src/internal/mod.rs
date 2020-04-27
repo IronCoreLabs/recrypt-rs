@@ -38,6 +38,7 @@ pub mod fp2elem;
 pub mod fp6elem;
 pub mod hashable;
 pub mod homogeneouspoint;
+pub mod memlock;
 pub mod pairing;
 pub mod rand_bytes;
 pub mod schnorr;
