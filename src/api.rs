@@ -1606,6 +1606,35 @@ pub(crate) mod test {
         Ok(())
     }
 
+    #[test]
+    fn private_key_roundtrip_json_bytes() {
+        // we don't have full serde support today for `PrivateKey`, but here's an example of use serde_json directly on the bytes
+
+        let r = Recrypt::new();
+        let (privk, _) = r.generate_key_pair().unwrap();
+        // serialize to string and json "bytes"
+        let priv_key_bytes_json = serde_json::to_vec(privk.bytes()).unwrap();
+        let priv_key_str_json = serde_json::to_string(privk.bytes()).unwrap();
+
+        dbg!(&priv_key_bytes_json);
+        dbg!(&priv_key_str_json);
+
+        // deserialize from string into a PrivateKey
+        let from_str_bytes: Vec<u8> = serde_json::from_str(&priv_key_str_json).unwrap();
+        let priv_key_from_str_bytes = PrivateKey::new_from_slice(&from_str_bytes).unwrap();
+
+        assert_eq!(&priv_key_from_str_bytes, &privk);
+
+        // deserialize from json bytes
+        let from_bytes_json: Vec<u8> = serde_json::from_slice(&priv_key_bytes_json).unwrap();
+        let priv_key_from_bytes_json = PrivateKey::new_from_slice(&from_bytes_json).unwrap();
+
+        assert_eq!(&priv_key_from_bytes_json, &privk);
+
+        // lastly show that the two deserialized private keys are equal
+        assert_eq!(&priv_key_from_str_bytes, &priv_key_from_bytes_json);
+    }
+
     // Also derives symmetric keys from the plaintexts and compares those.
     #[test]
     fn plaintexts_equal() -> Result<()> {
