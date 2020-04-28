@@ -92,9 +92,8 @@
 //! ### Serialize
 //! Serialize public key (x and y values) to JSON string
 //! ```rust, ignore
-//! let pub_key_str_json = serde_json::to_string(&pub_key.bytes_x_y()).unwrap()
-//! // returns "[[137, ... 78,107,146],[59, ... 34,71,16]]"
-//! // note nested [[], []] structure
+//! let pub_key_str_json_x = serde_json::to_string(&pub_key.bytes_x_y().0).unwrap();
+//! let pub_key_str_json_y = serde_json::to_string(&pub_key.bytes_x_y().1).unwrap();
 //! ```
 //! Serialize private key (bytes) to JSON string
 //! ```rust, ignore
@@ -103,9 +102,8 @@
 //! ```
 //! Serialize public key (x and y values) to Vec<u8>
 //! ```rust, ignore
-//! let pub_key_bytes_json = serde_json::to_vec(&pub_key.bytes_x_y()).unwrap()
-//! // returns [91, ...  54, 93, 93]
-//! // note single [] structure
+//! let pub_key_bytes_json_x = serde_json::to_vec(&pub_key.bytes_x_y().0).unwrap();
+//! let pub_key_bytes_json_y = serde_json::to_vec(&pub_key.bytes_x_y().1).unwrap();
 //! ```
 //! Serialize private key (bytes) to Vec<u8>
 //! ```rust, ignore
@@ -125,13 +123,21 @@
 //! ```
 //! Deserialize string into PublicKey
 //! ```rust, ignore
-//! let from_str_bytes: Vec<u8> = serde_json::from_str(&pub_key_str_json).unwrap();
-//! let pub_key_from_str_bytes = PublicKey::new_from_slice(&from_str_bytes).unwrap();
+//! let from_str_bytes_x: Vec<u8> = serde_json::from_str(&pub_key_str_json_x).unwrap();
+//! let from_str_bytes_y: Vec<u8> = serde_json::from_str(&pub_key_str_json_y).unwrap();
+//! let from_str_bytes_json_x_as_tuple: &[u8] = &from_str_bytes_x;
+//! let from_str_bytes_json_y_as_tuple: &[u8] = &from_str_bytes_y;
+//! let combined_x_y_2 = (from_str_bytes_json_x_as_tuple, from_str_bytes_json_y_as_tuple);
+//! let pub_key_from_str_bytes_json = PublicKey::new_from_slice(combined_x_y_2).unwrap();
 //! ```
 //! Deserialize JSON bytes into PublicKey
 //! ```rust, ignore
-//! let from_bytes_json: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json).unwrap();
-//! let pub_key_from_bytes_json = PublicKey::new_from_slice(&from_bytes_json).unwrap();
+//! let from_bytes_json_x: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json_x).unwrap();
+//! let from_bytes_json_y: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json_y).unwrap();
+//! let from_bytes_json_x_as_tuple: &[u8] = &from_bytes_json_x;
+//! let from_bytes_json_y_as_tuple: &[u8] = &from_bytes_json_y;
+//! let combined_x_y = (from_bytes_json_x_as_tuple, from_bytes_json_y_as_tuple);
+//! let pub_key_from_bytes_json = PublicKey::new_from_slice(combined_x_y).unwrap();
 //! ```
 
 pub mod prelude;
