@@ -1634,6 +1634,39 @@ pub(crate) mod test {
         // lastly show that the two deserialized private keys are equal
         assert_eq!(&priv_key_from_str_bytes, &priv_key_from_bytes_json);
     }
+    
+    #[test]
+    fn public_key_roundtrip_json_bytes() {
+        // we don't have full serde support today for `PublicKey`, but here's an example of use serde_json directly on the bytes
+        let r = Recrypt::new();
+        let (_, pubk) = r.generate_key_pair().unwrap();
+        // serialize to json "bytes"
+        let pub_key_bytes_json_x = serde_json::to_vec(&pubk.bytes_x_y().0).unwrap();
+        let pub_key_bytes_json_y = serde_json::to_vec(&pubk.bytes_x_y().1).unwrap();
+        // serialize to string
+        let pub_key_str_json_x = serde_json::to_string(&pubk.bytes_x_y().0).unwrap();
+        let pub_key_str_json_y = serde_json::to_string(&pubk.bytes_x_y().1).unwrap();
+
+        // deserialise from json bytes
+        let from_bytes_json_x: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json_x).unwrap();
+        let from_bytes_json_y: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json_y).unwrap();
+        let from_bytes_json_x_as_tuple: &[u8] = &from_bytes_json_x;
+        let from_bytes_json_y_as_tuple: &[u8] = &from_bytes_json_y;
+        let combined_x_y = (from_bytes_json_x_as_tuple, from_bytes_json_y_as_tuple);
+        let pub_key_from_bytes_json = PublicKey::new_from_slice(combined_x_y).unwrap();
+        // check that serialized then deserialized data matches the original generated public key
+        assert_eq!(&pub_key_from_bytes_json, &pubk);
+
+        // deserialise from string
+        let from_str_bytes_x: Vec<u8> = serde_json::from_str(&pub_key_str_json_x).unwrap();
+        let from_str_bytes_y: Vec<u8> = serde_json::from_str(&pub_key_str_json_y).unwrap();
+        let from_str_bytes_json_x_as_tuple: &[u8] = &from_str_bytes_x;
+        let from_str_bytes_json_y_as_tuple: &[u8] = &from_str_bytes_y;
+        let combined_x_y_2 = (from_str_bytes_json_x_as_tuple, from_str_bytes_json_y_as_tuple);
+        let pub_key_from_str_bytes_json = PublicKey::new_from_slice(combined_x_y_2).unwrap();
+        // check that serialized then deserialized data matches the original generated public key
+        assert_eq!(&pub_key_from_str_bytes_json, &pubk);
+    }
 
     // Also derives symmetric keys from the plaintexts and compares those.
     #[test]
