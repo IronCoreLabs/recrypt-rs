@@ -1634,7 +1634,7 @@ pub(crate) mod test {
         // lastly show that the two deserialized private keys are equal
         assert_eq!(&priv_key_from_str_bytes, &priv_key_from_bytes_json);
     }
-    
+
     #[test]
     fn public_key_roundtrip_json_bytes() {
         // we don't have full serde support today for `PublicKey`, but here's an example of use serde_json directly on the bytes
@@ -1662,7 +1662,10 @@ pub(crate) mod test {
         let from_str_bytes_y: Vec<u8> = serde_json::from_str(&pub_key_str_json_y).unwrap();
         let from_str_bytes_json_x_as_tuple: &[u8] = &from_str_bytes_x;
         let from_str_bytes_json_y_as_tuple: &[u8] = &from_str_bytes_y;
-        let combined_x_y_2 = (from_str_bytes_json_x_as_tuple, from_str_bytes_json_y_as_tuple);
+        let combined_x_y_2 = (
+            from_str_bytes_json_x_as_tuple,
+            from_str_bytes_json_y_as_tuple,
+        );
         let pub_key_from_str_bytes_json = PublicKey::new_from_slice(combined_x_y_2).unwrap();
         // check that serialized then deserialized data matches the original generated public key
         assert_eq!(&pub_key_from_str_bytes_json, &pubk);
