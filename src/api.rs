@@ -1606,6 +1606,60 @@ pub(crate) mod test {
         Ok(())
     }
 
+    #[test]
+    fn private_key_roundtrip_json_bytes() {
+        // we don't have full serde support today for `PrivateKey`, but here's an example of use serde_json directly on the bytes
+        let r = Recrypt::new();
+        let (privk, _) = r.generate_key_pair().unwrap();
+        // serialize to string and json "bytes"
+        let priv_key_bytes_json = serde_json::to_vec(privk.bytes()).unwrap();
+        let priv_key_str_json = serde_json::to_string(privk.bytes()).unwrap();
+
+        // deserialize from string into a PrivateKey
+        let from_str_bytes: Vec<u8> = serde_json::from_str(&priv_key_str_json).unwrap();
+        let priv_key_from_str_bytes = PrivateKey::new_from_slice(&from_str_bytes).unwrap();
+
+        assert_eq!(&priv_key_from_str_bytes, &privk);
+
+        // deserialize from json bytes
+        let from_bytes_json: Vec<u8> = serde_json::from_slice(&priv_key_bytes_json).unwrap();
+        let priv_key_from_bytes_json = PrivateKey::new_from_slice(&from_bytes_json).unwrap();
+
+        assert_eq!(&priv_key_from_bytes_json, &privk);
+
+        // lastly show that the two deserialized private keys are equal
+        assert_eq!(&priv_key_from_str_bytes, &priv_key_from_bytes_json);
+    }
+
+    #[test]
+    fn public_key_roundtrip_json_bytes() {
+        // we don't have full serde support today for `PublicKey`, but here's an example of use serde_json directly on the bytes
+        let r = Recrypt::new();
+        let (_, pubk) = r.generate_key_pair().unwrap();
+        // serialize to json "bytes"
+        let pub_key_bytes_json_x = serde_json::to_vec(&pubk.bytes_x_y().0).unwrap();
+        let pub_key_bytes_json_y = serde_json::to_vec(&pubk.bytes_x_y().1).unwrap();
+        // serialize to string
+        let pub_key_str_json_x = serde_json::to_string(&pubk.bytes_x_y().0).unwrap();
+        let pub_key_str_json_y = serde_json::to_string(&pubk.bytes_x_y().1).unwrap();
+
+        // deserialise from json bytes
+        let from_bytes_json_x: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json_x).unwrap();
+        let from_bytes_json_y: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json_y).unwrap();
+        let pub_key_from_bytes_json =
+            PublicKey::new_from_slice((&from_bytes_json_x, &from_bytes_json_y)).unwrap();
+        // check that serialized then deserialized data matches the original generated public key
+        assert_eq!(&pub_key_from_bytes_json, &pubk);
+
+        // deserialise from string
+        let from_str_bytes_x: Vec<u8> = serde_json::from_str(&pub_key_str_json_x).unwrap();
+        let from_str_bytes_y: Vec<u8> = serde_json::from_str(&pub_key_str_json_y).unwrap();
+        let pub_key_from_str_bytes_json =
+            PublicKey::new_from_slice((&from_str_bytes_x, &from_str_bytes_y)).unwrap();
+        // check that serialized then deserialized data matches the original generated public key
+        assert_eq!(&pub_key_from_str_bytes_json, &pubk);
+    }
+
     // Also derives symmetric keys from the plaintexts and compares those.
     #[test]
     fn plaintexts_equal() -> Result<()> {
