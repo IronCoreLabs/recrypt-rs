@@ -7,9 +7,8 @@
 //! Start exploring the [Api documentation](api/index.html)
 //!
 //! ## Basic Encrypt/Decrypt Example
-//! ```
+//! ```rust
 //! use recrypt::prelude::*;
-
 //!
 //! // create a new recrypt
 //! let mut recrypt = Recrypt::new();
@@ -30,11 +29,10 @@
 //! // plaintext recovered.
 //! assert_eq!(pt, decrypted_val)
 //! ```
-
 //! ## Single-hop Transform Encryption Example
 //! Encrypt a message to public key `initial_pub_key` and decrypt it with `target_priv_key`
 //! after transforming the encrypted message.
-//! ```
+//! ```rust
 //! use recrypt::prelude::*;
 //!
 //! // create a new recrypt
@@ -81,6 +79,56 @@
 //! We have done a lot of work in recrypt-rs to ensure that operations dealing with secret data
 //! are [constant time](https://www.bearssl.org/constanttime.html) and not susceptible to [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
 //! The public API is also constant time.
+//!
+//! ## Using serde_json to serialize/deserialize the bytes of keys
+//!
+//! The bytes of the PrivateKey and PublicKey data structures can be serialized and deserialized to and from JSON String and/or a Vec<u8> using the following methods.
+//! Simply add [serde_json](https://crates.io/crates/serde_json) as a dependency to your application.
+//! ```rust
+//! use recrypt::prelude::*;
+//! use recrypt::api::{PrivateKey, PublicKey};
+//! // create a new recrypt
+//! let mut recrypt = Recrypt::new();
+//!
+//! // generate a public/private keypair and some signing keys
+//! let (priv_key, pub_key) = recrypt.generate_key_pair().unwrap();
+//!
+//! //Serialize public key (x and y values) to JSON string
+//! let pub_key_str_json_x = serde_json::to_string(&pub_key.bytes_x_y().0).unwrap();
+//! let pub_key_str_json_y = serde_json::to_string(&pub_key.bytes_x_y().1).unwrap();
+//!
+//! // Serialize private key (bytes) to JSON string
+//! let priv_key_str_json = serde_json::to_string(priv_key.bytes()).unwrap();
+//!
+//! // Serialize public key (x and y values) to Vec<u8>
+//! let pub_key_bytes_json_x = serde_json::to_vec(&pub_key.bytes_x_y().0).unwrap();
+//! let pub_key_bytes_json_y = serde_json::to_vec(&pub_key.bytes_x_y().1).unwrap();
+//!
+//! // Serialize private key (bytes) to Vec<u8>
+//! let priv_key_bytes_json = serde_json::to_vec(&priv_key.bytes()).unwrap();
+//!
+//! //Deserialize string into PrivateKey
+//! let from_str_bytes: Vec<u8> = serde_json::from_str(&priv_key_str_json).unwrap();
+//! let priv_key_from_str_bytes = PrivateKey::new_from_slice(&from_str_bytes).unwrap();
+//!
+//! // Deserialize JSON bytes into PrivateKey
+//! let from_bytes_json: Vec<u8> = serde_json::from_slice(&priv_key_bytes_json).unwrap();
+//! let priv_key_from_bytes_json = PrivateKey::new_from_slice(&from_bytes_json).unwrap();
+//!
+//! // Deserialize string into PublicKey
+//! let from_str_bytes_x: Vec<u8> = serde_json::from_str(&pub_key_str_json_x).unwrap();
+//! let from_str_bytes_y: Vec<u8> = serde_json::from_str(&pub_key_str_json_y).unwrap();
+//! let from_str_bytes_json_x_as_tuple: &[u8] = &from_str_bytes_x;
+//! let from_str_bytes_json_y_as_tuple: &[u8] = &from_str_bytes_y;
+//! let pub_key_from_str_bytes_json = PublicKey::new_from_slice((from_str_bytes_json_x_as_tuple, from_str_bytes_json_y_as_tuple)).unwrap();
+//!
+//! // Deserialize JSON bytes into PublicKey
+//! let from_bytes_json_x: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json_x).unwrap();
+//! let from_bytes_json_y: Vec<u8> = serde_json::from_slice(&pub_key_bytes_json_y).unwrap();
+//! let from_bytes_json_x_as_tuple: &[u8] = &from_bytes_json_x;
+//! let from_bytes_json_y_as_tuple: &[u8] = &from_bytes_json_y;
+//! let pub_key_from_bytes_json = PublicKey::new_from_slice((from_bytes_json_x_as_tuple, from_bytes_json_y_as_tuple)).unwrap();
+//! ```
 
 pub mod prelude;
 #[macro_use] // this is still required in Rust 2018
