@@ -7,7 +7,7 @@
 //! ```
 
 // necessary for instantiating and storing a Recrypt as a struct member
- pub use crate::api::Ed25519;
+pub use crate::api::Ed25519;
 pub use crate::api::RandomBytes;
 pub use crate::api::Recrypt;
 pub use crate::api::Sha256;
