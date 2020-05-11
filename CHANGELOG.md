@@ -1,5 +1,19 @@
 # Changelog
 
+
+## 0.11.1
+
+### Public API changes
+
+- [[#115](https://github.com/IronCoreLabs/recrypt-rs/pull/115)]
+  - Add explicit 32-bit and 64-bit backends as features: `u64_backend`, `u32_backend`
+
+### Notable internal changes
+
+- [[#108](https://github.com/IronCoreLabs/recrypt-rs/pull/108)]
+  - Add memory protections for secret values (disable with `disable_memlock`)
+
+
 ## 0.11.0
 
 ### Public API changes
