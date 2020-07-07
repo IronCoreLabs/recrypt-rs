@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- [[#124](https://github.com/IronCoreLabs/recrypt-rs/pull/124)]
+  - Change MSRV to Rust 1.40.0
 
 ## 0.11.1
 
@@ -12,7 +16,6 @@
 
 - [[#108](https://github.com/IronCoreLabs/recrypt-rs/pull/108)]
   - Add memory protections for secret values (disable with `disable_memlock`)
-
 
 ## 0.11.0
 
