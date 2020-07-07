@@ -91,6 +91,7 @@ jobs:
           - stable
           - beta
           - 1.38.0 #MSRV
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
