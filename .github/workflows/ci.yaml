@@ -7,7 +7,6 @@ on:
 name: CI
 
 jobs:
-
   # Abort if the code isn't formatted according to rustfmt standards from nightly.
   fmt:
     name: Rustfmt
@@ -91,7 +90,8 @@ jobs:
         rust:
           - stable
           - beta
-          - 1.38.0 #MSRV
+          - 1.40.0 #MSRV
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
@@ -185,10 +185,20 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: bench-current
+      - name: Delete artifact
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: bench-current
+          failOnError: false
       - name: Retrieve benchmark results
         uses: actions/download-artifact@v1
         with:
           name: bench-base
+      - name: Delete artifact
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: bench-base
+          failOnError: false
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
