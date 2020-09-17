@@ -3,4 +3,4 @@ updates:
   - package-ecosystem: "rust:cargo"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
