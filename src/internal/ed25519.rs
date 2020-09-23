@@ -150,6 +150,7 @@ pub struct Ed25519;
 
 impl Ed25519Signing for Ed25519 {
     fn sign<T: Hashable>(&self, t: &T, signing_key: &SigningKeypair) -> Ed25519Signature {
+        use ed25519_dalek::Signer;
         //This unwrap cannot fail. The only thing that the `from_bytes` does for validation is that the
         //value is 64 bytes long, which we guarantee statically.
         let key_pair = ed25519_dalek::Keypair::from_bytes(&signing_key.bytes[..]).unwrap();
@@ -163,6 +164,8 @@ impl Ed25519Signing for Ed25519 {
         signature: &Ed25519Signature,
         public_key: &PublicSigningKey,
     ) -> bool {
+        use ed25519_dalek::ed25519::signature::Signature;
+        use ed25519_dalek::Verifier;
         PublicKey::from_bytes(&public_key.bytes[..])
             .and_then(|pk| {
                 ed25519_dalek::Signature::from_bytes(&signature.bytes[..])
