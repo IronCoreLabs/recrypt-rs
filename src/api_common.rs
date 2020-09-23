@@ -9,19 +9,19 @@ quick_error! {
     pub enum RecryptErr {
         DecryptFailed(err: internal::InternalError){
             display("The decryption failed. Ensure you're using the correct PrivateKey.")
-            cause(err)
+            source(err)
         }
         InvalidEncryptedMessageSignature(err: internal::InternalError){
             display("The signature of the encrypted value could not be verified.")
-            cause(err)
+            source(err)
         }
         InvalidPublicKey(err: internal::homogeneouspoint::PointErr){
             display("The public key was not valid. Ensure it was generated from a valid PrivateKey.")
             from()
-            cause(err)
+            source(err)
         }
         InvalidTransformKey(err: internal::InternalError){
-            cause(err)
+            source(err)
             display("The transform key signature was incorrect.")
         }
         InputWrongSize(typ: &'static str, req_size: usize){
@@ -29,7 +29,7 @@ quick_error! {
         }
         DecodeFailure(err: internal::bytedecoder::DecodeErr){
             display("The bytes could not be decoded into the appropriate data type.")
-            cause(err)
+            source(err)
             from()
         }
     }
