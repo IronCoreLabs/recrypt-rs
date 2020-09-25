@@ -59,7 +59,7 @@ serde_json = "~1.0.51"
 default = ["u64_backend"]
 u64_backend = ["ed25519-dalek/u64_backend"]
 u32_backend = ["ed25519-dalek/u32_backend"]
-wasm = ["u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
+wasm = ["u32_backend", "clear_on_drop/no_cc", "getrandom/js"]
 #Can be used to disable the automatic mlock detection for architectures.
 disable_memlock = []
 
