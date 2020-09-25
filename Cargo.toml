@@ -19,7 +19,7 @@ winapi = { version = "0.3", features = [ "memoryapi", "sysinfoapi" ] }
 
 [dependencies]
 #Explicit dependency so we can pass the wasm-bindgen flag to it
-getrandom = {version = "~0.1.1", optional = true}
+getrandom = {version = "~0.2.0", optional = true}
 rand = "~0.7.3"
 rand_chacha = "~0.2.2"
 sha2 = "~0.8"
@@ -59,7 +59,7 @@ serde_json = "~1.0.51"
 default = ["u64_backend"]
 u64_backend = ["ed25519-dalek/u64_backend"]
 u32_backend = ["ed25519-dalek/u32_backend"]
-wasm = ["u32_backend", "clear_on_drop/no_cc", "getrandom/wasm-bindgen"]
+wasm = ["u32_backend", "clear_on_drop/no_cc", "getrandom/js"]
 #Can be used to disable the automatic mlock detection for architectures.
 disable_memlock = []
 
