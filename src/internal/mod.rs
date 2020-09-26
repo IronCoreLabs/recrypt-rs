@@ -57,7 +57,7 @@ quick_error! {
         AuthHashMatchFailed {}
         InvalidEncryptedMessageSignature {}
         PointInvalid(err: PointErr) {
-            cause(err)
+            source(err)
             from()
         }
         CorruptReencryptionKey {}

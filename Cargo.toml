@@ -30,7 +30,7 @@ arrayvec = "~0.4"
 ed25519-dalek = { version="=1.0.1", default-features = false, features = ["std"] }
 clear_on_drop = "~0.2"
 gridiron = "~0.7.0"
-quick-error = "~1.2"
+quick-error = "~2.0"
 hex="~0.3"
 arrayref = "^0.3.5"
 log = "~0.4"
