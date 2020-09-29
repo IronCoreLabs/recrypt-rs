@@ -29,7 +29,7 @@ arrayvec = "~0.5"
 #Disable all features for ed25519 and enable the proper ones down in the [features] section below
 ed25519-dalek = { version="=1.0.1", default-features = false, features = ["std"] }
 clear_on_drop = "~0.2"
-gridiron = "~0.7.0"
+gridiron = "~0.8.0"
 quick-error = "~2.0"
 hex="~0.4"
 arrayref = "^0.3.5"
