@@ -11,8 +11,8 @@ pub struct Sha256;
 impl Sha256Hashing for Sha256 {
     fn hash<T: Hashable>(&self, t: &T) -> [u8; 32] {
         let mut hasher = sha2::Sha256::default();
-        hasher.input(t.to_bytes().as_slice());
-        let hash_result = hasher.result();
+        hasher.update(t.to_bytes().as_slice());
+        let hash_result = hasher.finalize();
         //This is currently the best way I know of to do this... Sorry.
         {
             let mut result: [u8; 32] = [0; 32];
