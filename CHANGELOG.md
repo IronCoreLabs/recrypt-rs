@@ -1,9 +1,19 @@
 # Changelog
 
-## Unreleased
+## 0.12.0
 
-- [[#124](https://github.com/IronCoreLabs/recrypt-rs/pull/124)]
-  - Change MSRV to Rust 1.40.0
+### Public API changes
+
+- [[#127](https://github.com/IronCoreLabs/recrypt-rs/pull/127)] Change MSRV to Rust 1.41.1
+- [[#128](https://github.com/IronCoreLabs/recrypt-rs/pull/128)] Upgrade to `getrandom` 0.2.0
+- [[#129](https://github.com/IronCoreLabs/recrypt-rs/pull/129)] Upgrade to `quick-error` 2.0
+- [[#133](https://github.com/IronCoreLabs/recrypt-rs/pull/133)] Upgrade to `ed25519-dalek` 1.0.1
+- [[#134](https://github.com/IronCoreLabs/recrypt-rs/pull/134)] Upgrade to `arrayvec` 0.5
+- [[#135](https://github.com/IronCoreLabs/recrypt-rs/pull/135)] Upgrade to `hex` 0.4
+- [[#136](https://github.com/IronCoreLabs/recrypt-rs/pull/136)] Upgrade to `derivative` 2.1.1
+- [[#137](https://github.com/IronCoreLabs/recrypt-rs/pull/137)] Upgrade to `gridiron` 0.8.0
+- [[#138](https://github.com/IronCoreLabs/recrypt-rs/pull/138)] Upgrade to `sha2` 0.9
+- [[#140](https://github.com/IronCoreLabs/recrypt-rs/pull/140)] Upgrade to `cfg-if` 1.0.0
 
 ## 0.11.1
 
