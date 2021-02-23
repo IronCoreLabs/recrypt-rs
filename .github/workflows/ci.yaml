@@ -90,7 +90,6 @@ jobs:
           use-cross: true
           command: build
           args: --release --target=${{ matrix.target }}
-            - name: Print sccache stats
       - name: Print sccache stats
         if: steps.rust-cache.outputs.cache-hit != 'true'
         run: sccache -s
