@@ -63,7 +63,8 @@ jobs:
         if: "!contains(runner.os, 'windows')"
       - uses: Swatinem/rust-cache@v1
         id: rust-cache
-        key: ${{ matrix.target }} #Add the matrix target to the cache key.
+        with:
+          key: ${{ matrix.target }} #Add the matrix target to the cache key.
       - name: Install sccache
         if: steps.rust-cache.outputs.cache-hit != 'true'
         uses: actions-rs/install@v0.1
