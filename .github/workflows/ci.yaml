@@ -61,16 +61,25 @@ jobs:
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
         if: "!contains(runner.os, 'windows')"
-      - name: Cache cargo
-        uses: actions/cache@v1
+      - uses: Swatinem/rust-cache@v1
+        id: rust-cache
+        key: ${{ matrix.target }} #Add the matrix target to the cache key.
+      - name: Install sccache
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        uses: actions-rs/install@v0.1
         with:
-          path: ~/.cargo/
-          key: ${{ github.job }}-${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ github.job }}-${{ runner.os }}-${{ matrix.target }}-target-${{ hashFiles('**/Cargo.toml') }}
+          crate: sccache
+          version: latest
+          use-tool-cache: true
+      - name: Setup sccache env variables
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "CC=$(which cc) " >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=$HOME/.cargo/bin/sccache" >> $GITHUB_ENV
+          echo "AWS_ACCESS_KEY_ID=AKIAU2WBY6VDVHUO5WSN" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "SCCACHE_BUCKET='sccache-rust'" >> $GITHUB_ENV
+          echo "SCCACHE_S3_USE_SSL=true" >> $GITHUB_ENV
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -81,6 +90,10 @@ jobs:
           use-cross: true
           command: build
           args: --release --target=${{ matrix.target }}
+            - name: Print sccache stats
+      - name: Print sccache stats
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        run: sccache -s
 
   # Run the tests on only one architecture, against various Rust versions.
   test:
@@ -98,16 +111,24 @@ jobs:
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
-      - name: Cache cargo
-        uses: actions/cache@v1
+      - uses: Swatinem/rust-cache@v1
+        id: rust-cache
+      - name: Install sccache
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        uses: actions-rs/install@v0.1
         with:
-          path: ~/.cargo/
-          key: ${{ github.job }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ github.job }}-${{ runner.os }}-target-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
+          crate: sccache
+          version: latest
+          use-tool-cache: true
+      - name: Setup sccache env variables
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "CC=$(which cc) " >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=$HOME/.cargo/bin/sccache" >> $GITHUB_ENV
+          echo "AWS_ACCESS_KEY_ID=AKIAU2WBY6VDVHUO5WSN" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "SCCACHE_BUCKET='sccache-rust'" >> $GITHUB_ENV
+          echo "SCCACHE_S3_USE_SSL=true" >> $GITHUB_ENV
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -116,6 +137,9 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+      - name: Print sccache stats
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        run: sccache -s
 
   # Benchmark current and base revisions, if this is a PR.
   bench:
@@ -136,21 +160,24 @@ jobs:
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
-      - name: Cache cargo
-        uses: actions/cache@v1
+      - uses: Swatinem/rust-cache@v1
+        id: rust-cache
+      - name: Install sccache
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        uses: actions-rs/install@v0.1
         with:
-          path: ~/.cargo/
-          key: ${{ github.job }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ github.job }}-${{ runner.os }}-target-${{ hashFiles('**/Cargo.toml') }}
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+          crate: sccache
+          version: latest
+          use-tool-cache: true
+      - name: Setup sccache env variables
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "CC=$(which cc) " >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=$HOME/.cargo/bin/sccache" >> $GITHUB_ENV
+          echo "AWS_ACCESS_KEY_ID=AKIAU2WBY6VDVHUO5WSN" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "SCCACHE_BUCKET='sccache-rust'" >> $GITHUB_ENV
+          echo "SCCACHE_S3_USE_SSL=true" >> $GITHUB_ENV
       - uses: actions-rs/cargo@v1
         with:
           command: install
@@ -177,11 +204,8 @@ jobs:
       # Work around https://github.com/actions/cache/issues/133#issuecomment-599102035
       - run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
         name: Fix perms on .cargo so we can restore the cache.
-      - name: Cache cargo
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/
-          key: ${{ github.job }}
+      - uses: Swatinem/rust-cache@v1
+        id: rust-cache
       - name: Retrieve benchmark results
         uses: actions/download-artifact@v1
         with:
