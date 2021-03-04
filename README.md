@@ -1,6 +1,6 @@
 # recrypt
 
-[![](https://img.shields.io/crates/v/recrypt.svg)](https://crates.io/crates/recrypt) [![](https://docs.rs/recrypt/badge.svg)](https://docs.rs/recrypt) [![Build Status](https://travis-ci.org/IronCoreLabs/recrypt-rs.svg?branch=master)](https://travis-ci.org/IronCoreLabs/recrypt-rs)
+[![](https://img.shields.io/crates/v/recrypt.svg)](https://crates.io/crates/recrypt) [![](https://docs.rs/recrypt/badge.svg)](https://docs.rs/recrypt) [![CI](https://github.com/IronCoreLabs/recrypt-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/IronCoreLabs/recrypt-rs/actions/workflows/ci.yaml)
 
 A pure-Rust library that implements a set of cryptographic primitives for building a _multi-hop Proxy Re-encryption_ scheme, known as Transform Encryption.
 
