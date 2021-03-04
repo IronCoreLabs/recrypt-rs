@@ -1,7 +1,7 @@
 # Release Checklist
 
-- Make sure all changes to be released are on `master`
-- Compare `master`'s commit history to the change log to ensure all public API changes are included as well as notable internal changes
+- Make sure all changes to be released are on `main`
+- Compare `main`'s commit history to the change log to ensure all public API changes are included as well as notable internal changes
 - Sanity check the version number set in `Cargo.toml` with the change log. Remember, we use semver!
 - Commit `Cargo.toml` (if needed) and `CHANGELOG.md` to your local git.
   - paste change log for the release into the commit message (For Github releases)
