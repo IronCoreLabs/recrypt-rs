@@ -25,7 +25,7 @@ rand_chacha = "~0.2.2"
 sha2 = "~0.9"
 num-traits = "~0.2"
 lazy_static = "~1.4"
-arrayvec = "~0.5"
+arrayvec = "~0.6"
 #Disable all features for ed25519 and enable the proper ones down in the [features] section below
 ed25519-dalek = { version="=1.0.1", default-features = false, features = ["std"] }
 clear_on_drop = "~0.2"
