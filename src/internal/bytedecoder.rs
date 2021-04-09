@@ -23,7 +23,7 @@ where
 impl BytesDecoder for gridiron::fp_256::Monty {
     const ENCODED_SIZE_BYTES: usize = 32;
     fn decode(bytes: ByteVector) -> Result<Self, DecodeErr> {
-        let byte_arr: ArrayVec<[u8; Self::ENCODED_SIZE_BYTES]> = bytes.into_iter().collect();
+        let byte_arr: ArrayVec<u8, { Self::ENCODED_SIZE_BYTES }> = bytes.into_iter().collect();
         let byte_arr: [u8; Self::ENCODED_SIZE_BYTES] = byte_arr.into_inner()?;
         Result::Ok(Fp256::from(byte_arr).to_monty())
     }
@@ -64,8 +64,8 @@ quick_error! {
 /// Needed for error handing when ArrayVec.into_inner is called on an instance that is not
 /// at capacity.
 macro_rules! from_arrayvec_n { ($($n: expr), *) => {
-    $(impl From<arrayvec::ArrayVec<[u8; $n]>> for DecodeErr {
-        fn from(x: arrayvec::ArrayVec<[u8; $n]>) -> Self {
+    $(impl From<arrayvec::ArrayVec<u8, $n>> for DecodeErr {
+        fn from(x: arrayvec::ArrayVec<u8, $n>) -> Self {
             DecodeErr::BytesNotCorrectLength {
                 required_length: $n,
                 bad_bytes: x.to_vec(),
