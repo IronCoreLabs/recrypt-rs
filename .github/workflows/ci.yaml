@@ -84,7 +84,7 @@ jobs:
         rust:
           - stable
           - beta
-          - 1.41.1 #MSRV
+          - 1.51 #MSRV
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
