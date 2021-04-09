@@ -14,10 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Cache cargo
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/
-          key: ${{ github.job }}
+        uses: Swatinem/rust-cache@v1
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -55,15 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Cache cargo
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/
-          key: ${{ github.job }}-${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ github.job }}-${{ runner.os }}-${{ matrix.target }}-target-${{ hashFiles('**/Cargo.toml') }}
+        uses: Swatinem/rust-cache@v1
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -89,15 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Cache cargo
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/
-          key: ${{ github.job }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ github.job }}-${{ runner.os }}-target-${{ hashFiles('**/Cargo.toml') }}-${{ matrix.rust }}
+        uses: Swatinem/rust-cache@v1
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -124,15 +105,7 @@ jobs:
         with:
           ref: ${{ matrix.ref }}
       - name: Cache cargo
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/
-          key: ${{ github.job }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ github.job }}-${{ runner.os }}-target-${{ hashFiles('**/Cargo.toml') }}
+        uses: Swatinem/rust-cache@v1
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -162,10 +135,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Cache cargo
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/
-          key: ${{ github.job }}
+        uses: Swatinem/rust-cache@v1
       - name: Retrieve benchmark results
         uses: actions/download-artifact@v1
         with:
