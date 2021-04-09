@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.1 (Unreleased)
+
+### Notable internal changes
+
+- [[#152](https://github.com/IronCoreLabs/recrypt-rs/pull/152)] Remove dependency on `arrayvec`
+
 ## 0.12.0
 
 ### Public API changes
