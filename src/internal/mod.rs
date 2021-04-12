@@ -1139,7 +1139,7 @@ pub(crate) fn take_lock<T>(m: &Mutex<T>) -> MutexGuard<T> {
     m.lock().unwrap_or_else(|e| {
         let error = format!("Error when acquiring lock: {}", e);
         error!("{}", error);
-        panic!(error);
+        panic!("{}", error);
     })
 }
 
