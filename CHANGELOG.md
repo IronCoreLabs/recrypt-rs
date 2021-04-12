@@ -2,10 +2,13 @@
 
 ## 0.13.0 (Unreleased)
 
+### Public API changes
+
+- [[#152](https://github.com/IronCoreLabs/recrypt-rs/pull/152)] Change MSRV to Rust 1.48.0
+
 ### Notable internal changes
 
 - [[#152](https://github.com/IronCoreLabs/recrypt-rs/pull/152)] Remove dependency on `arrayvec`
-- [[#152](https://github.com/IronCoreLabs/recrypt-rs/pull/152)] Change MSRV to Rust 1.48.0
 
 ## 0.12.0
 
