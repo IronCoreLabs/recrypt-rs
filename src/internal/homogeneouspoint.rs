@@ -662,7 +662,7 @@ pub mod test {
             fn z_zero_means_none_normalize(a in $arb_homogeneous()) {
                 let b = match a {
                    HomogeneousPoint {x, y, z: _ } =>
-                       HomogeneousPoint { x: x, y: y, z: $fp::zero()},
+                       HomogeneousPoint { x, y, z: $fp::zero()},
                 };
                 prop_assert_eq!(None, b.normalize());
             }

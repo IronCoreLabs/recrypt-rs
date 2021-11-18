@@ -1505,7 +1505,7 @@ pub(crate) mod test {
     fn private_key_clear() {
         let (mut priv_key, _) = Recrypt480::new().generate_key_pair().unwrap();
         priv_key.clear();
-        assert_eq!(SixtyBytes(priv_key.bytes().clone()), SixtyBytes([0u8; 60]));
+        assert_eq!(SixtyBytes(*priv_key.bytes()), SixtyBytes([0u8; 60]));
         assert_eq!(priv_key._internal_key, Default::default())
     }
 
