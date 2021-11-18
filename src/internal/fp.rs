@@ -126,9 +126,9 @@ impl From<[u8; 64]> for fr_256::Fr256 {
             [0u32; fr_256::NUMLIMBS],
             [0u32; fr_256::NUMLIMBS],
         );
-        x0[..fr_256::NUMLIMBS - 1].copy_from_slice(&x0_view[..]);
-        x1[..fr_256::NUMLIMBS - 1].copy_from_slice(&x1_view[..]);
-        x2[..1].copy_from_slice(&x2_view[..]);
+        x0[..fr_256::NUMLIMBS - 1].copy_from_slice(x0_view);
+        x1[..fr_256::NUMLIMBS - 1].copy_from_slice(x1_view);
+        x2[..1].copy_from_slice(x2_view);
 
         (fr_256::Fr256::new(x2) * fr_256::REDUCTION_CONST + fr_256::Fr256::new(x1))
             * fr_256::REDUCTION_CONST
@@ -140,8 +140,8 @@ impl From<[u8; 64]> for fr_480::Fr480 {
         let limbs = gridiron::from_sixty_four_bytes(src);
         let (x0_view, x1_view) = limbs.split_at(fr_480::NUMLIMBS - 1);
         let (mut x0, mut x1) = ([0u32; 16], [0u32; 16]);
-        x0[..fr_480::NUMLIMBS - 1].copy_from_slice(&x0_view[..]);
-        x1[..2].copy_from_slice(&x1_view[..]);
+        x0[..fr_480::NUMLIMBS - 1].copy_from_slice(x0_view);
+        x1[..2].copy_from_slice(x1_view);
 
         fr_480::Fr480::new(x1) * fr_480::REDUCTION_CONST + fr_480::Fr480::new(x0)
     }
