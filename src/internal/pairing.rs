@@ -65,17 +65,14 @@ where
                             f1 = f1 * ell1;
                             f2 = f2 * ell2;
                             point_r = point_s;
-                            point_r
                         } else if *naf_value == 1 {
                             point_s = point_q + point_r;
                             let (ell1, ell2) = self.add_line_eval(px, py, point_q, point_r);
                             f1 = f1 * ell1;
                             f2 = f2 * ell2;
                             point_r = point_s;
-                            point_r
-                        } else {
-                            point_r
                         }
+                        point_r
                     });
                 let point_q1 = self.frobenius(point_q);
                 let point_q2 = self.frobenius(point_q1);
@@ -111,24 +108,19 @@ where
         q: TwistedHPoint<T>,
         r: TwistedHPoint<T>,
     ) -> (Fp12Elem<T>, Fp2Elem<T>) {
-        match (q, r) {
-            (
-                TwistedHPoint {
-                    x: qx,
-                    y: qy,
-                    z: qz,
-                },
-                TwistedHPoint {
-                    x: rx,
-                    y: ry,
-                    z: rz,
-                },
-            ) => {
-                let numerator = ry * qz - qy * rz;
-                let denominator = rx * qz - qx * rz;
-                self.finalize_eval(q, px, py, numerator, denominator)
-            }
-        }
+        let TwistedHPoint {
+            x: qx,
+            y: qy,
+            z: qz,
+        } = q;
+        let TwistedHPoint {
+            x: rx,
+            y: ry,
+            z: rz,
+        } = r;
+        let numerator = ry * qz - qy * rz;
+        let denominator = rx * qz - qx * rz;
+        self.finalize_eval(q, px, py, numerator, denominator)
     }
 
     /// returns the value at P of the function whose zero-set is the line through Q and R.
@@ -136,13 +128,10 @@ where
     /// Used in step 4 of Algorithm 1 in High-Speed Software Implementation of
     /// the Optimal Ate Pairing over Barreto–Naehrig Curves
     fn double_line_eval(&self, px: T, py: T, r: TwistedHPoint<T>) -> (Fp12Elem<T>, Fp2Elem<T>) {
-        match r {
-            TwistedHPoint { x, y, z } => {
-                let numerator = x.square() * 3;
-                let denominator = y * z * 2;
-                self.finalize_eval(r, px, py, numerator, denominator)
-            }
-        }
+        let TwistedHPoint { x, y, z } = r;
+        let numerator = x.square() * 3;
+        let denominator = y * z * 2;
+        self.finalize_eval(r, px, py, numerator, denominator)
     }
 
     /// last step for double_line_eval or add_line_eval
@@ -154,27 +143,24 @@ where
         numerator: Fp2Elem<T>,
         denominator: Fp2Elem<T>,
     ) -> (Fp12Elem<T>, Fp2Elem<T>) {
-        match q {
-            TwistedHPoint { x, y, z } => {
-                let new_numerator = Fp12Elem::create(
-                    Zero::zero(),
-                    x * numerator - y * denominator,
-                    -z * numerator
-                        * Fp2Elem {
-                            elem1: Zero::zero(),
-                            elem2: px,
-                        },
-                    Zero::zero(),
-                    Zero::zero(),
-                    z * denominator
-                        * Fp2Elem {
-                            elem1: Zero::zero(),
-                            elem2: py,
-                        },
-                );
-                (new_numerator, z * denominator)
-            }
-        }
+        let TwistedHPoint { x, y, z } = q;
+        let new_numerator = Fp12Elem::create(
+            Zero::zero(),
+            x * numerator - y * denominator,
+            -z * numerator
+                * Fp2Elem {
+                    elem1: Zero::zero(),
+                    elem2: px,
+                },
+            Zero::zero(),
+            Zero::zero(),
+            z * denominator
+                * Fp2Elem {
+                    elem1: Zero::zero(),
+                    elem2: py,
+                },
+        );
+        (new_numerator, z * denominator)
     }
 
     /// Final exponentiation: compute the value f^((p^12 - 1) / r). This maps f to one of the rth roots of unity.
@@ -248,16 +234,13 @@ where
     }
 
     fn frobenius(&self, point: TwistedHPoint<T>) -> TwistedHPoint<T> {
-        match point {
-            TwistedHPoint { x, y, z } => {
-                let new_x = (self.pairing_frobenius_factor_1 * x.frobenius()).frobenius_to_fp2();
-                let new_y = (self.pairing_frobenius_factor_2 * y.frobenius()).frobenius_to_fp2();
-                TwistedHPoint {
-                    x: new_x,
-                    y: new_y,
-                    z: z.frobenius(),
-                }
-            }
+        let TwistedHPoint { x, y, z } = point;
+        let new_x = (self.pairing_frobenius_factor_1 * x.frobenius()).frobenius_to_fp2();
+        let new_y = (self.pairing_frobenius_factor_2 * y.frobenius()).frobenius_to_fp2();
+        TwistedHPoint {
+            x: new_x,
+            y: new_y,
+            z: z.frobenius(),
         }
     }
 }

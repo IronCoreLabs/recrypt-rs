@@ -166,8 +166,8 @@ impl Hashable for Plaintext {
 }
 
 /// Describes a single transform. Multiple `TransformBlocks` (in series) describe multi-hop transforms.
-#[derivative(PartialEq, Eq, Hash)]
 #[derive(Derivative, Debug, Clone, Copy)]
+#[derivative(PartialEq, Eq, Hash)]
 pub struct TransformBlock {
     /// public key corresponding to private key used to encrypt the temp key.
     public_key: PublicKey,
@@ -500,8 +500,8 @@ impl From<TwistedHPoint<Monty480>> for HashedValue {
 /// `to_public_key`         - public key of the delagatee
 /// `encrypted_k`           - random value K, encrypted to the delegatee; used to un-roll successive levels of multi-hop transform encryption
 /// `hashed_k`              - combination of the hash of K and the secret key of the delegator; used to recover K from `encrypted_k`
-#[derivative(PartialEq, Eq, Hash)]
 #[derive(Derivative, Debug, Clone)] //can't derive Copy because of NonEmptyVec
+#[derivative(PartialEq, Eq, Hash)]
 pub struct TransformKey {
     ephemeral_public_key: PublicKey,
     to_public_key: PublicKey,
@@ -746,7 +746,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recry
             ephem_reencryption_private_key._internal_key,
             temp_key,
             signing_keypair,
-            &self.curve_points,
+            self.curve_points,
             &self.pairing,
             &self.sha_256,
             &self.ed25519,
@@ -854,7 +854,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
             internal::PrivateKey::from(ephem_private_key),
             signing_keypair,
             &self.pairing,
-            &self.curve_points,
+            self.curve_points,
             &self.sha_256,
             &self.ed25519,
         )?;
@@ -871,7 +871,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
             internal::PrivateKey::from(private_key),
             EncryptedValue::try_into(encrypted_value)?,
             &self.pairing,
-            &self.curve_points,
+            self.curve_points,
             &self.sha_256,
             &self.ed25519,
         )
@@ -894,7 +894,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
             signing_keypair,
             &self.ed25519,
             &self.sha_256,
-            &self.curve_points,
+            self.curve_points,
             &self.pairing,
         )?)
     }
@@ -978,7 +978,7 @@ impl PublicKey {
                 y: SixtyBytes(y),
                 _internal_key: *internal_key,
             })
-            .ok_or_else(|| internal::homogeneouspoint::PointErr::ZeroPoint)?)
+            .ok_or(internal::homogeneouspoint::PointErr::ZeroPoint)?)
     }
 
     pub fn new(

@@ -407,10 +407,8 @@ fn pow_for_square<T: One + Mul<T, Output = T> + Copy + Square>(t: T, exp: u32) -
         while mut_exp > 1 {
             if mut_exp & 1 == 1 {
                 y = x * y;
-                x = x.square();
-            } else {
-                x = x.square();
             }
+            x = x.square();
             mut_exp >>= 1;
         }
         y * x
@@ -584,7 +582,7 @@ where
                 let unverified_plaintext = decrypt_encrypted_once(
                     private_key,
                     &encrypted_once_value,
-                    &pairing,
+                    pairing,
                     curve_points,
                 )?;
                 compute_and_compare_auth_hash(
@@ -800,7 +798,7 @@ where
     let re_public_key = public_keygen(reencryption_private_key, curve_points.generator);
     let p = to_public_key.value * reencryption_private_key.value;
     let encrypted_k = pairing.pair(p, g1)? * new_k.0;
-    let hashed_k = hash2(new_k, &curve_points, sha256) + (g1.neg() * from_private_key);
+    let hashed_k = hash2(new_k, curve_points, sha256) + (g1.neg() * from_private_key);
     let reencryption_key = ReencryptionKey {
         re_public_key,
         to_public_key,

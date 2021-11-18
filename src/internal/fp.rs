@@ -1,5 +1,4 @@
 use crate::internal::rand_bytes::RandomBytesGen;
-use arrayref;
 use gridiron::fp31;
 use gridiron::fp_256;
 use gridiron::fp_480;
@@ -120,8 +119,8 @@ impl fr_480::Fr480 {
 impl From<[u8; 64]> for fr_256::Fr256 {
     fn from(src: [u8; 64]) -> Self {
         let limbs = gridiron::from_sixty_four_bytes(src);
-        let (x0_view, x1_view, x2_view) =
-            arrayref::array_refs![&limbs, fr_256::NUMLIMBS - 1, fr_256::NUMLIMBS - 1, 1];
+        let (x0_view, x1_and_x2_view) = limbs.split_at(fr_256::NUMLIMBS - 1);
+        let (x1_view, x2_view) = x1_and_x2_view.split_at(fr_256::NUMLIMBS - 1);
         let (mut x0, mut x1, mut x2) = (
             [0u32; fr_256::NUMLIMBS],
             [0u32; fr_256::NUMLIMBS],
@@ -139,7 +138,7 @@ impl From<[u8; 64]> for fr_256::Fr256 {
 impl From<[u8; 64]> for fr_480::Fr480 {
     fn from(src: [u8; 64]) -> Self {
         let limbs = gridiron::from_sixty_four_bytes(src);
-        let (x0_view, x1_view) = arrayref::array_refs![&limbs, fr_480::NUMLIMBS - 1, 2];
+        let (x0_view, x1_view) = limbs.split_at(fr_480::NUMLIMBS - 1);
         let (mut x0, mut x1) = ([0u32; 16], [0u32; 16]);
         x0[..fr_480::NUMLIMBS - 1].copy_from_slice(&x0_view[..]);
         x1[..2].copy_from_slice(&x1_view[..]);

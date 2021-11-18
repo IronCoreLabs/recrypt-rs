@@ -9,7 +9,8 @@ documentation = "https://docs.rs/recrypt"
 categories = ["cryptography", "algorithms"]
 keywords = ["cryptography", "proxy-re-encryption", "PRE", "ECC", "transform-encryption"]
 description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
-edition = "2018"
+edition = "2021"
+rust-version = "1.56.0"
 
 [target.'cfg(all(unix, not(target_arch = "wasm32")))'.dependencies]
 libc = { version = "0.2" }
@@ -28,10 +29,9 @@ lazy_static = "~1.4"
 #Disable all features for ed25519 and enable the proper ones down in the [features] section below
 ed25519-dalek = { version="=1.0.1", default-features = false, features = ["std"] }
 clear_on_drop = "~0.2"
-gridiron = "~0.8.0"
+gridiron = { path = "../gridiron" }
 quick-error = "~2.0"
 hex="~0.4"
-arrayref = "^0.3.5"
 log = "~0.4"
 derivative = "2.1.1"
 cfg-if = "~1.0.0"
