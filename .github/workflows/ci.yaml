@@ -62,7 +62,7 @@ jobs:
         with:
           use-cross: true
           command: build
-          args: --release --target=${{ matrix.target }} --features=${{ matrix.features }}
+          args: --release --target=${{ matrix.target }} ${{ matrix.features }}
 
   # Run the tests on only one architecture, against various Rust versions.
   test:
