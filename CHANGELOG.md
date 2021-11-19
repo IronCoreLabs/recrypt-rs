@@ -4,7 +4,7 @@
 
 ### Public API changes
 
-- [[#152](https://github.com/IronCoreLabs/recrypt-rs/pull/152)] Change MSRV to Rust 1.56.0
+- [[#158](https://github.com/IronCoreLabs/recrypt-rs/pull/158)] Change MSRV to Rust 1.56.0
 
 ### Notable internal changes
 
@@ -14,6 +14,7 @@
 - [[#157](https://github.com/IronCoreLabs/recrypt-rs/pull/157)] Upgrade to `rand_chacha` 0.3
 - [[#157](https://github.com/IronCoreLabs/recrypt-rs/pull/157)] Upgrade to `gridiron` 0.9
 - [[#158](https://github.com/IronCoreLabs/recrypt-rs/pull/158)] Remove dependency on `arrayref`
+- [[#159](https://github.com/IronCoreLabs/recrypt-rs/pull/159)] Relax dependency version requirements
 
 ## 0.12.0
 
