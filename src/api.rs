@@ -47,7 +47,7 @@ impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     /// The RNG will periodically reseed itself from the system's best entropy source.
     pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         // 1 MB
-        const BYTES_BEFORE_RESEEDING: u64 = 1 * 1024 * 1024;
+        const BYTES_BEFORE_RESEEDING: u64 = 1024 * 1024;
         Recrypt::new_with_rand(ReseedingRng::new(
             rand_chacha::ChaChaCore::from_entropy(),
             BYTES_BEFORE_RESEEDING,
@@ -167,8 +167,8 @@ impl Hashable for Plaintext {
 }
 
 /// Describes a single transform. Multiple `TransformBlocks` (in series) describe multi-hop transforms.
-#[derivative(PartialEq, Eq, Hash)]
 #[derive(Derivative, Debug, Clone, Copy)]
+#[derivative(PartialEq, Eq, Hash)]
 pub struct TransformBlock {
     /// public key corresponding to private key used to encrypt the temp key.
     public_key: PublicKey,
@@ -747,7 +747,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> KeyGenOps for Recry
             ephem_reencryption_private_key._internal_key,
             temp_key,
             signing_keypair,
-            &self.curve_points,
+            self.curve_points,
             &self.pairing,
             &self.sha_256,
             &self.ed25519,
@@ -849,7 +849,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
             internal::PrivateKey::from(ephem_private_key),
             signing_keypair,
             &self.pairing,
-            &self.curve_points,
+            self.curve_points,
             &self.sha_256,
             &self.ed25519,
         )?;
@@ -866,7 +866,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
             internal::PrivateKey::from(private_key),
             EncryptedValue::try_into(encrypted_value)?,
             &self.pairing,
-            &self.curve_points,
+            self.curve_points,
             &self.sha_256,
             &self.ed25519,
         )
@@ -889,7 +889,7 @@ impl<R: RandomBytesGen, H: Sha256Hashing, S: Ed25519Signing> CryptoOps for Recry
             signing_keypair,
             &self.ed25519,
             &self.sha_256,
-            &self.curve_points,
+            self.curve_points,
             &self.pairing,
         )?)
     }
@@ -946,7 +946,7 @@ impl PublicKey {
                 y,
                 _internal_key: *internal_key,
             })
-            .ok_or_else(|| internal::homogeneouspoint::PointErr::ZeroPoint)?)
+            .ok_or(internal::homogeneouspoint::PointErr::ZeroPoint)?)
     }
 
     pub fn new(

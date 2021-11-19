@@ -64,7 +64,7 @@ impl From<SigningKeypair> for [u8; 64] {
 impl SigningKeypair {
     const ENCODED_SIZE_BYTES: usize = 64;
     pub fn new<CR: rand::RngCore + rand::CryptoRng>(rng: &Mutex<CR>) -> SigningKeypair {
-        let keypair = ed25519_dalek::Keypair::generate::<CR>(&mut *take_lock(&rng));
+        let keypair = ed25519_dalek::Keypair::generate::<CR>(&mut *take_lock(rng));
 
         //Unchecked is safe because the public is on the curve and the size is statically guaranteed.
         SigningKeypair::new_unchecked(keypair.to_bytes())
@@ -164,7 +164,6 @@ impl Ed25519Signing for Ed25519 {
         signature: &Ed25519Signature,
         public_key: &PublicSigningKey,
     ) -> bool {
-        use ed25519_dalek::ed25519::signature::Signature;
         use ed25519_dalek::Verifier;
         PublicKey::from_bytes(&public_key.bytes[..])
             .and_then(|pk| {

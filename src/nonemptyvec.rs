@@ -75,11 +75,11 @@ where
     }
 }
 
-impl<T> Into<Vec<T>> for NonEmptyVec<T> {
-    fn into(mut self) -> Vec<T> {
-        let mut result: Vec<T> = Vec::with_capacity(self.rest.len() + 1);
-        result.push(self.first);
-        result.append(&mut self.rest);
+impl<T> From<NonEmptyVec<T>> for Vec<T> {
+    fn from(mut n: NonEmptyVec<T>) -> Self {
+        let mut result: Vec<T> = Vec::with_capacity(n.rest.len() + 1);
+        result.push(n.first);
+        result.append(&mut n.rest);
         result
     }
 }
