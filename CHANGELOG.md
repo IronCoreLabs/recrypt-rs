@@ -1,14 +1,20 @@
 # Changelog
 
-## 0.13.0 (Unreleased)
+## 0.13.0
 
 ### Public API changes
 
-- [[#152](https://github.com/IronCoreLabs/recrypt-rs/pull/152)] Change MSRV to Rust 1.48.0
+- [[#158](https://github.com/IronCoreLabs/recrypt-rs/pull/158)] Change MSRV to Rust 1.56.0
 
 ### Notable internal changes
 
 - [[#152](https://github.com/IronCoreLabs/recrypt-rs/pull/152)] Remove dependency on `arrayvec`
+- [[#157](https://github.com/IronCoreLabs/recrypt-rs/pull/157)] Depend on `ed25519-dalek-fiat` instead of `ed25519-dalek`
+- [[#157](https://github.com/IronCoreLabs/recrypt-rs/pull/157)] Upgrade to `rand` 0.8
+- [[#157](https://github.com/IronCoreLabs/recrypt-rs/pull/157)] Upgrade to `rand_chacha` 0.3
+- [[#157](https://github.com/IronCoreLabs/recrypt-rs/pull/157)] Upgrade to `gridiron` 0.9
+- [[#158](https://github.com/IronCoreLabs/recrypt-rs/pull/158)] Remove dependency on `arrayref`
+- [[#159](https://github.com/IronCoreLabs/recrypt-rs/pull/159)] Relax dependency version requirements
 
 ## 0.12.0
 
