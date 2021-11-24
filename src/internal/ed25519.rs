@@ -164,6 +164,7 @@ impl Ed25519Signing for Ed25519 {
         signature: &Ed25519Signature,
         public_key: &PublicSigningKey,
     ) -> bool {
+        use ed25519_dalek::ed25519::signature::Signature;
         use ed25519_dalek::Verifier;
         PublicKey::from_bytes(&public_key.bytes[..])
             .and_then(|pk| {
@@ -174,7 +175,6 @@ impl Ed25519Signing for Ed25519 {
             .unwrap_or(false)
     }
 }
-
 pub trait Ed25519Signing {
     ///
     ///Create a signature by signing over the bytes produced by the hashable instance of `t`.
