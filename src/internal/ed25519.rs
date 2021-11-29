@@ -164,11 +164,11 @@ impl Ed25519Signing for Ed25519 {
         signature: &Ed25519Signature,
         public_key: &PublicSigningKey,
     ) -> bool {
-        use ed25519_dalek::ed25519::signature::Signature;
         use ed25519_dalek::Verifier;
+
         PublicKey::from_bytes(&public_key.bytes[..])
             .and_then(|pk| {
-                ed25519_dalek::Signature::from_bytes(&signature.bytes[..])
+                TryFrom::try_from(&signature.bytes[..])
                     .and_then(|sig| pk.verify(&t.to_bytes()[..], &sig))
             })
             .map(|_| true)
