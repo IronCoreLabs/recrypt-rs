@@ -192,6 +192,16 @@ Our implementation was guided by the following papers:
 And by the book:
 _Guide to Pairing-Based Cryptography_ by N.E. Mrabet and M. Joye, Chapman and Hall/CRC Cryptography and Network Security Series, 2016.
 
+# Intellectual Property
+
+Recrypt-rust incorporates technology that is protected by the following patents (additional patents may be pending in the U.S. and elsewhere):
+
+- US 10,659,222 - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
+- US 11,146,391 - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
+- WO2018201062A1 - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
+- EP3616384A4 - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
+- KR20200027921 A - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
+
 # License
 
 Recrypt-rust is licensed under the [GNU Affero General Public License](LICENSE).
