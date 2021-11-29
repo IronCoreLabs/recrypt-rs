@@ -1,13 +1,19 @@
 [package]
 name = "recrypt"
-version = "0.13.0"
+version = "0.13.1"
 authors = [ "IronCore Labs <info@ironcorelabs.com>" ]
 readme = "README.md"
 license = "AGPL-3.0-only"
 repository = "https://github.com/IronCoreLabs/recrypt-rs"
 documentation = "https://docs.rs/recrypt"
 categories = [ "cryptography", "algorithms" ]
-keywords = [ "cryptography", "proxy-re-encryption", "PRE", "ECC", "transform-encryption" ]
+keywords = [
+    "cryptography",
+    "proxy-re-encryption",
+    "PRE",
+    "ECC",
+    "transform-encryption",
+]
 description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
 edition = "2021"
 rust-version = "1.56.0"
@@ -23,11 +29,13 @@ cfg-if = "1"
 clear_on_drop = "0.2"
 derivative = "2.1"
 # Disable all features for ed25519 and enable the proper ones down in the [features] section below
-ed25519-dalek = { version="=0.1.0", default-features = false, features = [ "std" ], package = "ed25519-dalek-fiat" }
+ed25519-dalek = { version = "=0.1.0", default-features = false, features = [
+    "std",
+], package = "ed25519-dalek-fiat" }
 # Explicit dependency so we can pass the wasm-bindgen flag to it
 getrandom = { version = "0.2", optional = true }
 gridiron = "0.10"
-hex="0.4"
+hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 num-traits = "0.2"
@@ -60,7 +68,7 @@ u64_backend = [ "ed25519-dalek/u64_backend" ]
 u32_backend = [ "ed25519-dalek/u32_backend" ]
 wasm = [ "u32_backend", "clear_on_drop/no_cc", "getrandom/js" ]
 #Can be used to disable the automatic mlock detection for architectures.
-disable_memlock = [ ]
+disable_memlock = []
 
 [[bench]]
 name = "api_benchmark"
