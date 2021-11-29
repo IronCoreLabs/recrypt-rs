@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.13.0
+## 0.13.1 (2021-11-29)
+
+### Public API changes
+None
+
+### Notable internal changes
+[[#163]](https://github.com/IronCoreLabs/recrypt-rs/pull/163) Fix compilation error for certain combinations of transitive dependencies related to ed25519-dalek-fiat
+
+## 0.13.0 (yanked)
 
 ### Public API changes
 
