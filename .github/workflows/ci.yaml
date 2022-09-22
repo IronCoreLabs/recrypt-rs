@@ -43,11 +43,11 @@ jobs:
           - os: ubuntu-22.04
             target: wasm32-unknown-unknown
             features: --features wasm --no-default-features
-          - os: macos-10.15
+          - os: macos-12
             target: aarch64-apple-ios
-          - os: macos-10.15
+          - os: macos-12
             target: x86_64-apple-darwin # 64-bit OSX
-          - os: macos-11
+          - os: macos-12
             target: aarch64-apple-darwin # 64-bit M1 OSX
           - os: windows-2019
             target: x86_64-pc-windows-msvc
@@ -75,7 +75,7 @@ jobs:
         rust:
           - stable
           - beta
-          - 1.56 #MSRV
+          - 1.57 #MSRV
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
