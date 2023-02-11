@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - main
+    - main
   pull_request:
 
 name: CI
@@ -12,22 +12,22 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-          components: rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-      - name: Cancel workflow
-        if: failure()
-        uses: andymckay/cancel-action@0.2
+    - uses: actions/checkout@v3
+    - name: Cache cargo
+      uses: Swatinem/rust-cache@v1
+    - uses: IronCoreLabs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        override: true
+        components: rustfmt
+    - uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+    - name: Cancel workflow
+      if: failure()
+      uses: andymckay/cancel-action@0.2
 
   # Build on all the architectures we intend to support, including cross compiled ones.
   build:
@@ -36,35 +36,35 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
-            target: aarch64-linux-android # Android x64
-          - os: ubuntu-22.04
-            target: x86_64-unknown-linux-musl # Alpine Linux x86_64
-          - os: ubuntu-22.04
-            target: wasm32-unknown-unknown
-            features: --features wasm --no-default-features
-          - os: macos-12
-            target: aarch64-apple-ios
-          - os: macos-12
-            target: x86_64-apple-darwin # 64-bit OSX
-          - os: macos-12
-            target: aarch64-apple-darwin # 64-bit M1 OSX
-          - os: windows-2019
-            target: x86_64-pc-windows-msvc
+        - os: ubuntu-22.04
+          target: aarch64-linux-android # Android x64
+        - os: ubuntu-22.04
+          target: x86_64-unknown-linux-musl # Alpine Linux x86_64
+        - os: ubuntu-22.04
+          target: wasm32-unknown-unknown
+          features: --features wasm --no-default-features
+        - os: macos-12
+          target: aarch64-apple-ios
+        - os: macos-12
+          target: x86_64-apple-darwin # 64-bit OSX
+        - os: macos-12
+          target: aarch64-apple-darwin # 64-bit M1 OSX
+        - os: windows-2019
+          target: x86_64-pc-windows-msvc
     steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --release --target=${{ matrix.target }} ${{ matrix.features }}
+    - uses: actions/checkout@v2
+    - name: Cache cargo
+      uses: Swatinem/rust-cache@v1
+    - uses: IronCoreLabs/toolchain@v1
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        override: true
+    - uses: actions-rs/cargo@v1
+      with:
+        use-cross: true
+        command: build
+        args: --release --target=${{ matrix.target }} ${{ matrix.features }}
 
   # Run the tests on only one architecture, against various Rust versions.
   test:
@@ -73,22 +73,22 @@ jobs:
     strategy:
       matrix:
         rust:
-          - stable
-          - beta
-          - 1.57 #MSRV
+        - stable
+        - beta
+        - 1.57 #MSRV
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+    - uses: actions/checkout@v2
+    - name: Cache cargo
+      uses: Swatinem/rust-cache@v1
+    - uses: IronCoreLabs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.rust }}
+        override: true
+    - uses: actions-rs/cargo@v1
+      with:
+        command: test
 
   # Benchmark current and base revisions, if this is a PR.
   bench:
@@ -98,87 +98,87 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: current
-            ref: ${{ github.ref }}
-          - name: base
-            ref: ${{ github.base_ref }}
+        - name: current
+          ref: ${{ github.ref }}
+        - name: base
+          ref: ${{ github.base_ref }}
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ matrix.ref }}
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: critcmp
-      - uses: actions-rs/cargo@v1
-        with:
-          command: bench
-          args: -- --save-baseline ${{ matrix.name }}
-      - run: critcmp --export ${{ matrix.name }} > results.json
-      - name: Store benchmark results
-        uses: actions/upload-artifact@v1
-        with:
-          name: bench-${{ matrix.name }}
-          path: results.json
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ matrix.ref }}
+    - name: Cache cargo
+      uses: Swatinem/rust-cache@v1
+    - uses: IronCoreLabs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    - uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: critcmp
+    - uses: actions-rs/cargo@v1
+      with:
+        command: bench
+        args: -- --save-baseline ${{ matrix.name }}
+    - run: critcmp --export ${{ matrix.name }} > results.json
+    - name: Store benchmark results
+      uses: actions/upload-artifact@v1
+      with:
+        name: bench-${{ matrix.name }}
+        path: results.json
 
   # Add a comment to the PR with benchmark results. Only if everything else passed, and this is a PR.
   bench_results:
     needs:
-      - bench
+    - bench
     name: Upload benchmark results
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v1
-      - name: Retrieve benchmark results
-        uses: actions/download-artifact@v1
-        with:
-          name: bench-current
-      - name: Delete artifact
-        uses: geekyeggo/delete-artifact@v1
-        with:
-          name: bench-current
-          failOnError: false
-      - name: Retrieve benchmark results
-        uses: actions/download-artifact@v1
-        with:
-          name: bench-base
-      - name: Delete artifact
-        uses: geekyeggo/delete-artifact@v1
-        with:
-          name: bench-base
-          failOnError: false
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: critcmp
-      - name: Compare benchmarks
-        run: |
-          if ! critcmp bench-base/results.json bench-current/results.json -t 10 ; then
-            echo "# Benchmark blew big budget! Bad!" > comment.md
-          fi
-          echo "Benchmark results comparing with base:" >> comment.md
-          echo '```' >> comment.md
-          critcmp bench-base/results.json bench-current/results.json -t 2 >> comment.md || true
-          echo '```' >> comment.md
-          cat comment.md
-          mv comment.md .github/workflows/comment.md
-      # This will post a comment to the PR with benchmark results, but it's disabled because it's annoying.
-      # - uses: harupy/comment-on-pr@c0522c4
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     filename: comment.md
+    - uses: actions/checkout@v2
+    - name: Cache cargo
+      uses: Swatinem/rust-cache@v1
+    - name: Retrieve benchmark results
+      uses: actions/download-artifact@v1
+      with:
+        name: bench-current
+    - name: Delete artifact
+      uses: geekyeggo/delete-artifact@v1
+      with:
+        name: bench-current
+        failOnError: false
+    - name: Retrieve benchmark results
+      uses: actions/download-artifact@v1
+      with:
+        name: bench-base
+    - name: Delete artifact
+      uses: geekyeggo/delete-artifact@v1
+      with:
+        name: bench-base
+        failOnError: false
+    - uses: IronCoreLabs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    - uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: critcmp
+    - name: Compare benchmarks
+      run: |
+        if ! critcmp bench-base/results.json bench-current/results.json -t 10 ; then
+          echo "# Benchmark blew big budget! Bad!" > comment.md
+        fi
+        echo "Benchmark results comparing with base:" >> comment.md
+        echo '```' >> comment.md
+        critcmp bench-base/results.json bench-current/results.json -t 2 >> comment.md || true
+        echo '```' >> comment.md
+        cat comment.md
+        mv comment.md .github/workflows/comment.md
+    # This will post a comment to the PR with benchmark results, but it's disabled because it's annoying.
+    # - uses: harupy/comment-on-pr@c0522c4
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     filename: comment.md
