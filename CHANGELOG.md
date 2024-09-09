@@ -3,7 +3,7 @@
 ## Unreleased
 
 - [[#184](https://github.com/IronCoreLabs/recrypt-rs/pull/184)]
-  - Change MSRV to Rust 1.65.0
+  - Change MSRV to Rust 1.70.0
 - [[#177](https://github.com/IronCoreLabs/recrypt-rs/pull/177)]
   - Change MSRV to Rust 1.60.0
 - [[#175](https://github.com/IronCoreLabs/recrypt-rs/pull/175)]
