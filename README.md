@@ -202,6 +202,12 @@ Recrypt-rust incorporates technology that is protected by the following patents 
 - EP3616384A4 - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
 - KR20200027921 A - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
 
+# Cryptography Notice
+
+This repository includes cryptographic software. The country in which you currently reside may have restrictions on the import, possession, use, and/or re-export to another country, of encryption software. BEFORE using any encryption software, please check your country's laws, regulations and policies concerning the import, possession, or use, and re-export of encryption software, to see if this is permitted. See https://www.wassenaar.org/ for more information.
+
+The U.S. Government Department of Commerce, Bureau of Industry and Security (BIS), has classified this software as Export Commodity Control Number (ECCN) 5D002, which includes information security software using or performing cryptographic functions. The form and manner of this distribution makes it eligible for export under the License Exception ENC (see the BIS Export Administration Regulations, Section 740.17.B.3.i.B and also the publicly available source code exemption, under 742.15; notice has been given to BIS and NSA).
+
 # License
 
 Recrypt-rust is licensed under the [GNU Affero General Public License](LICENSE).
