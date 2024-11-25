@@ -10,7 +10,7 @@ categories = ["cryptography", "algorithms"]
 keywords = ["cryptography", "proxy-re-encryption", "PRE", "ECC", "transform-encryption"]
 description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
 edition = "2021"
-rust-version = "1.60.0"
+rust-version = "1.70.0"
 
 [target.'cfg(all(unix, not(target_arch = "wasm32")))'.dependencies]
 libc = {version = "0.2"}

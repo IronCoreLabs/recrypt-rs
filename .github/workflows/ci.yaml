@@ -41,11 +41,11 @@ jobs:
         - os: ubuntu-22.04
           target: wasm32-unknown-unknown
           features: --features wasm --no-default-features
-        - os: macos-12
+        - os: macos-13
           target: aarch64-apple-ios
-        - os: macos-12
+        - os: macos-13
           target: x86_64-apple-darwin # 64-bit OSX
-        - os: macos-12
+        - os: macos-14
           target: aarch64-apple-darwin # 64-bit M1 OSX
         - os: windows-2019
           target: x86_64-pc-windows-msvc
@@ -72,7 +72,7 @@ jobs:
         rust:
         - stable
         - beta
-        - 1.60.0 #MSRV
+        - 1.70.0 #MSRV
       fail-fast: false
     steps:
     - uses: actions/checkout@v2
@@ -116,7 +116,7 @@ jobs:
         args: -- --save-baseline ${{ matrix.name }}
     - run: critcmp --export ${{ matrix.name }} > results.json
     - name: Store benchmark results
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: bench-${{ matrix.name }}
         path: results.json
@@ -132,7 +132,7 @@ jobs:
     - name: Cache cargo
       uses: Swatinem/rust-cache@v1
     - name: Retrieve benchmark results
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: bench-current
     - name: Delete artifact
@@ -141,7 +141,7 @@ jobs:
         name: bench-current
         failOnError: false
     - name: Retrieve benchmark results
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: bench-base
     - name: Delete artifact
