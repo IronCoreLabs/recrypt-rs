@@ -1,4 +1,3 @@
-#![cfg_attr(feature = "unstable", feature(test))]
 #![doc(html_no_source)] // use github for source browsing
 
 //! Recrypt implements a set of cryptographic primitives for building a

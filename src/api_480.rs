@@ -50,7 +50,7 @@ impl Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         Recrypt480::new_with_rand(ReseedingRng::new(
             rand_chacha::ChaChaCore::from_entropy(),
             BYTES_BEFORE_RESEEDING,
-            rand::rngs::OsRng::default(),
+            rand::rngs::OsRng,
         ))
     }
 }
@@ -934,13 +934,13 @@ impl SixtyBytes {
 
 impl fmt::Debug for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.0.to_vec())
+        write!(f, "{:?}", self.0)
     }
 }
 
 impl fmt::LowerHex for SixtyBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", hex::encode(self.0.to_vec()))
+        write!(f, "{}", hex::encode(self.0))
     }
 }
 
