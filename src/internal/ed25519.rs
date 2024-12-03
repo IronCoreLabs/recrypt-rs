@@ -5,7 +5,6 @@ use crate::internal::ByteVector;
 use crate::internal::{array_split_64, take_lock};
 use clear_on_drop::clear::Clear;
 use ed25519_dalek;
-use ed25519_dalek::PublicKey;
 use quick_error::quick_error;
 use rand;
 use std;
@@ -64,10 +63,10 @@ impl From<SigningKeypair> for [u8; 64] {
 impl SigningKeypair {
     const ENCODED_SIZE_BYTES: usize = 64;
     pub fn new<CR: rand::RngCore + rand::CryptoRng>(rng: &Mutex<CR>) -> SigningKeypair {
-        let keypair = ed25519_dalek::Keypair::generate::<CR>(&mut *take_lock(rng));
+        let signing_key = ed25519_dalek::SigningKey::generate::<CR>(&mut *take_lock(rng));
 
         //Unchecked is safe because the public is on the curve and the size is statically guaranteed.
-        SigningKeypair::new_unchecked(keypair.to_bytes())
+        SigningKeypair::new_unchecked(signing_key.to_keypair_bytes())
     }
     ///
     ///Create a SigningKeypair from a byte array slice. If the array is not the right length or if the public
@@ -94,10 +93,10 @@ impl SigningKeypair {
     ///
     pub fn from_bytes(sized_bytes: &[u8; 64]) -> Result<SigningKeypair, Ed25519Error> {
         let (priv_key, pub_key) = array_split_64(sized_bytes);
-        //This can't fail because it's statically guaranteed to be 32 bytes long.
-        let ed25519_dalek_secret = ed25519_dalek::SecretKey::from_bytes(&priv_key).unwrap();
+        let ed25519_dalek_secret = ed25519_dalek::SigningKey::from_bytes(&priv_key);
         //Calculate the public key to check that the value passed in is correct.
-        let ed25519_dalek_pub = ed25519_dalek::PublicKey::from(&ed25519_dalek_secret);
+
+        let ed25519_dalek_pub = ed25519_dalek::VerifyingKey::from(&ed25519_dalek_secret);
         if ed25519_dalek_pub.to_bytes() == pub_key {
             Ok(SigningKeypair::new_unchecked(*sized_bytes))
         } else {
@@ -151,9 +150,8 @@ pub struct Ed25519;
 impl Ed25519Signing for Ed25519 {
     fn sign<T: Hashable>(&self, t: &T, signing_key: &SigningKeypair) -> Ed25519Signature {
         use ed25519_dalek::Signer;
-        //This unwrap cannot fail. The only thing that the `from_bytes` does for validation is that the
-        //value is 64 bytes long, which we guarantee statically.
-        let key_pair = ed25519_dalek::Keypair::from_bytes(&signing_key.bytes[..]).unwrap();
+        let (priv_key, _) = array_split_64(&signing_key.bytes);
+        let key_pair = ed25519_dalek::SigningKey::from_bytes(&priv_key);
         let sig = key_pair.sign(&t.to_bytes()[..]);
 
         Ed25519Signature::new(sig.to_bytes())
@@ -166,10 +164,10 @@ impl Ed25519Signing for Ed25519 {
     ) -> bool {
         use ed25519_dalek::Verifier;
 
-        PublicKey::from_bytes(&public_key.bytes[..])
+        ed25519_dalek::VerifyingKey::from_bytes(&public_key.bytes)
             .and_then(|pk| {
-                TryFrom::try_from(&signature.bytes[..])
-                    .and_then(|sig| pk.verify(&t.to_bytes()[..], &sig))
+                let sig = ed25519_dalek::Signature::from_bytes(&signature.bytes);
+                pk.verify(&t.to_bytes()[..], &sig)
             })
             .map(|_| true)
             .unwrap_or(false)
@@ -197,7 +195,6 @@ pub trait Ed25519Signing {
 pub(crate) mod test {
     use super::*;
     use crate::internal::array_concat_32;
-    use ed25519_dalek::SecretKey;
 
     pub fn good_signing_keypair() -> SigningKeypair {
         SigningKeypair::new_unchecked([
@@ -209,18 +206,13 @@ pub(crate) mod test {
 
     #[test]
     fn real_ed25519_matches_verify_good_message() {
-        let sec_key = SecretKey::from_bytes(&[1; 32]).unwrap();
-        let dalek_pub_key = ed25519_dalek::PublicKey::from(&sec_key);
-        let priv_key = SigningKeypair {
-            bytes: array_concat_32(&sec_key.to_bytes(), &dalek_pub_key.to_bytes()),
+        let sec_key = ed25519_dalek::SigningKey::from_bytes(&[1; 32]);
+        let keypair = SigningKeypair {
+            bytes: sec_key.to_keypair_bytes(),
         };
         let message = [100u8; 32].to_vec();
-        let result = Ed25519.sign(&message, &priv_key);
-        let verify_result = Ed25519.verify(
-            &message,
-            &result,
-            &PublicSigningKey::new(dalek_pub_key.to_bytes()),
-        );
+        let result = Ed25519.sign(&message, &keypair);
+        let verify_result = Ed25519.verify(&message, &result, &keypair.public_key());
         assert!(verify_result);
     }
 
@@ -238,10 +230,9 @@ pub(crate) mod test {
 
     #[test]
     fn signing_keypair_into_bytes() {
-        let sec_key = SecretKey::from_bytes(&[1; 32]).unwrap();
-        let dalek_pub_key = ed25519_dalek::PublicKey::from(&sec_key);
+        let dalek_pub_key = ed25519_dalek::VerifyingKey::from_bytes(&[1u8; 32]).unwrap();
         let key_pair = SigningKeypair {
-            bytes: array_concat_32(&sec_key.to_bytes(), &dalek_pub_key.to_bytes()),
+            bytes: array_concat_32(&[1u8; 32], &dalek_pub_key.to_bytes()),
         };
         let key_pair_bytes = key_pair.bytes().clone();
         let bytes: [u8; 64] = key_pair.into();

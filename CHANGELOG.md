@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.14.0 (2024-12-03)
 
+- [[#184](https://github.com/IronCoreLabs/recrypt-rs/pull/188)]
+  - Switch from `ed25519-dalek-fiat` to `ed25519-dalek`.
+  - Remove `u64_backend` and `u32_backend` features.
 - [[#184](https://github.com/IronCoreLabs/recrypt-rs/pull/184)]
   - Change MSRV to Rust 1.70.0
 - [[#177](https://github.com/IronCoreLabs/recrypt-rs/pull/177)]

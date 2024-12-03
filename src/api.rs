@@ -51,7 +51,7 @@ impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         Recrypt::new_with_rand(ReseedingRng::new(
             rand_chacha::ChaChaCore::from_entropy(),
             BYTES_BEFORE_RESEEDING,
-            rand::rngs::OsRng::default(),
+            rand::rngs::OsRng,
         ))
     }
 }
