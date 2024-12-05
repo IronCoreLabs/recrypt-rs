@@ -15,6 +15,7 @@ use std::cell::RefCell;
 
 macro_rules! recrypt_bench {
     (api = $api:ident; suite_desc = $suite_desc:ident; bits = $bits:tt) => {
+        #[allow(dead_code)]
         fn $suite_desc(c: &mut Criterion) {
             c.bench_function(concat!($bits, "-bit generate key pair"), |b| {
                 let api = $api::new();
@@ -213,6 +214,7 @@ macro_rules! recrypt_bench {
     };
 }
 
+// Note: this benchmark is currently unused. Uncomment `criterion_benchmark_fp480` below to run it as well.
 recrypt_bench! {api = Recrypt480; suite_desc = criterion_benchmark_fp480; bits = "480"}
 recrypt_bench! {api = Recrypt; suite_desc = criterion_benchmark_fp256; bits = "256"}
 
