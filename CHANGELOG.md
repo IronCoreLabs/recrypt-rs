@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.1 (2024-12-05)
+
+- [[#190](https://github.com/IronCoreLabs/recrypt-rs/pull/190)]
+  - Fix performance regression with generating ed25519 keypairs introduced in 0.14.0.
+
 ## 0.14.0 (2024-12-03)
 
 - [[#184](https://github.com/IronCoreLabs/recrypt-rs/pull/188)]
@@ -15,9 +20,11 @@
 ## 0.13.1 (2021-11-29)
 
 ### Public API changes
+
 None
 
 ### Notable internal changes
+
 [[#163]](https://github.com/IronCoreLabs/recrypt-rs/pull/163) Fix compilation error for certain combinations of transitive dependencies related to ed25519-dalek-fiat
 
 ## 0.13.0 (yanked)
