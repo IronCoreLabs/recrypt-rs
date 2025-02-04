@@ -34,7 +34,7 @@ ed25519-dalek = { version = "2.1.1", default-features = false, features = [
     "fast",
 ] }
 # Explicit dependency so we can pass the wasm-bindgen flag to it
-getrandom = { version = "0.2", optional = true }
+getrandom = { version = "0.3", optional = true }
 gridiron = "0.10"
 hex = "0.4"
 lazy_static = "1.4"
