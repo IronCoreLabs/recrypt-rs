@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.0 (Unreleased)
+
+- [[#194](https://github.com/IronCoreLabs/recrypt-rs/pull/194)]
+  - Change MSRV to Rust 1.74.0
+
 ## 0.14.1 (2024-12-05)
 
 - [[#190](https://github.com/IronCoreLabs/recrypt-rs/pull/190)]
