@@ -1,7 +1,7 @@
 use crate::internal::rand_bytes::RandomBytesGen;
-use gridiron::fp31;
 use gridiron::fp_256;
 use gridiron::fp_480;
+use gridiron::fp31;
 
 // r: 65000549695646603732796438742359905742570406053903786389881062969044166799969 (also "curve_order" for Fp256)
 fp31!(
@@ -227,7 +227,9 @@ mod test {
             1821456760, 1081920276, 1225443286, 82365526, 424792007, 2137546047, 1459441907,
             1632731523, 28927,
         ]);
-        let fp480 = fp480_unsafe_from("e1ff8546060eb7ea879ff685d3f32a39f8e13a3315a48563eb407ccb14d92272f00ba5071e8ec873c585524a6f79bb14025b61046d2371c3fd1846ee");
+        let fp480 = fp480_unsafe_from(
+            "e1ff8546060eb7ea879ff685d3f32a39f8e13a3315a48563eb407ccb14d92272f00ba5071e8ec873c585524a6f79bb14025b61046d2371c3fd1846ee",
+        );
         assert_eq!(truth, fp480)
     }
 }

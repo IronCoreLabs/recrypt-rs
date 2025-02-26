@@ -1,12 +1,12 @@
+use crate::internal::Square;
 use crate::internal::field::ExtensionField;
-use crate::internal::fp12elem::Fp12Elem;
 use crate::internal::fp2elem::{Fp2Elem, Xi};
 use crate::internal::fp6elem::Fp6Elem;
+use crate::internal::fp12elem::Fp12Elem;
 use crate::internal::homogeneouspoint::Double;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::homogeneouspoint::PointErr;
 use crate::internal::homogeneouspoint::TwistedHPoint;
-use crate::internal::Square;
 use gridiron::fp_256;
 use gridiron::fp_480;
 use num_traits::{Inv, One, Zero};

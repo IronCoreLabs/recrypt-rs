@@ -1,9 +1,9 @@
+use crate::internal::ByteVector;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::field::{ExtensionField, Field};
 use crate::internal::fp2elem::{Fp2Elem, Xi};
 use crate::internal::hashable::Hashable;
-use crate::internal::ByteVector;
-use crate::internal::{pow_for_square, sum_n, Square};
+use crate::internal::{Square, pow_for_square, sum_n};
 use core::fmt;
 use num_traits::{Inv, One, Pow, Zero};
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -340,7 +340,9 @@ where
         if self.elem1 == Zero::zero() && self.elem2 == Zero::zero() {
             self.elem3
         } else {
-            panic!("Developer error: frobenius_to_fp2 for Fp6 is not defined if elem1 and elem2 are not zero")
+            panic!(
+                "Developer error: frobenius_to_fp2 for Fp6 is not defined if elem1 and elem2 are not zero"
+            )
         }
     }
 }
