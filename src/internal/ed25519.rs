@@ -1,7 +1,7 @@
 use crate::api_common::RecryptErr;
+use crate::internal::ByteVector;
 use crate::internal::hashable::Hashable;
 use crate::internal::memlock;
-use crate::internal::ByteVector;
 use crate::internal::{array_split_64, take_lock};
 use clear_on_drop::clear::Clear;
 use ed25519_dalek;

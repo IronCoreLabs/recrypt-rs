@@ -7,7 +7,7 @@ use crate::internal::hashable::Hashable;
 use crate::internal::homogeneouspoint::HomogeneousPoint;
 use crate::internal::sha256::Sha256;
 use crate::internal::sha256::Sha256Hashing;
-use crate::internal::{field, PrivateKey, PublicKey};
+use crate::internal::{PrivateKey, PublicKey, field};
 use gridiron::digits::constant_time_primitives::ConstantSwap;
 use gridiron::fp_256::Monty as Monty256;
 use gridiron::fp_480::Monty as Monty480;
@@ -159,10 +159,10 @@ pub trait SchnorrSigning<T: field::Field, U> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::internal::PublicKey;
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::fp::fr_256::Fr256;
     use crate::internal::test::arb_priv_key;
-    use crate::internal::PublicKey;
     use num_traits::{One, Pow, Zero};
     use proptest::arbitrary::any;
     use proptest::prelude::*;

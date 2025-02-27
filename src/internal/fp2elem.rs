@@ -1,9 +1,9 @@
+use crate::internal::ByteVector;
+use crate::internal::Square;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::field::Field;
 use crate::internal::hashable::Hashable;
 use crate::internal::pow_for_square;
-use crate::internal::ByteVector;
-use crate::internal::Square;
 use core::fmt;
 use gridiron::digits::constant_bool::ConstantBool;
 use gridiron::digits::constant_time_primitives::ConstantSwap;

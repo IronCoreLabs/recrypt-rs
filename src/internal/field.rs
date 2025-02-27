@@ -1,8 +1,8 @@
+use crate::internal::Square;
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::fp::fr_480::Fr480;
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
-use crate::internal::Square;
 use gridiron::fp_256;
 use gridiron::fp_480;
 use num_traits::{Inv, Pow};
@@ -34,11 +34,7 @@ macro_rules! field_props {
         }
 
         fn prop_eq_reflexive(a: Self, b: Self) -> bool {
-            if a == b {
-                b == a
-            } else {
-                b != a
-            }
+            if a == b { b == a } else { b != a }
         }
 
         fn prop_sub_same_as_neg_add(a: Self, b: Self) -> bool {
