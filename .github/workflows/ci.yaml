@@ -25,7 +25,7 @@ jobs:
           args: --all -- --check
       - name: Cancel workflow
         if: failure()
-        uses: andymckay/cancel-action@0.2
+        uses: andymckay/cancel-action@0.5
 
   # Build on all the architectures we intend to support, including cross compiled ones.
   build:
