@@ -136,7 +136,7 @@ jobs:
         with:
           name: bench-current
       - name: Delete artifact
-        uses: geekyeggo/delete-artifact@v1
+        uses: geekyeggo/delete-artifact@v5
         with:
           name: bench-current
           failOnError: false
@@ -145,7 +145,7 @@ jobs:
         with:
           name: bench-base
       - name: Delete artifact
-        uses: geekyeggo/delete-artifact@v1
+        uses: geekyeggo/delete-artifact@v5
         with:
           name: bench-base
           failOnError: false
