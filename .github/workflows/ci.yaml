@@ -10,7 +10,7 @@ jobs:
   # Abort if the code isn't formatted according to rustfmt standards from nightly.
   fmt:
     name: Rustfmt
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Cache cargo
@@ -34,11 +34,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             target: aarch64-linux-android # Android x64
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             target: x86_64-unknown-linux-musl # Alpine Linux x86_64
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             target: wasm32-unknown-unknown
             features: --features wasm --no-default-features
           - os: macos-13
@@ -47,7 +47,7 @@ jobs:
             target: x86_64-apple-darwin # 64-bit OSX
           - os: macos-14
             target: aarch64-apple-darwin # 64-bit M1 OSX
-          - os: windows-2019
+          - os: windows-2025
             target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
   # Run the tests on only one architecture, against various Rust versions.
   test:
     name: Test Suite
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         rust:
@@ -88,7 +88,7 @@ jobs:
   # Benchmark current and base revisions, if this is a PR.
   bench:
     name: Bench
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.base_ref != ''
     strategy:
       matrix:
@@ -126,7 +126,7 @@ jobs:
     needs:
       - bench
     name: Upload benchmark results
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Cache cargo
