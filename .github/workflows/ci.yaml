@@ -12,7 +12,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
@@ -50,7 +50,7 @@ jobs:
           - os: windows-2025
             target: x86_64-pc-windows-msvc
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
@@ -75,7 +75,7 @@ jobs:
           - 1.85.0 #MSRV
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
@@ -98,7 +98,7 @@ jobs:
           - name: base
             ref: ${{ github.base_ref }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ matrix.ref }}
       - name: Cache cargo
@@ -128,7 +128,7 @@ jobs:
     name: Upload benchmark results
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Retrieve benchmark results
