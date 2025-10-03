@@ -132,7 +132,7 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Retrieve benchmark results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: bench-current
       - name: Delete artifact
@@ -141,7 +141,7 @@ jobs:
           name: bench-current
           failOnError: false
       - name: Retrieve benchmark results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: bench-base
       - name: Delete artifact
