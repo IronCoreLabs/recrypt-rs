@@ -1,10 +1,10 @@
+use crate::internal::ByteVector;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::field::{ExtensionField, Field};
 use crate::internal::fp2elem::Fp2Elem;
 use crate::internal::fp6elem::Fp6Elem;
 use crate::internal::hashable::Hashable;
-use crate::internal::ByteVector;
-use crate::internal::{pow_for_square, sum_n, Square};
+use crate::internal::{Square, pow_for_square, sum_n};
 use core::fmt;
 use gridiron::fp_256::Monty as Monty256;
 use gridiron::fp_480::Monty as Monty480;

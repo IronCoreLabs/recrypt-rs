@@ -1,6 +1,6 @@
+use crate::internal::ByteVector;
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::fp::fr_480::Fr480;
-use crate::internal::ByteVector;
 use crate::nonemptyvec::NonEmptyVec;
 use gridiron::fp_256;
 use gridiron::fp_480;

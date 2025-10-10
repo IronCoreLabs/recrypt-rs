@@ -29,7 +29,9 @@
         # nix develop
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
-            rustWithWasm
+            rusttoolchain
+            # If you want to do rust wasm builds, comment out rust toolchain and this rustWithWasm
+            # rustWithWasm
             pkg-config
           ];
         };
