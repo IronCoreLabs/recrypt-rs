@@ -28,12 +28,15 @@
       rec {
         # nix develop
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            rusttoolchain
-            # If you want to do rust wasm builds, comment out rust toolchain and this rustWithWasm
-            # rustWithWasm
-            pkg-config
-          ];
+          buildInputs =
+            with pkgs;
+            [
+              rusttoolchain
+              # If you want to do rust wasm builds, comment out rust toolchain and uncomment this rustWithWasm
+              # rustWithWasm
+              pkg-config
+              libiconv
+            ];
         };
 
       }
