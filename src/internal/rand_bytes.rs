@@ -19,7 +19,7 @@ pub struct RandomBytes<T: CryptoRng + RngCore> {
 
 impl Default for RandomBytes<rand_chacha::ChaChaRng> {
     fn default() -> Self {
-        RandomBytes::new(rand_chacha::ChaChaRng::from_entropy())
+        RandomBytes::new(rand_chacha::ChaChaRng::from_os_rng())
     }
 }
 
