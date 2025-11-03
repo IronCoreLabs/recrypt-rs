@@ -116,7 +116,7 @@ jobs:
           args: -- --save-baseline ${{ matrix.name }}
       - run: critcmp --export ${{ matrix.name }} > results.json
       - name: Store benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bench-${{ matrix.name }}
           path: results.json
