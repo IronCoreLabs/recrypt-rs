@@ -28,21 +28,20 @@ winapi = { version = "0.3", features = ["memoryapi", "sysinfoapi"] }
 cfg-if = "1"
 clear_on_drop = "0.2"
 derivative = "2.1"
-ed25519-dalek = { version = "2.1.1", default-features = false, features = [
-    "std",
+ed25519-dalek = { version = "3.0.0-pre.1", default-features = false, features = [
     "rand_core",
     "fast",
 ] }
 # Explicit dependency so we can pass the wasm-bindgen flag to it
-getrandom = { version = "0.2", optional = true }
-gridiron = "0.10"
+getrandom = { version = "0.3", optional = true }
+gridiron = "0.11"
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 num-traits = "0.2"
 quick-error = "2"
-rand = "0.8"
-rand_chacha = "0.3"
+rand = "0.9"
+rand_chacha = "0.9"
 sha2 = "0.10"
 
 [dev-dependencies]
@@ -64,7 +63,7 @@ debug = false
 lto = true
 
 [features]
-wasm = ["clear_on_drop/no_cc", "getrandom/js"]
+wasm = ["clear_on_drop/no_cc", "getrandom/wasm_js"]
 #Can be used to disable the automatic mlock detection for architectures.
 disable_memlock = []
 

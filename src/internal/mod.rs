@@ -1133,7 +1133,7 @@ where
 /// }; // lock released here
 /// ```
 ///
-pub(crate) fn take_lock<T>(m: &Mutex<T>) -> MutexGuard<T> {
+pub(crate) fn take_lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
     m.lock().unwrap_or_else(|e| {
         let error = format!("Error when acquiring lock: {}", e);
         error!("{}", error);
