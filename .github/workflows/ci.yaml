@@ -41,9 +41,9 @@ jobs:
           - os: ubuntu-24.04
             target: wasm32-unknown-unknown
             features: --features wasm --no-default-features
-          - os: macos-13
+          - os: macos-15-intel
             target: aarch64-apple-ios
-          - os: macos-13
+          - os: macos-15-intel
             target: x86_64-apple-darwin # 64-bit OSX
           - os: macos-14
             target: aarch64-apple-darwin # 64-bit M1 OSX
@@ -167,9 +167,3 @@ jobs:
           echo '```' >> comment.md
           cat comment.md
           mv comment.md .github/workflows/comment.md
-    # This will post a comment to the PR with benchmark results, but it's disabled because it's annoying.
-    # - uses: harupy/comment-on-pr@c0522c4
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     filename: comment.md
