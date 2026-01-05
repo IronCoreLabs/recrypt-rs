@@ -62,7 +62,7 @@ impl<T: Hashable + Clone> Hashable for NonEmptyVec<T> {
     }
 }
 
-impl<'a, T: Hashable, U: Hashable> Hashable for &'a (T, U) {
+impl<T: Hashable, U: Hashable> Hashable for &(T, U) {
     fn to_bytes(&self) -> ByteVector {
         vec![self.0.to_bytes(), self.1.to_bytes()].to_bytes()
     }

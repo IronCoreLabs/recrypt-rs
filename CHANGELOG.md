@@ -2,6 +2,8 @@
 
 ## 0.15.0 (Unreleased)
 
+- [[#212](https://github.com/IronCoreLabs/recrypt-rs/pull/212)]
+  - Change MSRV to Rust 1.86.0
 - [[#194](https://github.com/IronCoreLabs/recrypt-rs/pull/194)]
   - Change MSRV to Rust 1.74.0
 
