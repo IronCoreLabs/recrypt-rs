@@ -16,7 +16,7 @@ keywords = [
 ]
 description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
 edition = "2024"
-rust-version = "1.86.0"
+rust-version = "1.88.0"
 
 # disable libtest benches
 # workaround for https://github.com/rust-lang/rust/issues/47241
