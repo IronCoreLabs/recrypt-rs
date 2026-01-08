@@ -513,7 +513,7 @@ where
 /// # Return
 /// SignedValue[EncryptedValue] - the plaintext encrypted to the specified public key,
 /// along with the authHash, public signing key, and signature
-pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
+pub fn encrypt<T, F: Sha256Hashing, G: Ed25519Signing>(
     to_public_key: PublicKey<T>,
     plaintext: Fp12Elem<T>, // @clintfred can this be any fp12? or an rth root?
     encrypting_key: PrivateKey<T>,
@@ -524,7 +524,7 @@ pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     sign: &G,
 ) -> ErrorOr<SignedValue<EncryptedValue<T>>>
 where
-    T: ExtensionField + PairingConfig + BitRepr + Hashable + ConstantSwap,
+    T: ExtensionField + PairingConfig + BitRepr + Hashable + ConstantSwap + Clone,
 {
     let ephem_pub_key = PublicKey {
         value: curve_points.generator * encrypting_key,

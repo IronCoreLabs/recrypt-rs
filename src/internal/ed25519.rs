@@ -129,7 +129,7 @@ impl SigningKeypair {
 }
 bytes_eq_and_hash!(SigningKeypair);
 
-impl<'a> From<&'a SigningKeypair> for PublicSigningKey {
+impl From<&SigningKeypair> for PublicSigningKey {
     fn from(kp: &SigningKeypair) -> PublicSigningKey {
         let (_, pub_bytes) = array_split_64(&kp.bytes);
 
