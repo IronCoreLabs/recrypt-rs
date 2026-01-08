@@ -28,7 +28,8 @@ winapi = { version = "0.3", features = ["memoryapi", "sysinfoapi"] }
 cfg-if = "1"
 clear_on_drop = "0.2"
 derivative = "2.1"
-ed25519-dalek = { version = "3.0.0-pre.1", default-features = false, features = [
+# Can't upgrade to the latest pre until rand 0.10 is released.
+ed25519-dalek = { version = "=3.0.0-pre.1", default-features = false, features = [
     "rand_core",
     "fast",
 ] }
