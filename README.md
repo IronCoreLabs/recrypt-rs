@@ -92,7 +92,7 @@ These benchmarks were done on an Macbook Pro M1 Max.
 
 If you are unfamiliar with the output of criterion.rs benchmarks, please see [the docs](https://bheisler.github.io/criterion.rs/book/user_guide/command_line_output.html) for how to interpret the output.
 
-```
+```text
   256-bit generate key pair        time: [317.03 µs 318.42 µs 320.27 µs]
   256-bit generate plaintext       time: [1.1955 ms 1.2065 ms 1.2187 ms]
   256-bit generate ed25519 keypair time: [13.819 µs 14.042 µs 14.372 µs]

@@ -12,7 +12,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
@@ -41,16 +41,16 @@ jobs:
           - os: ubuntu-24.04
             target: wasm32-unknown-unknown
             features: --features wasm --no-default-features
-          - os: macos-13
+          - os: macos-15-intel
             target: aarch64-apple-ios
-          - os: macos-13
+          - os: macos-15-intel
             target: x86_64-apple-darwin # 64-bit OSX
           - os: macos-14
             target: aarch64-apple-darwin # 64-bit M1 OSX
           - os: windows-2025
             target: x86_64-pc-windows-msvc
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
@@ -72,10 +72,10 @@ jobs:
         rust:
           - stable
           - beta
-          - 1.85.0 #MSRV
+          - 1.86.0 #MSRV
       fail-fast: false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
@@ -98,7 +98,7 @@ jobs:
           - name: base
             ref: ${{ github.base_ref }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ matrix.ref }}
       - name: Cache cargo
@@ -116,7 +116,7 @@ jobs:
           args: -- --save-baseline ${{ matrix.name }}
       - run: critcmp --export ${{ matrix.name }} > results.json
       - name: Store benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bench-${{ matrix.name }}
           path: results.json
@@ -128,11 +128,11 @@ jobs:
     name: Upload benchmark results
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Retrieve benchmark results
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: bench-current
       - name: Delete artifact
@@ -141,7 +141,7 @@ jobs:
           name: bench-current
           failOnError: false
       - name: Retrieve benchmark results
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: bench-base
       - name: Delete artifact
@@ -167,9 +167,3 @@ jobs:
           echo '```' >> comment.md
           cat comment.md
           mv comment.md .github/workflows/comment.md
-    # This will post a comment to the PR with benchmark results, but it's disabled because it's annoying.
-    # - uses: harupy/comment-on-pr@c0522c4
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     filename: comment.md
