@@ -40,6 +40,7 @@ pub mod hashable;
 pub mod homogeneouspoint;
 pub mod memlock;
 pub mod pairing;
+pub mod platform;
 pub mod rand_bytes;
 pub mod schnorr;
 pub mod sha256;
@@ -50,6 +51,9 @@ use std::sync::{Mutex, MutexGuard};
 
 pub type ByteVector = Vec<u8>;
 pub type ErrorOr<T> = Result<T, InternalError>;
+
+// Re-export platform-specific types from the platform module
+pub use platform::LimbType;
 
 quick_error! {
     #[derive(Debug, PartialEq, Eq)]
@@ -175,7 +179,7 @@ impl<T> BitRepr for PrivateKey<T>
 where
     T: BitRepr + Copy,
 {
-    fn to_bits(&self) -> Vec<ConstantBool<u32>> {
+    fn to_bits(&self) -> Vec<ConstantBool<LimbType>> {
         self.value.to_bits()
     }
 }
@@ -456,7 +460,7 @@ where
 ///Generate a public key using the private key and generator point.
 pub fn public_keygen<T>(private_key: PrivateKey<T>, generator: HomogeneousPoint<T>) -> PublicKey<T>
 where
-    T: Field + BitRepr + ConstantSwap,
+    T: Field + BitRepr + ConstantSwap<LimbType>,
 {
     PublicKey {
         value: generator * private_key.value,
@@ -524,7 +528,7 @@ pub fn encrypt<T: Clone, F: Sha256Hashing, G: Ed25519Signing>(
     sign: &G,
 ) -> ErrorOr<SignedValue<EncryptedValue<T>>>
 where
-    T: ExtensionField + PairingConfig + BitRepr + Hashable + ConstantSwap,
+    T: ExtensionField + PairingConfig + BitRepr + Hashable + ConstantSwap<LimbType>,
 {
     let ephem_pub_key = PublicKey {
         value: curve_points.generator * encrypting_key,
@@ -573,7 +577,7 @@ where
         + Hashable
         + From<[u8; 64]>
         + Default
-        + ConstantSwap,
+        + ConstantSwap<LimbType>,
 {
     verify_signed_value(signed_encrypted_value, signing).map_or(
         Result::Err(InternalError::InvalidEncryptedMessageSignature),
@@ -641,7 +645,7 @@ fn decrypt_encrypted_once<T>(
     curve_points: &CurvePoints<T>,
 ) -> ErrorOr<Fp12Elem<T>>
 where
-    T: ExtensionField + PairingConfig + BitRepr + ConstantSwap,
+    T: ExtensionField + PairingConfig + BitRepr + ConstantSwap<LimbType>,
 {
     let g1 = curve_points.g1;
     let EncryptedOnceValue {
@@ -676,7 +680,7 @@ where
         + BitRepr
         + From<[u8; 64]>
         + Default
-        + ConstantSwap,
+        + ConstantSwap<LimbType>,
     H: Sha256Hashing,
 {
     let re_blocks = &reencrypted_value.encryption_blocks;
@@ -789,7 +793,7 @@ where
         + Hashable
         + From<[u8; 64]>
         + Default
-        + ConstantSwap,
+        + ConstantSwap<LimbType>,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -853,7 +857,7 @@ fn hash2<FP, H>(
     sha256: &H,
 ) -> TwistedHPoint<FP>
 where
-    FP: Hashable + From<[u8; 64]> + BitRepr + Default + ExtensionField + ConstantSwap,
+    FP: Hashable + From<[u8; 64]> + BitRepr + Default + ExtensionField + ConstantSwap<LimbType>,
     H: Sha256Hashing,
 {
     let hash_element = curve_points.hash_element;
@@ -892,7 +896,7 @@ impl<FP: Hashable + ExtensionField> Hashable for ReencryptionKey<FP> {
     }
 }
 
-impl<FP: BitRepr + ExtensionField + ConstantSwap> ReencryptionKey<FP> {
+impl<FP: BitRepr + ExtensionField + ConstantSwap<LimbType>> ReencryptionKey<FP> {
     ///Augment this ReencryptionKey with a priv_key. This is useful if the ReencryptionKey was from an unaugmented
     ///private key.
     pub fn augment(
@@ -942,7 +946,7 @@ where
         + BitRepr
         + From<[u8; 64]>
         + Default
-        + ConstantSwap,
+        + ConstantSwap<LimbType>,
     H: Sha256Hashing,
     S: Ed25519Signing,
 {
@@ -1015,7 +1019,7 @@ where
         + BitRepr
         + From<[u8; 64]>
         + Default
-        + ConstantSwap,
+        + ConstantSwap<LimbType>,
     H: Sha256Hashing,
 {
     // encrypt and product auth hashes for the rand_re_temp_key
@@ -1074,7 +1078,7 @@ where
         + BitRepr
         + From<[u8; 64]>
         + Default
-        + ConstantSwap,
+        + ConstantSwap<LimbType>,
     H: Sha256Hashing,
 {
     let re_blocks = reencrypted_value.encryption_blocks.clone();
