@@ -1,6 +1,6 @@
+use crate::internal::LimbType;
 use crate::internal::fp::fr_256::Fr256;
 use crate::internal::fp::fr_480::Fr480;
-use crate::internal::LimbType;
 use gridiron::digits::constant_bool::ConstantBool;
 
 /// A bit representation of a numeric value
