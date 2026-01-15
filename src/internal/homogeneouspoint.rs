@@ -1,4 +1,5 @@
 use crate::internal::ByteVector;
+use crate::internal::LimbType;
 use crate::internal::bit_repr::BitRepr;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::field::ExtensionField;
@@ -52,7 +53,7 @@ impl<T: One + Field + From<u32> + Hashable> HomogeneousPoint<T> {
 
 impl<T, U> Mul<U> for HomogeneousPoint<T>
 where
-    T: Field + ConstantSwap,
+    T: Field + ConstantSwap<LimbType>,
     U: BitRepr,
 {
     type Output = HomogeneousPoint<T>;
@@ -63,7 +64,7 @@ where
         let bits = rhs.to_bits();
         let mut x0: HomogeneousPoint<T> = zero();
         let mut x1 = self;
-        let mut last_bit = ConstantBool::new_false();
+        let mut last_bit = ConstantBool::<LimbType>::new_false();
         bits.iter().rev().for_each(|&bit| {
             x0.swap_if(&mut x1, bit ^ last_bit);
             x1 += x0;
@@ -152,8 +153,8 @@ impl<T: Field + Hashable> Hashable for HomogeneousPoint<T> {
     }
 }
 
-impl<T: ConstantSwap> ConstantSwap for HomogeneousPoint<T> {
-    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<u32>) {
+impl<T: ConstantSwap<LimbType>> ConstantSwap<LimbType> for HomogeneousPoint<T> {
+    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<LimbType>) {
         self.x.swap_if(&mut other.x, swap);
         self.y.swap_if(&mut other.y, swap);
         self.z.swap_if(&mut other.z, swap);
@@ -226,8 +227,8 @@ impl<T> TwistedHPoint<T> {
     }
 }
 
-impl<T: ConstantSwap> ConstantSwap for TwistedHPoint<T> {
-    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<u32>) {
+impl<T: ConstantSwap<LimbType>> ConstantSwap<LimbType> for TwistedHPoint<T> {
+    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<LimbType>) {
         self.x.swap_if(&mut other.x, swap);
         self.y.swap_if(&mut other.y, swap);
         self.z.swap_if(&mut other.z, swap);
@@ -236,7 +237,7 @@ impl<T: ConstantSwap> ConstantSwap for TwistedHPoint<T> {
 
 impl<T, U> Mul<U> for TwistedHPoint<T>
 where
-    T: ExtensionField + ConstantSwap,
+    T: ExtensionField + ConstantSwap<LimbType>,
     U: BitRepr,
 {
     type Output = TwistedHPoint<T>;
@@ -247,7 +248,7 @@ where
         let bits = rhs.to_bits();
         let mut x0: TwistedHPoint<T> = zero();
         let mut x1 = self;
-        let mut last_bit = ConstantBool::new_false();
+        let mut last_bit = ConstantBool::<LimbType>::new_false();
         bits.iter().rev().for_each(|&bit| {
             x0.swap_if(&mut x1, bit ^ last_bit);
             x1 += x0;

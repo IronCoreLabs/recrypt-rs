@@ -1,6 +1,6 @@
-# recrypt
+# Recrypt
 
-[![](https://img.shields.io/crates/v/recrypt.svg)](https://crates.io/crates/recrypt) [![](https://docs.rs/recrypt/badge.svg)](https://docs.rs/recrypt) [![CI](https://github.com/IronCoreLabs/recrypt-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/IronCoreLabs/recrypt-rs/actions/workflows/ci.yaml)
+[![crates](https://img.shields.io/crates/v/recrypt.svg)](https://crates.io/crates/recrypt) [![docs](https://docs.rs/recrypt/badge.svg)](https://docs.rs/recrypt) [![CI](https://github.com/IronCoreLabs/recrypt-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/IronCoreLabs/recrypt-rs/actions/workflows/ci.yaml)
 
 A pure-Rust library that implements a set of cryptographic primitives for building a _multi-hop Proxy Re-encryption_ scheme, known as Transform Encryption.
 
@@ -26,7 +26,38 @@ All SDKs are intended to be compatible with one another.
 
 ### Rust Dependency
 
-See https://crates.io/crates/recrypt for the most recent version.
+See [crates](https://crates.io/crates/recrypt) for the most recent version.
+
+### Feature Flags
+
+Recrypt uses feature flags to select the underlying arithmetic backend. Exactly one backend must be enabled:
+
+| Feature        | Default | Description                                                               |
+|----------------|---------|---------------------------------------------------------------------------|
+| `u64_backend`  | Yes     | Uses 62-bit limbs for field arithmetic. Faster on 64-bit architectures.   |
+| `u32_backend`  | No      | Uses 31-bit limbs for field arithmetic. Required for WebAssembly targets. |
+
+Additional features:
+
+| Feature            | Default | Description                                                                                                                           |
+|--------------------|---------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `wasm`             | No      | Enables `u32_backend` plus wasm-specific dependencies (`getrandom/wasm_js`, `clear_on_drop/no_cc`). Use this for WebAssembly builds.  |
+| `disable_memlock`  | No      | Disables automatic memory locking via mlock. Use on platforms that don't support mlock.                                               |
+
+Example usage:
+
+```toml
+# Default (64-bit backend)
+recrypt = "0.14"
+
+# For WebAssembly
+recrypt = { version = "0.14", default-features = false, features = ["wasm"] }
+
+# 32-bit backend without wasm
+recrypt = { version = "0.14", default-features = false, features = ["u32_backend"] }
+```
+
+Enabling both `u64_backend` and `u32_backend` (or neither) is a compile error.
 
 ### Other bindings
 
@@ -49,97 +80,56 @@ To learn more about our approach to cryptography and to read our publications, p
 
 ### Memory Protection
 
-We do support memory protection via mlock. This will be detected and turned on automatically for supported platforms. If you need to disable this you can use the `disable_memlock` feature flag
-which is disabled by default.
+Recrypt supports memory protection via mlock to prevent sensitive cryptographic material from being swapped to disk. This is detected and enabled automatically on supported platforms (Linux, macOS, Windows). If you need to disable this behavior, use the `disable_memlock` feature flag (see [Feature Flags](#feature-flags)).
 
 ## Benchmarks
 
-### Results from [79b6e6](https://github.com/IronCoreLabs/recrypt-rs/tree/79b6e62956f524109c8df81c4cf0cdf65291b5c5) (from 2019-12-04)
+### Results from 0.14.1 (Jan 8, 2025)
 
 _Note: The most accurate way to characterize performance is to [run the benchmarks for yourself](#running-benchmarks) in your target environment!_
 
-These benchmarks were done on a Thinkpad X1 Extreme (Gen2)
-
-Abbreviated entry from `/proc/cpuinfo`
-
-```
-vendor_id       : GenuineIntel
-cpu family      : 6
-model           : 158
-model name      : Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz
-```
+These benchmarks were done on an Macbook Pro M1 Max.
 
 If you are unfamiliar with the output of criterion.rs benchmarks, please see [the docs](https://bheisler.github.io/criterion.rs/book/user_guide/command_line_output.html) for how to interpret the output.
 
-```
-$ cargo bench
-
-256-bit generate key pair
-                        time:   [757.61 us 760.48 us 764.48 us]
-256-bit generate plaintext
-                        time:   [2.9911 ms 2.9962 ms 3.0032 ms]
-256-bit generate ed25519 keypair
-                        time:   [15.627 us 15.686 us 15.793 us]
-Found 1 outliers among 20 measurements (5.00%)
-  1 (5.00%) high severe
-256-bit generate transform key
-                        time:   [15.050 ms 15.072 ms 15.094 ms]
-256-bit compute public key
-                        time:   [715.24 us 717.64 us 720.06 us]
-Found 2 outliers among 20 measurements (10.00%)
-  2 (10.00%) high mild
-256-bit derive symmetric key
-                        time:   [1.9093 us 1.9625 us 2.0225 us]
-Found 3 outliers among 20 measurements (15.00%)
-  2 (10.00%) high mild
-  1 (5.00%) high severe
-256-bit encrypt (level 0)
-                        time:   [7.0845 ms 7.1014 ms 7.1337 ms]
-Found 4 outliers among 20 measurements (20.00%)
-  1 (5.00%) low mild
-  3 (15.00%) high severe
-256-bit decrypt (level 0)
-                        time:   [6.4466 ms 6.4530 ms 6.4598 ms]
-Found 1 outliers among 20 measurements (5.00%)
-  1 (5.00%) high mild
-256-bit transform (level 1)
-                        time:   [18.466 ms 18.492 ms 18.519 ms]
-256-bit decrypt (level 1)
-                        time:   [22.856 ms 22.888 ms 22.927 ms]
-Found 1 outliers among 20 measurements (5.00%)
-  1 (5.00%) high severe
-256-bit transform (level 2)
-                        time:   [41.160 ms 41.339 ms 41.541 ms]
-256-bit decrypt (level 2)
-                        time:   [38.508 ms 38.560 ms 38.617 ms]
-Found 2 outliers among 20 measurements (10.00%)
-  1 (5.00%) low mild
-  1 (5.00%) high severe
+```text
+  256-bit generate key pair        time: [317.03 µs 318.42 µs 320.27 µs]
+  256-bit generate plaintext       time: [1.1955 ms 1.2065 ms 1.2187 ms]
+  256-bit generate ed25519 keypair time: [13.819 µs 14.042 µs 14.372 µs]
+  256-bit generate transform key   time: [6.1809 ms 6.1905 ms 6.1995 ms]
+  256-bit compute public key       time: [317.00 µs 318.14 µs 319.01 µs]
+  256-bit derive symmetric key     time: [2.5810 µs 2.9923 µs 3.4567 µs]
+  256-bit encrypt (level 0)        time: [2.8864 ms 2.8907 ms 2.8950 ms]
+  256-bit decrypt (level 0)        time: [2.5649 ms 2.5731 ms 2.5850 ms]
+  256-bit transform (level 1)      time: [7.4683 ms 7.5562 ms 7.7222 ms]
+  256-bit decrypt (level 1)        time: [9.4527 ms 9.4668 ms 9.4800 ms]
+  256-bit transform (level 2)      time: [17.265 ms 17.294 ms 17.322 ms]
+  256-bit decrypt (level 2)        time: [15.974 ms 16.037 ms 16.098 ms]
 ```
 
 ## Contributing
 
-#### Building
+### Building
 
 Rust (stable) is required.
 
-```
-$ cargo build
-```
-
-#### Running Tests
-
-```
-$ cargo test
+```sh
+cargo build
 ```
 
-#### Running benchmarks
+### Running Tests
 
-```
-$ cargo bench
+```sh
+cargo test
 ```
 
-# Relation to Proxy Re-Encryption
+### Running Benchmarks
+
+```sh
+cargo bench
+```
+
+## Proxy Re-Encryption Background
 
 In the academic literature, _transform encryption_ is referred to as _proxy re-encryption_. A proxy re-encryption (PRE) scheme is a public-key encryption scheme, where each participant has a pair of related keys, one public and one private, which are mathematically related. Alice encrypts a message to Bob using his public key, and Bob decrypts the encrypted message using his public key to retrieve the original message.
 
@@ -161,7 +151,7 @@ There are a number of ways to categorize PRE schemes; some of the most important
 
 The Recrypt library implements a PRE scheme that is unidirectional, non-interactive, non-transitive, collusion-safe, and multi-hop.
 
-## Algorithms
+### Algorithms
 
 The PRE algorithm implemented here was originally suggested in a short paper titled "A Fully Secure Unidirectional and Multi-user Proxy Re-encryption Scheme" by H. Wang and Z. Cao, published in the proceedings of the ACM Conference on Computer and Communications Security (CCS) in 2009. The algorithm was enhanced in a paper titled "A Multi-User CCA-Secure Proxy Re-Encryption Scheme" by Y. Cai and X. Liu, published in the proceedings of the IEEE 12th International Conference on Dependable, Autonomic, and Secure Computing in 2014.
 
@@ -192,7 +182,7 @@ Our implementation was guided by the following papers:
 And by the book:
 _Guide to Pairing-Based Cryptography_ by N.E. Mrabet and M. Joye, Chapman and Hall/CRC Cryptography and Network Security Series, 2016.
 
-# Intellectual Property
+## Intellectual Property
 
 Recrypt-rust incorporates technology that is protected by the following patents (additional patents may be pending in the U.S. and elsewhere):
 
@@ -202,13 +192,13 @@ Recrypt-rust incorporates technology that is protected by the following patents 
 - EP3616384A4 - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
 - KR20200027921 A - Orthogonal Access Control for Groups via Multi-Hop Transform Encryption
 
-# Cryptography Notice
+## Cryptography Notice
 
 This repository includes cryptographic software. The country in which you currently reside may have restrictions on the import, possession, use, and/or re-export to another country, of encryption software. BEFORE using any encryption software, please check your country's laws, regulations and policies concerning the import, possession, or use, and re-export of encryption software, to see if this is permitted. See https://www.wassenaar.org/ for more information.
 
 The U.S. Government Department of Commerce, Bureau of Industry and Security (BIS), has classified this software as Export Commodity Control Number (ECCN) 5D002, which includes information security software using or performing cryptographic functions. The form and manner of this distribution makes it eligible for export under the License Exception ENC (see the BIS Export Administration Regulations, Section 740.17.B.3.i.B and also the publicly available source code exemption, under 742.15; notice has been given to BIS and NSA).
 
-# License
+## License
 
 Recrypt-rust is licensed under the [GNU Affero General Public License](LICENSE).
 We also offer commercial licenses - [email](mailto:info@ironcorelabs.com) for more information.

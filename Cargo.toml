@@ -16,13 +16,23 @@ keywords = [
 ]
 description = "A pure-Rust implementation of Transform Encryption, a Proxy Re-encryption scheme"
 edition = "2024"
-rust-version = "1.86.0"
+rust-version = "1.88.0"
 
-[target.'cfg(all(unix, not(target_arch = "wasm32")))'.dependencies]
-libc = { version = "0.2" }
+# disable libtest benches
+# workaround for https://github.com/rust-lang/rust/issues/47241
+[lib]
+bench = false
 
-[target.'cfg(all(windows, not(target_arch = "wasm32")))'.dependencies]
-winapi = { version = "0.3", features = ["memoryapi", "sysinfoapi"] }
+[features]
+default = ["u64_backend"]
+# Use u64 backend (faster on 64-bit architectures)
+u64_backend = ["gridiron/limb62"]
+# Use u32 backend (required for wasm, can be used on any platform for testing)
+u32_backend = ["gridiron/limb31"]
+# For wasm builds: enables u32_backend plus wasm-specific dependencies
+wasm = ["u32_backend", "clear_on_drop/no_cc", "getrandom/wasm_js"]
+# Can be used to disable the automatic mlock detection for architectures.
+disable_memlock = []
 
 [dependencies]
 cfg-if = "1"
@@ -35,7 +45,7 @@ ed25519-dalek = { version = "=3.0.0-pre.1", default-features = false, features =
 ] }
 # Explicit dependency so we can pass the wasm-bindgen flag to it
 getrandom = { version = "0.3", optional = true }
-gridiron = "0.11"
+gridiron = { version = "0.12", default-features = false }
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
@@ -44,6 +54,12 @@ quick-error = "2"
 rand = "0.9"
 rand_chacha = "0.9"
 sha2 = "0.10"
+
+[target.'cfg(all(unix, not(target_arch = "wasm32")))'.dependencies]
+libc = { version = "0.2" }
+
+[target.'cfg(all(windows, not(target_arch = "wasm32")))'.dependencies]
+winapi = { version = "0.3", features = ["memoryapi", "sysinfoapi"] }
 
 [dev-dependencies]
 criterion = "0.8"
@@ -61,18 +77,9 @@ debug = true
 [profile.release]
 opt-level = 3
 debug = false
+codegen-units = 1
 lto = true
-
-[features]
-wasm = ["clear_on_drop/no_cc", "getrandom/wasm_js"]
-#Can be used to disable the automatic mlock detection for architectures.
-disable_memlock = []
 
 [[bench]]
 name = "api_benchmark"
 harness = false
-
-# disable libtest benches
-# workaround for https://github.com/rust-lang/rust/issues/47241
-[lib]
-bench = false

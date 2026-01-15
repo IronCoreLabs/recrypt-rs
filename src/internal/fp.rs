@@ -1,14 +1,16 @@
 use crate::internal::rand_bytes::RandomBytesGen;
 use gridiron::fp_256;
 use gridiron::fp_480;
-use gridiron::fp31;
 
-// r: 65000549695646603732796438742359905742570406053903786389881062969044166799969 (also "curve_order" for Fp256)
+#[cfg(feature = "u32_backend")]
+use gridiron::fp31;
+// r = 65000549695646603732796438742359905742570406053903786389881062969044166799969 (also "curve_order" for Fp256)
+#[cfg(feature = "u32_backend")]
 fp31!(
     fr_256, // Name of mod
     Fr256,  // Name of class
     256,    // Number of bits for prime
-    9,      // Number of limbs (ceil(bits/64))
+    9,      // Number of limbs (ceil(bits/31))
     // prime in limbs, least sig first
     // sage: 65000549695646603732796438742359905742570406053903786389881062969044166799969.digits(2^31)
     [
@@ -43,8 +45,10 @@ fp31!(
     //          (-m).inverse_mod(2^31)
     757616223
 );
+
 // r = 3121577065842246806003085452055281276803074876175537384188619957989004525299611739143164276204220965332554591187396064132658995685351714167608049
 // This is also "curve_order" for Fp480
+#[cfg(feature = "u32_backend")]
 fp31!(
     fr_480, // Name of mod
     Fr480,  // Name of class
@@ -86,6 +90,119 @@ fp31!(
     //          (-m).inverse_mod(2^31)
     1693426159
 );
+
+#[cfg(not(feature = "u32_backend"))]
+use gridiron::fp62;
+
+#[cfg(not(feature = "u32_backend"))]
+fp62!(
+    fr_256, // Name of mod
+    Fr256,  // Name of class
+    256,    // Number of bits for prime
+    5,      // Number of limbs (ceil(bits/62))
+    [
+        // prime number in limbs, least significant first
+        // get this from sage with p.digits(2^62)
+        1886713967064937057,
+        4194602001485325456,
+        2809906994319573522,
+        3260738976388087402,
+        143
+    ],
+    [
+        // Barrett reduction constant for reducing values up to twice
+        // the number of prime bits (double limbs):
+        // 2^(62*5*2 - 62) mod p = 2^558 mod p
+        1065958187536409300,
+        4234680938117870815,
+        3285701108014636925,
+        2067570302055439989,
+        62
+    ],
+    [
+        // Montgomery R = 2^(W*N) where W = word size and N = limbs
+        //            R = 2^(5*62) = 2^310
+        // Montgomery R mod p
+        2936851089539971147,
+        583464008209364592,
+        2224920035069184107,
+        1017232563857971296,
+        76
+    ],
+    [
+        // Montgomery R^2 mod p
+        2068181803476500340,
+        90163823890415014,
+        3136226075385316144,
+        1159566150942268457,
+        86
+    ],
+    // -p[0]^-1 mod 2^62
+    // in sage: m = p.digits(2^62)[0]
+    //          (-m).inverse_mod(2^62)
+    388461543364775519
+);
+
+#[cfg(not(feature = "u32_backend"))]
+fp62!(
+    fr_480, // Name of mod
+    Fr480,  // Name of class
+    480,    // Number of bits for prime
+    8,      // Number of limbs (ceil(bits/62))
+    [
+        // prime number in limbs, least significant first
+        // get this from sage with p.digits(2^62)
+        2440693663225238257,
+        3539764477904802220,
+        1428868479681500228,
+        1195485658071212571,
+        2705995798735790620,
+        477791701396546756,
+        709858406450761912,
+        70364878668681
+    ],
+    [
+        // Barrett reduction constant for reducing values up to twice
+        // the number of prime bits (double limbs):
+        // 2^(62*8*2 - 62) mod p = 2^930 mod p
+        4232791690240516199,
+        2570251445162385211,
+        1953698701289181842,
+        3756775821135378570,
+        1658891262688879891,
+        4184329677974591309,
+        87805944455915183,
+        24606964424464
+    ],
+    [
+        // Montgomery R = 2^(W*N) where W = word size and N = limbs
+        //            R = 2^(8*62) = 2^496
+        // Montgomery R mod p
+        319241053486712621,
+        2852725605343167358,
+        2896686359122673330,
+        1610908752119777884,
+        3350557317075162958,
+        3969433312113376123,
+        3890139537431606097,
+        42235360693756
+    ],
+    [
+        // Montgomery R^2 mod p
+        2123727783431207097,
+        1366660434875215487,
+        647906528512918422,
+        6144226007655950,
+        3467890543784210579,
+        3599025786362190013,
+        161546753682401134,
+        11722720716476
+    ],
+    // -p[0]^-1 mod 2^62
+    // in sage: m = p.digits(2^62)[0]
+    //          (-m).inverse_mod(2^62)
+    124432205055238639
+);
 impl fr_256::Fr256 {
     ///Generate an Fr256 with no bias from `RandomBytesGen`.
     pub fn from_rand_no_bias<R: RandomBytesGen>(random_bytes: &R) -> fr_256::Fr256 {
@@ -116,6 +233,8 @@ impl fr_480::Fr480 {
         fr
     }
 }
+
+#[cfg(feature = "u32_backend")]
 impl From<[u8; 64]> for fr_256::Fr256 {
     fn from(src: [u8; 64]) -> Self {
         let limbs = gridiron::from_sixty_four_bytes(src);
@@ -135,11 +254,47 @@ impl From<[u8; 64]> for fr_256::Fr256 {
             + fr_256::Fr256::new(x0)
     }
 }
+
+#[cfg(feature = "u32_backend")]
 impl From<[u8; 64]> for fr_480::Fr480 {
     fn from(src: [u8; 64]) -> Self {
         let limbs = gridiron::from_sixty_four_bytes(src);
         let (x0_view, x1_view) = limbs.split_at(fr_480::NUMLIMBS - 1);
-        let (mut x0, mut x1) = ([0u32; 16], [0u32; 16]);
+        let (mut x0, mut x1) = ([0u32; fr_480::NUMLIMBS], [0u32; fr_480::NUMLIMBS]);
+        x0[..fr_480::NUMLIMBS - 1].copy_from_slice(x0_view);
+        x1[..2].copy_from_slice(x1_view);
+
+        fr_480::Fr480::new(x1) * fr_480::REDUCTION_CONST + fr_480::Fr480::new(x0)
+    }
+}
+
+#[cfg(not(feature = "u32_backend"))]
+impl From<[u8; 64]> for fr_256::Fr256 {
+    fn from(src: [u8; 64]) -> Self {
+        let limbs = gridiron::from_sixty_four_bytes(src);
+        let (x0_view, x1_and_x2_view) = limbs.split_at(fr_256::NUMLIMBS - 1);
+        let (x1_view, x2_view) = x1_and_x2_view.split_at(fr_256::NUMLIMBS - 1);
+        let (mut x0, mut x1, mut x2) = (
+            [0u64; fr_256::NUMLIMBS],
+            [0u64; fr_256::NUMLIMBS],
+            [0u64; fr_256::NUMLIMBS],
+        );
+        x0[..fr_256::NUMLIMBS - 1].copy_from_slice(x0_view);
+        x1[..fr_256::NUMLIMBS - 1].copy_from_slice(x1_view);
+        x2[..1].copy_from_slice(x2_view);
+
+        (fr_256::Fr256::new(x2) * fr_256::REDUCTION_CONST + fr_256::Fr256::new(x1))
+            * fr_256::REDUCTION_CONST
+            + fr_256::Fr256::new(x0)
+    }
+}
+
+#[cfg(not(feature = "u32_backend"))]
+impl From<[u8; 64]> for fr_480::Fr480 {
+    fn from(src: [u8; 64]) -> Self {
+        let limbs = gridiron::from_sixty_four_bytes(src);
+        let (x0_view, x1_view) = limbs.split_at(fr_480::NUMLIMBS - 1);
+        let (mut x0, mut x1) = ([0u64; fr_480::NUMLIMBS], [0u64; fr_480::NUMLIMBS]);
         x0[..fr_480::NUMLIMBS - 1].copy_from_slice(x0_view);
         x1[..2].copy_from_slice(x1_view);
 
@@ -222,14 +377,14 @@ mod test {
 
     #[test]
     fn fp480_unsafe_from_known_value() {
-        let truth = gridiron::fp_480::Fp480::new([
-            2098743022, 1514595207, 158172177, 2077087904, 1481974950, 1373179512, 48841159,
-            1821456760, 1081920276, 1225443286, 82365526, 424792007, 2137546047, 1459441907,
-            1632731523, 28927,
-        ]);
-        let fp480 = fp480_unsafe_from(
-            "e1ff8546060eb7ea879ff685d3f32a39f8e13a3315a48563eb407ccb14d92272f00ba5071e8ec873c585524a6f79bb14025b61046d2371c3fd1846ee",
-        );
+        let hex_str = "e1ff8546060eb7ea879ff685d3f32a39f8e13a3315a48563eb407ccb14d92272f00ba5071e8ec873c585524a6f79bb14025b61046d2371c3fd1846ee";
+        // Create truth from bytes (works regardless of limb size)
+        let bytes = hex::decode(hex_str).unwrap();
+        let mut arr = [0u8; 60];
+        arr.copy_from_slice(&bytes);
+        let truth = gridiron::fp_480::Fp480::from(arr);
+
+        let fp480 = fp480_unsafe_from(hex_str);
         assert_eq!(truth, fp480)
     }
 }
