@@ -48,13 +48,13 @@ Example usage:
 
 ```toml
 # Default (64-bit backend)
-recrypt = "0.14"
+recrypt = "0.15"
 
 # For WebAssembly
-recrypt = { version = "0.14", default-features = false, features = ["wasm"] }
+recrypt = { version = "0.15", default-features = false, features = ["wasm"] }
 
 # 32-bit backend without wasm
-recrypt = { version = "0.14", default-features = false, features = ["u32_backend"] }
+recrypt = { version = "0.15", default-features = false, features = ["u32_backend"] }
 ```
 
 Enabling both `u64_backend` and `u32_backend` (or neither) is a compile error.
@@ -84,7 +84,7 @@ Recrypt supports memory protection via mlock to prevent sensitive cryptographic 
 
 ## Benchmarks
 
-### Results from 0.14.1 (Jan 8, 2025)
+### Results from 0.15.0 (Jan 8, 2025)
 
 _Note: The most accurate way to characterize performance is to [run the benchmarks for yourself](#running-benchmarks) in your target environment!_
 
