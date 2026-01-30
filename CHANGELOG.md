@@ -1,11 +1,11 @@
 # Changelog
 
-## 0.15.0 (Unreleased)
+## 0.15.0
 
-- [[#212](https://github.com/IronCoreLabs/recrypt-rs/pull/212)]
-  - Change MSRV to Rust 1.86.0
-- [[#194](https://github.com/IronCoreLabs/recrypt-rs/pull/194)]
-  - Change MSRV to Rust 1.74.0
+- [[#193](https://github.com/IronCoreLabs/recrypt-rs/pull/194)]
+  - Update rand to 0.9.x
+  - Update gridiron to 0.12.2 to support 64 bit optimization. Note that the 64 bit backend is the default. See feature flags section of the [readme](./README.md).
+  - Change MSRV to Rust 1.88.0
 
 ## 0.14.1 (2024-12-05)
 

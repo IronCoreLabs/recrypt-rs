@@ -1,3 +1,4 @@
+use crate::internal::LimbType;
 use crate::internal::array_concat_32;
 use crate::internal::bit_repr::BitRepr;
 use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
@@ -74,8 +75,8 @@ fn compute_double_hash<A: Hashable, B: Hashable, H: Sha256Hashing>(
 
 impl<FP, FR, H> SchnorrSigning<FP, FR> for SchnorrSign<FP, FR, H>
 where
-    FP: field::Field + BitRepr + Hashable + From<[u8; 64]> + ConstantSwap,
-    FR: field::Field + BitRepr + From<FP> + From<[u8; 64]> + Hashable + ConstantSwap,
+    FP: field::Field + BitRepr + Hashable + From<[u8; 64]> + ConstantSwap<LimbType>,
+    FR: field::Field + BitRepr + From<FP> + From<[u8; 64]> + Hashable + ConstantSwap<LimbType>,
     H: Sha256Hashing,
 {
     fn sign<A: Hashable>(
@@ -162,6 +163,7 @@ mod test {
     use crate::internal::PublicKey;
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::fp::fr_256::Fr256;
+    use crate::internal::platform::fr256_test_constants;
     use crate::internal::test::arb_priv_key;
     use num_traits::{One, Pow, Zero};
     use proptest::arbitrary::any;
@@ -218,24 +220,15 @@ mod test {
                 .to_monty(),
         );
         //65000549695646603732796438742359905742570406053903786389881062969044166799967
-        let k = Fr256::new([
-            1470919263, 878569654, 1621943440, 1953263767, 407749138, 1308464908, 685899370,
-            1518399909, 143,
-        ]);
+        let k = fr256_test_constants::schnorr_test_k();
 
         let message = 1u8;
         //SchnorrSignature(
         //  4062534355977912733299777421397494108926584881726437723242321564179011504485,
         //  54576864563267907144762780592548274163132236814713061179326750530890377205812)
         let expected_result = SchnorrSignature {
-            r: Fr256::new([
-                1172343141, 1124832653, 1210936679, 1999488104, 1636097057, 1423956336, 713957350,
-                2108165914, 8,
-            ]),
-            s: Fr256::new([
-                572266548, 1817264162, 947859163, 727064549, 1022507007, 908309245, 1790662289,
-                1421119645, 120,
-            ]),
+            r: fr256_test_constants::schnorr_expected_r(),
+            s: fr256_test_constants::schnorr_expected_s(),
         };
 
         let result = SchnorrSign::new_256()

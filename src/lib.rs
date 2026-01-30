@@ -129,6 +129,19 @@
 //! let pub_key_from_bytes_json = PublicKey::new_from_slice((from_bytes_json_x_as_tuple, from_bytes_json_y_as_tuple)).unwrap();
 //! ```
 
+// Ensure exactly one backend is selected
+#[cfg(all(feature = "u64_backend", feature = "u32_backend"))]
+compile_error!(
+    "Features `u64_backend` and `u32_backend` are mutually exclusive. \
+     Only one backend can be enabled at a time."
+);
+
+#[cfg(not(any(feature = "u64_backend", feature = "u32_backend")))]
+compile_error!(
+    "Either feature `u64_backend` or `u32_backend` must be enabled. \
+     Use `--features u64_backend` (recommended for 64-bit) or `--features u32_backend` (required for wasm)."
+);
+
 pub mod prelude;
 #[macro_use] // this is still required in Rust 2018
 mod internal; // this needs to come before `api` as api relies on macros defined in `internal`

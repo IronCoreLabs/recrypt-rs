@@ -24,9 +24,8 @@ use derivative::Derivative;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
-use rand::SeedableRng;
-use rand::rngs::adapter::ReseedingRng;
-use rand_chacha;
+use rand::rngs::ReseedingRng;
+use rand_chacha::ChaCha20Core;
 use std;
 use std::fmt;
 
@@ -48,11 +47,10 @@ impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         // 1 MB
         const BYTES_BEFORE_RESEEDING: u64 = 1024 * 1024;
-        Recrypt::new_with_rand(ReseedingRng::new(
-            rand_chacha::ChaChaCore::from_entropy(),
-            BYTES_BEFORE_RESEEDING,
-            rand::rngs::OsRng,
-        ))
+        Recrypt::new_with_rand(
+            ReseedingRng::<ChaCha20Core, _>::new(BYTES_BEFORE_RESEEDING, rand::rngs::OsRng)
+                .expect("Calling OsRng failed to seed Rng."),
+        )
     }
 }
 

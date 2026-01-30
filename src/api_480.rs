@@ -24,8 +24,8 @@ use derivative::Derivative;
 use gridiron::fp_480::Fp480;
 use gridiron::fp_480::Monty as Monty480;
 use rand;
-use rand::SeedableRng;
-use rand::rngs::adapter::ReseedingRng;
+use rand::rngs::ReseedingRng;
+use rand_chacha::ChaCha20Core;
 use std;
 use std::fmt;
 /// Recrypt public API - 480-bit
@@ -47,11 +47,10 @@ impl Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     pub fn new() -> Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
         // 2 MB
         const BYTES_BEFORE_RESEEDING: u64 = 2 * 1024 * 1024;
-        Recrypt480::new_with_rand(ReseedingRng::new(
-            rand_chacha::ChaChaCore::from_entropy(),
-            BYTES_BEFORE_RESEEDING,
-            rand::rngs::OsRng,
-        ))
+        Recrypt480::new_with_rand(
+            ReseedingRng::<ChaCha20Core, _>::new(BYTES_BEFORE_RESEEDING, rand::rngs::OsRng)
+                .expect("Calling OsRng failed to seed Rng."),
+        )
     }
 }
 

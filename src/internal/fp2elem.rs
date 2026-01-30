@@ -1,4 +1,5 @@
 use crate::internal::ByteVector;
+use crate::internal::LimbType;
 use crate::internal::Square;
 use crate::internal::bytedecoder::{BytesDecoder, DecodeErr};
 use crate::internal::field::Field;
@@ -78,8 +79,8 @@ where
     }
 }
 
-impl<T: ConstantSwap> ConstantSwap for Fp2Elem<T> {
-    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<u32>) {
+impl<T: ConstantSwap<LimbType>> ConstantSwap<LimbType> for Fp2Elem<T> {
+    fn swap_if(&mut self, other: &mut Self, swap: ConstantBool<LimbType>) {
         self.elem1.swap_if(&mut other.elem1, swap);
         self.elem2.swap_if(&mut other.elem2, swap);
     }
