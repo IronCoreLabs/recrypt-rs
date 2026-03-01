@@ -51,7 +51,7 @@ lazy_static = "1.4"
 log = "0.4"
 num-traits = "0.2"
 quick-error = "2"
-rand = "0.9"
+rand = "0.10"
 rand_chacha = "0.9"
 sha2 = "0.10"
 
