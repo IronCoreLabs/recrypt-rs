@@ -52,7 +52,7 @@ log = "0.4"
 num-traits = "0.2"
 quick-error = "2"
 rand = "0.9"
-rand_chacha = "0.9"
+rand_chacha = "0.10"
 sha2 = "0.10"
 
 [target.'cfg(all(unix, not(target_arch = "wasm32")))'.dependencies]
