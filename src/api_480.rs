@@ -24,8 +24,8 @@ use derivative::Derivative;
 use gridiron::fp_480::Fp480;
 use gridiron::fp_480::Monty as Monty480;
 use rand;
-use rand::rngs::ReseedingRng;
-use rand_chacha::ChaCha20Core;
+use rand::SeedableRng;
+use rand::rngs::SysRng;
 use std;
 use std::fmt;
 /// Recrypt public API - 480-bit
@@ -45,11 +45,9 @@ impl Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     ///
     /// The RNG will periodically reseed itself from the system's best entropy source.
     pub fn new() -> Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
-        // 2 MB
-        const BYTES_BEFORE_RESEEDING: u64 = 2 * 1024 * 1024;
         Recrypt480::new_with_rand(
-            ReseedingRng::<ChaCha20Core, _>::new(BYTES_BEFORE_RESEEDING, rand::rngs::OsRng)
-                .expect("Calling OsRng failed to seed Rng."),
+            rand_chacha::ChaCha20Rng::try_from_rng(&mut SysRng)
+                .expect("Failed to seed RNG from system entropy"),
         )
     }
 }
@@ -60,7 +58,7 @@ impl Default for Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     }
 }
 
-impl<CR: rand::CryptoRng + rand::RngCore> Recrypt480<Sha256, Ed25519, RandomBytes<CR>> {
+impl<CR: rand::CryptoRng> Recrypt480<Sha256, Ed25519, RandomBytes<CR>> {
     /// Construct a Recrypt480 with the given RNG. Unless you have specific needs using `new()` is recommended.
     pub fn new_with_rand(r: CR) -> Recrypt480<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = pairing::Pairing::new();
@@ -635,9 +633,7 @@ pub trait SchnorrOps {
     ) -> bool;
 }
 
-impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
-    for Recrypt480<H, S, RandomBytes<CR>>
-{
+impl<H: Sha256Hashing, S, CR: rand::CryptoRng> SchnorrOps for Recrypt480<H, S, RandomBytes<CR>> {
     fn schnorr_sign<A: Hashable>(
         &self,
         priv_key: &PrivateKey,
@@ -672,7 +668,7 @@ pub trait Ed25519Ops {
     fn generate_ed25519_key_pair(&self) -> SigningKeypair;
 }
 
-impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Recrypt480<H, S, RandomBytes<CR>> {
+impl<H, S, CR: rand::CryptoRng> Ed25519Ops for Recrypt480<H, S, RandomBytes<CR>> {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
     fn generate_ed25519_key_pair(&self) -> SigningKeypair {

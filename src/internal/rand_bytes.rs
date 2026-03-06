@@ -1,5 +1,5 @@
 use rand;
-use rand::{CryptoRng, RngCore};
+use rand::CryptoRng;
 
 use crate::internal::take_lock;
 use rand::SeedableRng;
@@ -13,17 +13,20 @@ pub trait RandomBytesGen {
     fn random_bytes_60(&self) -> [u8; 60];
 }
 
-pub struct RandomBytes<T: CryptoRng + RngCore> {
+pub struct RandomBytes<T: CryptoRng> {
     pub(crate) rng: Mutex<T>,
 }
 
 impl Default for RandomBytes<rand_chacha::ChaChaRng> {
     fn default() -> Self {
-        RandomBytes::new(rand_chacha::ChaChaRng::from_os_rng())
+        RandomBytes::new(
+            rand_chacha::ChaChaRng::try_from_rng(&mut rand::rngs::SysRng)
+                .expect("Failed to seed RNG from system entropy"),
+        )
     }
 }
 
-impl<CR: CryptoRng + RngCore> RandomBytes<CR> {
+impl<CR: CryptoRng> RandomBytes<CR> {
     pub fn new(rng: CR) -> Self {
         RandomBytes {
             rng: Mutex::new(rng),
@@ -31,7 +34,7 @@ impl<CR: CryptoRng + RngCore> RandomBytes<CR> {
     }
 }
 
-impl<CR: CryptoRng + RngCore> RandomBytesGen for RandomBytes<CR> {
+impl<CR: CryptoRng> RandomBytesGen for RandomBytes<CR> {
     fn random_bytes_32(&self) -> [u8; 32] {
         let mut bytes: [u8; 32] = [0u8; 32];
         take_lock(&self.rng).deref_mut().fill_bytes(&mut bytes);
