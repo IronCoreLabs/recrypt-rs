@@ -62,21 +62,21 @@ impl<T: CryptoRng + SeedableRng> TryRng for ReseedingRng<T> {
     fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
         self.reseed_if_needed();
         let val = self.inner.next_u32();
-        self.bytes_generated += 4;
+        self.bytes_generated = self.bytes_generated.saturating_add(4);
         Ok(val)
     }
 
     fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
         self.reseed_if_needed();
         let val = self.inner.next_u64();
-        self.bytes_generated += 8;
+        self.bytes_generated = self.bytes_generated.saturating_add(8);
         Ok(val)
     }
 
     fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
         self.reseed_if_needed();
         self.inner.fill_bytes(dst);
-        self.bytes_generated += dst.len();
+        self.bytes_generated = self.bytes_generated.saturating_add(dst.len());
         Ok(())
     }
 }
