@@ -1,8 +1,14 @@
 # Changelog
 
+## 0.16.0
+
+- [[#225](https://github.com/IronCoreLabs/recrypt-rs/pull/225)]
+  - Update rand to 0.10.x and rand_chacha to 0.10.x
+  - Add custom `ReseedingRng` wrapper since rand no longer has one. Automatically reseed from system entropy every 64 KiB of output, matching `ThreadRng`'s reseeding interval.
+
 ## 0.15.0
 
-- [[#193](https://github.com/IronCoreLabs/recrypt-rs/pull/194)]
+- [[#193](https://github.com/IronCoreLabs/recrypt-rs/pull/193)]
   - Update rand to 0.9.x
   - Update gridiron to 0.12.2 to support 64 bit optimization. Note that the 64 bit backend is the default. See feature flags section of the [readme](./README.md).
   - Change MSRV to Rust 1.88.0
