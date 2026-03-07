@@ -50,7 +50,7 @@ impl<T: CryptoRng + SeedableRng> ReseedingRng<T> {
             }
             // On reseed failure, continue with existing state rather than panicking.
             // The current state is still cryptographically valid and the likelyhood of
-            // SysRng panicking is very low.
+            // SysRng erroring is very low.
             self.bytes_generated = 0;
         }
     }
