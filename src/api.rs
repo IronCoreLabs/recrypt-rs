@@ -24,8 +24,6 @@ use derivative::Derivative;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
-use rand::SeedableRng;
-use rand::rngs::SysRng;
 use std;
 use std::fmt;
 
@@ -45,10 +43,7 @@ impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     ///
     /// The RNG will periodically reseed itself from the system's best entropy source.
     pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
-        Recrypt::new_with_rand(
-            rand_chacha::ChaCha20Rng::try_from_rng(&mut SysRng)
-                .expect("Failed to seed RNG from system entropy"),
-        )
+        Recrypt::new_with_rand(Default::default())
     }
 }
 

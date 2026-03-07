@@ -33,7 +33,7 @@ quick_error! {
     }
 }
 
-pub type DefaultRng = rand_chacha::ChaCha20Rng;
+pub type DefaultRng = crate::api::ReseedingRng<rand_chacha::ChaCha20Rng>;
 pub type Result<T> = std::result::Result<T, RecryptErr>;
 
 impl From<internal::InternalError> for RecryptErr {

@@ -1,13 +1,9 @@
-use rand::SeedableRng;
 use recrypt::prelude::*;
 use std::sync::Arc;
 use std::thread;
 #[test]
 fn generate_plaintexts() {
-    let recrypt = Arc::new(Recrypt::new_with_rand(
-        rand_chacha::ChaChaRng::try_from_rng(&mut rand::rngs::SysRng)
-            .expect("Failed to seed RNG from system entropy"),
-    ));
+    let recrypt = Arc::new(Recrypt::new());
 
     let mut threads = vec![];
     for _i in 0..10 {

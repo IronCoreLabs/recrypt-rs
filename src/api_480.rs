@@ -24,8 +24,6 @@ use derivative::Derivative;
 use gridiron::fp_480::Fp480;
 use gridiron::fp_480::Monty as Monty480;
 use rand;
-use rand::SeedableRng;
-use rand::rngs::SysRng;
 use std;
 use std::fmt;
 /// Recrypt public API - 480-bit
@@ -45,10 +43,7 @@ impl Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     ///
     /// The RNG will periodically reseed itself from the system's best entropy source.
     pub fn new() -> Recrypt480<Sha256, Ed25519, RandomBytes<DefaultRng>> {
-        Recrypt480::new_with_rand(
-            rand_chacha::ChaCha20Rng::try_from_rng(&mut SysRng)
-                .expect("Failed to seed RNG from system entropy"),
-        )
+        Recrypt480::new_with_rand(Default::default())
     }
 }
 
