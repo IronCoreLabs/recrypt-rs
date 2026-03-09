@@ -11,7 +11,7 @@ use std::ops::DerefMut;
 use std::sync::Mutex;
 
 /// Reseed threshold in bytes — matches ThreadRng's 64 KiB interval.
-pub const RESEED_THRESHOLD: usize = 64 * 1024;
+const RESEED_THRESHOLD: usize = 64 * 1024;
 
 /// Generation of random bytes for cryptographic operations
 pub trait RandomBytesGen {
@@ -19,9 +19,8 @@ pub trait RandomBytesGen {
     fn random_bytes_60(&self) -> [u8; 60];
 }
 
-/// A CSPRNG wrapper that automatically reseeds from system entropy after
-/// [`RESEED_THRESHOLD`] bytes of output. Implements [`CryptoRng`] so it can be
-/// used anywhere a `CryptoRng` is expected.
+/// A CSPRNG wrapper that automatically reseeds from system entropy periodically.
+/// Implements [`CryptoRng`] so it can be used anywhere a `CryptoRng` is expected.
 pub struct ReseedingRng<T: CryptoRng + SeedableRng> {
     inner: T,
     bytes_generated: usize,
