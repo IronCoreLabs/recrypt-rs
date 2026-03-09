@@ -11,7 +11,7 @@ use std::ops::DerefMut;
 use std::sync::Mutex;
 
 /// Reseed threshold in bytes — matches ThreadRng's 64 KiB interval.
-const RESEED_THRESHOLD: usize = 64 * 1024;
+pub const RESEED_THRESHOLD: usize = 64 * 1024;
 
 /// Generation of random bytes for cryptographic operations
 pub trait RandomBytesGen {
@@ -49,7 +49,7 @@ impl<T: CryptoRng + SeedableRng> ReseedingRng<T> {
                 self.inner = reseeded;
             }
             // On reseed failure, continue with existing state rather than panicking.
-            // The current state is still cryptographically valid and the likelyhood of
+            // The current state is still cryptographically valid and the likelihood of
             // SysRng erroring is very low.
             self.bytes_generated = 0;
         }
