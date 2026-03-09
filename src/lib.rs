@@ -81,7 +81,7 @@
 //!
 //! ## Using serde_json to serialize/deserialize the bytes of keys
 //!
-//! The bytes of the PrivateKey and PublicKey data structures can be serialized and deserialized to and from JSON String and/or a Vec<u8> using the following methods.
+//! The bytes of the PrivateKey and PublicKey data structures can be serialized and deserialized to and from JSON String and/or a `Vec<u8>` using the following methods.
 //! Simply add [serde_json](https://crates.io/crates/serde_json) as a dependency to your application.
 //! ```rust
 //! use recrypt::prelude::*;
