@@ -24,8 +24,6 @@ use derivative::Derivative;
 use gridiron::fp_256::Fp256;
 use gridiron::fp_256::Monty as Monty256;
 use rand;
-use rand::rngs::ReseedingRng;
-use rand_chacha::ChaCha20Core;
 use std;
 use std::fmt;
 
@@ -45,12 +43,7 @@ impl Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     ///
     /// The RNG will periodically reseed itself from the system's best entropy source.
     pub fn new() -> Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
-        // 1 MB
-        const BYTES_BEFORE_RESEEDING: u64 = 1024 * 1024;
-        Recrypt::new_with_rand(
-            ReseedingRng::<ChaCha20Core, _>::new(BYTES_BEFORE_RESEEDING, rand::rngs::OsRng)
-                .expect("Calling OsRng failed to seed Rng."),
-        )
+        Recrypt::new_with_rand(Default::default())
     }
 }
 
@@ -60,7 +53,7 @@ impl Default for Recrypt<Sha256, Ed25519, RandomBytes<DefaultRng>> {
     }
 }
 
-impl<CR: rand::CryptoRng + rand::RngCore> Recrypt<Sha256, Ed25519, RandomBytes<CR>> {
+impl<CR: rand::CryptoRng> Recrypt<Sha256, Ed25519, RandomBytes<CR>> {
     /// Construct a Recrypt with the given RNG. Unless you have specific needs using `new()` is recommended.
     pub fn new_with_rand(r: CR) -> Recrypt<Sha256, Ed25519, RandomBytes<CR>> {
         let pairing = internal::pairing::Pairing::new();
@@ -634,9 +627,7 @@ pub trait SchnorrOps {
     ) -> bool;
 }
 
-impl<H: Sha256Hashing, S, CR: rand::RngCore + rand::CryptoRng> SchnorrOps
-    for Recrypt<H, S, RandomBytes<CR>>
-{
+impl<H: Sha256Hashing, S, CR: rand::CryptoRng> SchnorrOps for Recrypt<H, S, RandomBytes<CR>> {
     fn schnorr_sign<A: Hashable>(
         &self,
         priv_key: &PrivateKey,
@@ -671,7 +662,7 @@ pub trait Ed25519Ops {
     fn generate_ed25519_key_pair(&self) -> SigningKeypair;
 }
 
-impl<H, S, CR: rand::RngCore + rand::CryptoRng> Ed25519Ops for Recrypt<H, S, RandomBytes<CR>> {
+impl<H, S, CR: rand::CryptoRng> Ed25519Ops for Recrypt<H, S, RandomBytes<CR>> {
     ///Generate a signing key pair for use with the `Ed25519Signing` trait using the random number generator
     ///used to back the `RandomBytes` struct.
     fn generate_ed25519_key_pair(&self) -> SigningKeypair {
