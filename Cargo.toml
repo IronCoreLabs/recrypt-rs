@@ -49,7 +49,7 @@ num-traits = "0.2"
 quick-error = "2"
 rand = "0.10"
 rand_chacha = "0.10"
-sha2 = "0.10"
+sha2 = "0.11"
 
 [target.'cfg(all(unix, not(target_arch = "wasm32")))'.dependencies]
 libc = { version = "0.2" }
