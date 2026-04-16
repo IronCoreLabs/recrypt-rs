@@ -1,0 +1,14 @@
+name: Rust Release
+
+on:
+  # https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#release
+  # The Bump Version workflow will make a Github release if it isn't a prerelease version
+  release:
+    types:
+      - created
+  workflow_dispatch:
+
+jobs:
+  rust-release:
+    uses: IronCoreLabs/workflows/.github/workflows/rust-release.yaml@rust-release-v1
+    secrets: inherit

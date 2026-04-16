@@ -1,0 +1,24 @@
+name: Bump Version
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: New semver release version.
+  pull_request: # Only runs a check
+
+jobs:
+  bump:
+    uses: IronCoreLabs/workflows/.github/workflows/bump-version.yaml@bump-version-v1
+    with:
+      version: ${{ inputs.version }}
+      release_mode: prerelease
+      release_prereleases: false
+    secrets: inherit
