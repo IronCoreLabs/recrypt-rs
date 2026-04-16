@@ -1,13 +1,7 @@
-# Release Checklist
+# Release
 
 - Make sure all changes to be released are on `main`
-- Compare `main`'s commit history to the change log to ensure all public API changes are included as well as notable internal changes
-- Sanity check the version number set in `Cargo.toml` with the change log. Remember, we use semver!
-- Commit `Cargo.toml` (if needed) and `CHANGELOG.md` to your local git.
-  - paste change log for the release into the commit message (For Github releases)
-- `cargo package` to see if there are any issues
-- Tag the release, using the changelog entry as the commit message
-  - `git tag -a <NEW_VER_NUM>`
-  - `git push origin <NEW_VER_NUM> && git push` (eg: 0.5.2)
-- `cargo publish`
-- Check crates.io and docs.rs sites for new version
+- Compare `main`'s commit history to the changelog to ensure all public API changes are included as well as notable internal changes
+  - If necessary, PR and merge the changelog changes.
+- Run the [Bump Version](.github/workflows/bump-version.yaml) workflow.
+  - Give it a new release version. For example, if the current version is 1.2.3-pre.4, type in 1.2.3. This will cause a release to [crates.io](https://crates.io/crates/recrypt).
