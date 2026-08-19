@@ -7,8 +7,16 @@ on:
     types:
       - created
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Rehearse the release without publishing, to check the crates.io Trusted Publishing config"
+        type: boolean
+        default: false
 
 jobs:
   rust-release:
-    uses: IronCoreLabs/workflows/.github/workflows/rust-release.yaml@rust-release-v1
+    uses: IronCoreLabs/workflows/.github/workflows/rust-release.yaml@rust-release-v2
+    with:
+      # inputs is empty on release events, and '' fails dry_run's boolean type check.
+      dry_run: ${{ inputs.dry_run || false }}
     secrets: inherit
