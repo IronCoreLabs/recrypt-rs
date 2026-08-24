@@ -16,7 +16,7 @@ on:
 
 jobs:
   bump:
-    uses: IronCoreLabs/workflows/.github/workflows/bump-version.yaml@bump-version-v1
+    uses: IronCoreLabs/workflows/.github/workflows/bump-version.yaml@bump-version-v1.0.0
     with:
       version: ${{ inputs.version }}
       release_mode: prerelease
