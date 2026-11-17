@@ -13,16 +13,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+      # The cache key covers the installed toolchains, so install them first.
       - uses: IronCoreLabs/rust-toolchain@v1
         with:
           toolchain: nightly
           components: rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
       - name: Cancel workflow
         if: failure()
         uses: andymckay/cancel-action@0.5
@@ -34,10 +32,13 @@ jobs:
     strategy:
       matrix:
         include:
+          # Only the targets whose linker the runner doesn't already have need cross.
           - os: ubuntu-24.04
             target: aarch64-linux-android # Android x64
+            cross: true
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-musl # Alpine Linux x86_64
+            cross: true
           - os: ubuntu-24.04
             target: wasm32-unknown-unknown
             features: --features wasm --no-default-features
@@ -51,17 +52,16 @@ jobs:
             target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v7
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
         with:
           toolchain: stable
           target: ${{ matrix.target }}
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --release --target=${{ matrix.target }} ${{ matrix.features }}
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Install cross
+        if: matrix.cross
+        uses: taiki-e/install-action@cross
+      - run: ${{ matrix.cross && 'cross' || 'cargo' }} build --release --target=${{ matrix.target }} ${{ matrix.features }}
 
   # Run the tests on only one architecture, against various Rust versions.
   test:
@@ -76,14 +76,12 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v7
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - run: cargo test
 
   # Benchmark current and base revisions, if this is a PR.
   bench:
@@ -101,19 +99,16 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ matrix.ref }}
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
       - uses: IronCoreLabs/rust-toolchain@v1
         with:
           toolchain: stable
-      - uses: actions-rs/cargo@v1
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Install critcmp
+        uses: taiki-e/cache-cargo-install-action@v3
         with:
-          command: install
-          args: critcmp
-      - uses: actions-rs/cargo@v1
-        with:
-          command: bench
-          args: -- --save-baseline ${{ matrix.name }}
+          tool: critcmp
+      - run: cargo bench -- --save-baseline ${{ matrix.name }}
       - run: critcmp --export ${{ matrix.name }} > results.json
       - name: Store benchmark results
         uses: actions/upload-artifact@v7
@@ -129,8 +124,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
       - name: Retrieve benchmark results
         uses: actions/download-artifact@v8
         with:
@@ -152,10 +145,10 @@ jobs:
       - uses: IronCoreLabs/rust-toolchain@v1
         with:
           toolchain: stable
-      - uses: actions-rs/cargo@v1
+      - name: Install critcmp
+        uses: taiki-e/cache-cargo-install-action@v3
         with:
-          command: install
-          args: critcmp
+          tool: critcmp
       - name: Compare benchmarks
         run: |
           if ! critcmp bench-base/results.json bench-current/results.json -t 10 ; then

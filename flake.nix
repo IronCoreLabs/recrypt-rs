@@ -29,7 +29,7 @@
         # nix develop
         devShell = pkgs.mkShell {
           buildInputs = with pkgs;
-            [ rusttoolchain pkg-config ];
+            [ rustWithWasm pkg-config ];
         };
 
       }
