@@ -46,7 +46,7 @@ jobs:
             target: aarch64-apple-ios
           - os: macos-15-intel
             target: x86_64-apple-darwin # 64-bit OSX
-          - os: macos-14
+          - os: macos-15
             target: aarch64-apple-darwin # 64-bit M1 OSX
           - os: windows-2025
             target: x86_64-pc-windows-msvc
