@@ -84,27 +84,27 @@ Recrypt supports memory protection via mlock to prevent sensitive cryptographic 
 
 ## Benchmarks
 
-### Results from 0.15.0 (Jan 8, 2025)
+### Results from 0.17.0 (Nov 17, 2026)
 
 _Note: The most accurate way to characterize performance is to [run the benchmarks for yourself](#running-benchmarks) in your target environment!_
 
-These benchmarks were done on an Macbook Pro M1 Max.
+These benchmarks were done on an Macbook Pro M5 Max.
 
 If you are unfamiliar with the output of criterion.rs benchmarks, please see [the docs](https://bheisler.github.io/criterion.rs/book/user_guide/command_line_output.html) for how to interpret the output.
 
 ```text
-  256-bit generate key pair        time: [317.03 µs 318.42 µs 320.27 µs]
-  256-bit generate plaintext       time: [1.1955 ms 1.2065 ms 1.2187 ms]
-  256-bit generate ed25519 keypair time: [13.819 µs 14.042 µs 14.372 µs]
-  256-bit generate transform key   time: [6.1809 ms 6.1905 ms 6.1995 ms]
-  256-bit compute public key       time: [317.00 µs 318.14 µs 319.01 µs]
-  256-bit derive symmetric key     time: [2.5810 µs 2.9923 µs 3.4567 µs]
-  256-bit encrypt (level 0)        time: [2.8864 ms 2.8907 ms 2.8950 ms]
-  256-bit decrypt (level 0)        time: [2.5649 ms 2.5731 ms 2.5850 ms]
-  256-bit transform (level 1)      time: [7.4683 ms 7.5562 ms 7.7222 ms]
-  256-bit decrypt (level 1)        time: [9.4527 ms 9.4668 ms 9.4800 ms]
-  256-bit transform (level 2)      time: [17.265 ms 17.294 ms 17.322 ms]
-  256-bit decrypt (level 2)        time: [15.974 ms 16.037 ms 16.098 ms]
+  256-bit generate key pair         time:   [173.45 µs 174.47 µs 175.43 µs]
+  256-bit generate plaintext        time:   [670.74 µs 672.96 µs 675.74 µs]
+  256-bit generate ed25519 keypair  time:   [8.4504 µs 8.5043 µs 8.5549 µs]
+  256-bit generate transform key    time:   [3.5307 ms 3.5373 ms 3.5436 ms]
+  256-bit compute public key        time:   [173.42 µs 174.14 µs 174.83 µs]
+  256-bit derive symmetric key      time:   [745.00 ns 836.98 ns 960.91 ns]
+  256-bit encrypt (level 0)         time:   [1.6211 ms 1.6267 ms 1.6315 ms]
+  256-bit decrypt (level 0)         time:   [1.4293 ms 1.4353 ms 1.4429 ms]
+  256-bit transform (level 1)       time:   [4.1866 ms 4.2067 ms 4.2279 ms]
+  256-bit decrypt (level 1)         time:   [5.2673 ms 5.3035 ms 5.3426 ms]
+  256-bit transform (level 2)       time:   [9.7184 ms 9.7395 ms 9.7670 ms]
+  256-bit decrypt (level 2)         time:   [8.9815 ms 9.0044 ms 9.0268 ms]
 ```
 
 ## Contributing

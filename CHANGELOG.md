@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.17.0
+
+- [[#231](https://github.com/IronCoreLabs/recrypt-rs/pull/231), [#232](https://github.com/IronCoreLabs/recrypt-rs/pull/232)]
+  - Update ed25519-dalek from the `3.0.0-pre.6` prerelease to the `3.0.0` release. 0.16.0 depended on a prerelease, so anything sharing an ed25519-dalek version with recrypt has to move too.
+  - Drop the exact version requirement on ed25519-dalek now that it has a stable release. Future 3.x releases resolve without a change here.
+- Replace `lazy_static` with `std::sync::LazyLock` and drop the dependency.
+
 ## 0.16.0
 
 - [[#225](https://github.com/IronCoreLabs/recrypt-rs/pull/225)]

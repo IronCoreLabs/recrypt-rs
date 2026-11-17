@@ -335,43 +335,50 @@ mod test {
     use crate::internal::curve::{FP_256_CURVE_POINTS, FP_480_CURVE_POINTS};
     use crate::internal::fp::fp256_unsafe_from;
     use crate::internal::homogeneouspoint::Double;
-    use lazy_static::lazy_static;
     use num_traits::Pow;
     use proptest::prelude::*;
+    use std::sync::LazyLock;
 
-    lazy_static! {
-        static ref GOOD_TWISTED_HPOINT: TwistedHPoint<fp_256::Fp256> = TwistedHPoint {
+    static GOOD_TWISTED_HPOINT: LazyLock<TwistedHPoint<fp_256::Fp256>> =
+        LazyLock::new(|| TwistedHPoint {
             x: Fp2Elem {
                 //39898887170429929807040143276261848585078991568615066857293752634765338134660
-                elem1:
-                fp256_unsafe_from("5835f848fb3e6f2a741a589fe85710c64272355f3186de77f84770c28eaac884"),
+                elem1: fp256_unsafe_from(
+                    "5835f848fb3e6f2a741a589fe85710c64272355f3186de77f84770c28eaac884",
+                ),
                 //4145079839513126747718408015399244712098849008922890496895080944648891367549
-                elem2:
-                fp256_unsafe_from("92a08345bae17b654f089e235b54b4f41de5e358d5183e4c2c6d1498a3f807d")
+                elem2: fp256_unsafe_from(
+                    "92a08345bae17b654f089e235b54b4f41de5e358d5183e4c2c6d1498a3f807d",
+                ),
             },
             y: Fp2Elem {
                 //54517427188233403272140512636254575372766895942651963572804557077716421872651
-                elem1:
-                fp256_unsafe_from("7887c5327665bd5a2b27552a06cd04a027021fbf7379c760eb426e26862c8c0b"),
+                elem1: fp256_unsafe_from(
+                    "7887c5327665bd5a2b27552a06cd04a027021fbf7379c760eb426e26862c8c0b",
+                ),
                 //29928198841033477396304275898313889635561368630804063259494165651195801046334
-                elem2:
-                fp256_unsafe_from("422ac2a0339a70746983c121f37b9931adc7423b39864fe675b0f0ec882f0d3e")
+                elem2: fp256_unsafe_from(
+                    "422ac2a0339a70746983c121f37b9931adc7423b39864fe675b0f0ec882f0d3e",
+                ),
             },
             z: Fp2Elem {
                 //25757029117904574834370194644693146689936696995375576562303493881177613755324
-                elem1:
-                fp256_unsafe_from("38f1f63c4692158b7830dfa45533f08119bb5f01bfcccc004b820adf2b8763bc"),
+                elem1: fp256_unsafe_from(
+                    "38f1f63c4692158b7830dfa45533f08119bb5f01bfcccc004b820adf2b8763bc",
+                ),
                 //20317563273514500379895253969863230147776170908243485486513578790623697384796
-                elem2:
-                fp256_unsafe_from("2ceb55529c6b0ca59139f2ec721870634e164523d1ed9b0d60049e29c4f3355c")
-            }
-        };
+                elem2: fp256_unsafe_from(
+                    "2ceb55529c6b0ca59139f2ec721870634e164523d1ed9b0d60049e29c4f3355c",
+                ),
+            },
+        });
 
-        static ref GOOD_TWISTED_HPOINT_MONTY: TwistedHPoint<fp_256::Monty> = GOOD_TWISTED_HPOINT.map(&|fp| fp.to_monty());
-        static ref BASE_POINT: HomogeneousPoint<fp_256::Monty> = FP_256_CURVE_POINTS.generator;
-        static ref BASE_POINT_X: fp_256::Monty = BASE_POINT.x;
-        static ref BASE_POINT_Y: fp_256::Monty = BASE_POINT.y;
-    }
+    static GOOD_TWISTED_HPOINT_MONTY: LazyLock<TwistedHPoint<fp_256::Monty>> =
+        LazyLock::new(|| GOOD_TWISTED_HPOINT.map(&|fp| fp.to_monty()));
+    static BASE_POINT: LazyLock<HomogeneousPoint<fp_256::Monty>> =
+        LazyLock::new(|| FP_256_CURVE_POINTS.generator);
+    static BASE_POINT_X: LazyLock<fp_256::Monty> = LazyLock::new(|| BASE_POINT.x);
+    static BASE_POINT_Y: LazyLock<fp_256::Monty> = LazyLock::new(|| BASE_POINT.y);
 
     #[test]
     fn pair_match_known_good_value() {
